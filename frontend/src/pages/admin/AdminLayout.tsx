@@ -2,7 +2,6 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 
 const adminNavItems = [
-  { to: '/admin', label: '대시보드', end: true },
   { to: '/admin/courses', label: '강좌 관리' },
   { to: '/admin/notices', label: '공지 관리' },
   { to: '/admin/instructors', label: '강사 관리' },
@@ -32,7 +31,7 @@ export default function AdminLayout() {
             <span className="text-lg font-bold text-slate-900">관리자</span>
             <nav className="flex gap-6">
               {adminNavItems.map((item) => (
-                <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
+                <NavLink key={item.to} to={item.to} className={navLinkClass}>
                   {item.label}
                 </NavLink>
               ))}

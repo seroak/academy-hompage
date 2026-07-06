@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
 import CoursesPage from './pages/CoursesPage'
@@ -11,7 +11,6 @@ import SocialCallbackPage from './pages/SocialCallbackPage'
 import LoginPage from './pages/admin/LoginPage'
 import RequireAdmin from './pages/admin/RequireAdmin'
 import AdminLayout from './pages/admin/AdminLayout'
-import DashboardPage from './pages/admin/DashboardPage'
 import CoursesAdminPage from './pages/admin/CoursesAdminPage'
 import NoticesAdminPage from './pages/admin/NoticesAdminPage'
 import InstructorsAdminPage from './pages/admin/InstructorsAdminPage'
@@ -34,7 +33,7 @@ function App() {
       <Route path="/admin/login" element={<LoginPage />} />
       <Route element={<RequireAdmin />}>
         <Route element={<AdminLayout />}>
-          <Route path="/admin" element={<DashboardPage />} />
+          <Route path="/admin" element={<Navigate to="/admin/courses" replace />} />
           <Route path="/admin/courses" element={<CoursesAdminPage />} />
           <Route path="/admin/notices" element={<NoticesAdminPage />} />
           <Route path="/admin/instructors" element={<InstructorsAdminPage />} />
