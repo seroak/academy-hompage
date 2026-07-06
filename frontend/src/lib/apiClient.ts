@@ -1,6 +1,7 @@
 import { useAuthStore } from '../stores/authStore'
+import { useParentAuthStore } from '../stores/parentAuthStore'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000'
 
 export class ApiError extends Error {
   status: number
@@ -12,8 +13,24 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch(path: string, init: RequestInit = {}): Promise<unknown> {
-  const token = useAuthStore.getState().accessToken
+export type ApiAuthMode = 'admin' | 'parent' | 'none'
+
+interface ApiFetchOptions {
+  authMode?: ApiAuthMode
+}
+
+export async function apiFetch(
+  path: string,
+  init: RequestInit = {},
+  options: ApiFetchOptions = {},
+): Promise<unknown> {
+  const authMode = options.authMode ?? 'admin'
+  const token =
+    authMode === 'admin'
+      ? useAuthStore.getState().accessToken
+      : authMode === 'parent'
+        ? useParentAuthStore.getState().accessToken
+        : null
   const headers = new Headers(init.headers)
   headers.set('Content-Type', 'application/json')
   if (token) {

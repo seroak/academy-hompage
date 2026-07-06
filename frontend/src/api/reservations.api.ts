@@ -31,7 +31,7 @@ export async function createReservation(input: CreateReservationInput): Promise<
   const raw = await apiFetch('/reservations', {
     method: 'POST',
     body: JSON.stringify(input),
-  })
+  }, { authMode: 'parent' })
   return ReservationSchema.parse(raw)
 }
 

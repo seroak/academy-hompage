@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 export interface JwtPayload {
   sub: string;
-  username: string;
+  username?: string;
+  tokenType?: string;
 }
 
 export interface AdminPrincipal {
@@ -22,7 +23,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload): AdminPrincipal {
+  async validate(payload: JwtPayload): Promise<AdminPrincipal> {
+    if (payload.tokenType !== 'admin' || !payload.username) {
+      throw new UnauthorizedException('Admin token required');
+    }
+
     return { adminId: payload.sub, username: payload.username };
   }
 }

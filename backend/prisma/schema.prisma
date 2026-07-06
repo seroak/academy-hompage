@@ -17,6 +17,47 @@ model Admin {
   createdAt    DateTime @default(now())
 }
 
+enum OAuthProvider {
+  GOOGLE
+  KAKAO
+  NAVER
+}
+
+model ParentUser {
+  id             String                @id @default(cuid())
+  email          String?               @unique
+  name           String?
+  socialAccounts ParentSocialAccount[]
+  authSessions   ParentAuthSession[]
+  reservations   Reservation[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+}
+
+model ParentSocialAccount {
+  id                String        @id @default(cuid())
+  provider          OAuthProvider
+  providerAccountId String
+  profileEmail      String?
+  profileName       String?
+  parentUser        ParentUser    @relation(fields: [parentUserId], references: [id])
+  parentUserId      String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([provider, providerAccountId])
+}
+
+model ParentAuthSession {
+  id           String     @id @default(cuid())
+  code         String     @unique
+  parentUser   ParentUser @relation(fields: [parentUserId], references: [id])
+  parentUserId String
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  createdAt    DateTime   @default(now())
+}
+
 model Instructor {
   id        String   @id @default(cuid())
   name      String
@@ -75,6 +116,8 @@ model Reservation {
   status             ReservationStatus @default(WAITING)
   group              ReservationGroup? @relation(fields: [groupId], references: [id])
   groupId            String?
+  parentUser         ParentUser?       @relation(fields: [parentUserId], references: [id])
+  parentUserId       String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 }

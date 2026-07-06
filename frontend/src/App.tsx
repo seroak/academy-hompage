@@ -7,6 +7,7 @@ import InstructorsPage from './pages/InstructorsPage'
 import NoticesPage from './pages/NoticesPage'
 import NoticeDetailPage from './pages/NoticeDetailPage'
 import ApplyPage from './pages/ApplyPage'
+import SocialCallbackPage from './pages/SocialCallbackPage'
 import LoginPage from './pages/admin/LoginPage'
 import RequireAdmin from './pages/admin/RequireAdmin'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -27,6 +28,7 @@ function App() {
         <Route path="/notices" element={<NoticesPage />} />
         <Route path="/notices/:id" element={<NoticeDetailPage />} />
         <Route path="/apply" element={<ApplyPage />} />
+        <Route path="/auth/social/callback" element={<SocialCallbackPage />} />
       </Route>
 
       <Route path="/admin/login" element={<LoginPage />} />

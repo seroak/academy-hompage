@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { socialLoginStartUrl } from '../api/auth.api'
+import type { OAuthProvider } from '../api/schemas/auth.schema'
 import { useApplyReservationMutation } from './hooks/useApplyReservationMutation'
+import { useParentAuthStore } from '../stores/parentAuthStore'
 import {
   CreateReservationInputSchema,
   DAY_OF_WEEK_OPTIONS,
@@ -23,11 +26,40 @@ const emptyForm: CreateReservationInput = {
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10]
 
+const SOCIAL_PROVIDERS: Array<{ provider: OAuthProvider; label: string; className: string }> = [
+  {
+    provider: 'google',
+    label: 'Google로 계속하기',
+    className: 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50',
+  },
+  {
+    provider: 'kakao',
+    label: '카카오로 계속하기',
+    className: 'border-[#f6df36] bg-[#f6df36] text-slate-950 hover:bg-[#f1d900]',
+  },
+  {
+    provider: 'naver',
+    label: '네이버로 계속하기',
+    className: 'border-[#03c75a] bg-[#03c75a] text-white hover:bg-[#02b351]',
+  },
+]
+
 export default function ApplyPage() {
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation()
+  const { parent, isAuthenticated, logout } = useParentAuthStore()
   const [form, setForm] = useState<CreateReservationInput>(emptyForm)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!parent) return
+
+    setForm((current) => ({
+      ...current,
+      parentName: current.parentName || parent.name || '',
+      parentEmail: current.parentEmail || parent.email || '',
+    }))
+  }, [parent])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -53,7 +85,50 @@ export default function ApplyPage() {
 
   function applyAgain() {
     reset()
-    setForm(emptyForm)
+    setForm({
+      ...emptyForm,
+      parentName: parent?.name ?? '',
+      parentEmail: parent?.email ?? '',
+    })
+  }
+
+  function startSocialLogin(provider: OAuthProvider) {
+    window.location.href = socialLoginStartUrl(provider, '/apply')
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-[1fr_360px]">
+        <section>
+          <p className="text-sm font-semibold text-brand-700">수업 신청</p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-950">보호자 계정으로 로그인해 주세요</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
+            신청 내역과 그룹 편성 안내를 정확히 연결하기 위해 Google, 카카오, 네이버 계정 중
+            하나로 로그인한 뒤 신청을 받을게요.
+          </p>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-6">
+          <h2 className="text-base font-bold text-slate-900">소셜 로그인</h2>
+          <div className="mt-4 grid gap-3">
+            {SOCIAL_PROVIDERS.map((item) => (
+              <button
+                key={item.provider}
+                type="button"
+                onClick={() => startSocialLogin(item.provider)}
+                className={`rounded-lg border px-4 py-3 text-sm font-semibold transition ${item.className}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            로그인 후 이름과 이메일이 신청서에 자동 입력되며, 실제 보호자 정보에 맞게 수정할 수
+            있습니다.
+          </p>
+        </section>
+      </div>
+    )
   }
 
   if (isSuccess) {
@@ -81,6 +156,19 @@ export default function ApplyPage() {
         그룹을 직접 모으지 못하셨다면, 아래 정보를 남겨 주세요. 비슷한 희망 시간대의 신청이 모이면
         그룹을 편성해 안내드립니다.
       </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
+        <p className="text-sm text-slate-700">
+          <span className="font-semibold text-slate-900">{parent?.name ?? parent?.email ?? '보호자'}</span>
+          님 계정으로 신청합니다.
+        </p>
+        <button
+          type="button"
+          onClick={logout}
+          className="text-sm font-medium text-brand-700 hover:text-brand-800"
+        >
+          다른 계정으로 로그인
+        </button>
+      </div>
 
       <form
         onSubmit={handleSubmit}

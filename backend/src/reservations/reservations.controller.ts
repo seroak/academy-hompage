@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
@@ -16,6 +17,12 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { QueryReservationsDto } from './dto/query-reservations.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ParentJwtGuard } from '../auth/guards/parent-jwt.guard';
+import { ParentPrincipal } from '../auth/strategies/parent-jwt.strategy';
+
+interface ParentRequest {
+  user: ParentPrincipal;
+}
 
 @Controller('reservations')
 export class ReservationsController {
@@ -33,9 +40,10 @@ export class ReservationsController {
     return this.reservationsService.findOne(id);
   }
 
+  @UseGuards(ParentJwtGuard)
   @Post()
-  create(@Body() dto: CreateReservationDto) {
-    return this.reservationsService.create(dto);
+  create(@Body() dto: CreateReservationDto, @Req() request: ParentRequest) {
+    return this.reservationsService.create(dto, request.user.parentUserId);
   }
 
   @UseGuards(JwtAuthGuard)

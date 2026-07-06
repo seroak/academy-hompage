@@ -37,8 +37,20 @@ export class ReservationsService {
     return reservation;
   }
 
-  async create(dto: CreateReservationDto) {
-    const reservation = await this.prisma.reservation.create({ data: dto });
+  async create(dto: CreateReservationDto, parentUserId?: string) {
+    if (!parentUserId) {
+      throw new NotFoundException('Parent user not found');
+    }
+
+    const parentUser = await this.prisma.parentUser.findUnique({ where: { id: parentUserId } });
+
+    if (!parentUser) {
+      throw new NotFoundException(`ParentUser ${parentUserId} not found`);
+    }
+
+    const reservation = await this.prisma.reservation.create({
+      data: { ...dto, parentUserId },
+    });
     await this.notification.sendReservationReceived(reservation);
     return reservation;
   }

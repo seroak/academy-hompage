@@ -14,6 +14,7 @@ describe('ReservationsService', () => {
       update: jest.Mock;
       delete: jest.Mock;
     };
+    parentUser: { findUnique: jest.Mock };
   };
   let notification: { sendReservationReceived: jest.Mock };
 
@@ -26,6 +27,7 @@ describe('ReservationsService', () => {
         update: jest.fn(),
         delete: jest.fn(),
       },
+      parentUser: { findUnique: jest.fn() },
     };
     notification = { sendReservationReceived: jest.fn().mockResolvedValue(undefined) };
 
@@ -103,13 +105,27 @@ describe('ReservationsService', () => {
 
     it('신청을 생성하고 접수 이메일을 발송한다', async () => {
       const created = { id: '1', ...dto, status: 'WAITING' };
+      prisma.parentUser.findUnique.mockResolvedValue({
+        id: 'parent-1',
+        name: '김엄마',
+        email: 'parent@example.com',
+      });
       prisma.reservation.create.mockResolvedValue(created);
 
-      const result = await service.create(dto);
+      const result = await service.create(dto, 'parent-1');
 
       expect(result).toBe(created);
-      expect(prisma.reservation.create).toHaveBeenCalledWith({ data: dto });
+      expect(prisma.reservation.create).toHaveBeenCalledWith({
+        data: { ...dto, parentUserId: 'parent-1' },
+      });
       expect(notification.sendReservationReceived).toHaveBeenCalledWith(created);
+    });
+
+    it('학부모 계정이 없으면 NotFoundException을 던진다', async () => {
+      prisma.parentUser.findUnique.mockResolvedValue(null);
+
+      await expect(service.create(dto, 'missing-parent')).rejects.toThrow(NotFoundException);
+      expect(prisma.reservation.create).not.toHaveBeenCalled();
     });
   });
 

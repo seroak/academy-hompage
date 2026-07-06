@@ -40,6 +40,7 @@ describe('AuthService', () => {
       expect(jwtService.sign).toHaveBeenCalledWith({
         sub: 'admin-1',
         username: 'admin',
+        tokenType: 'admin',
       });
     });
 

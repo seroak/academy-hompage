@@ -43,7 +43,7 @@ describe('ReservationsController', () => {
     expect(service.findOne).toHaveBeenCalledWith('1');
   });
 
-  it('delegates create to the service (public endpoint)', async () => {
+  it('delegates create to the service with parent user principal', async () => {
     const dto = {
       childName: '민준',
       childAge: 5,
@@ -54,8 +54,10 @@ describe('ReservationsController', () => {
     };
     service.create.mockResolvedValue('created');
 
-    await expect(controller.create(dto)).resolves.toBe('created');
-    expect(service.create).toHaveBeenCalledWith(dto);
+    await expect(
+      controller.create(dto, { user: { parentUserId: 'parent-1' } }),
+    ).resolves.toBe('created');
+    expect(service.create).toHaveBeenCalledWith(dto, 'parent-1');
   });
 
   it('delegates update to the service', async () => {

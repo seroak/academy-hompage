@@ -20,6 +20,7 @@ export class AuthService {
     const accessToken = this.jwtService.sign({
       sub: admin.id,
       username: admin.username,
+      tokenType: 'admin',
     });
 
     return { accessToken };
