@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Instructor {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  bio       String
+  photoUrl  String?
+  courses   Course[]
+  createdAt DateTime @default(now())
+}
+
+model Course {
+  id            String     @id @default(cuid())
+  title         String
+  description   String
+  category      String
+  level         String
+  tuition       Int
+  schedule      String
+  thumbnailUrl  String?
+  instructor    Instructor @relation(fields: [instructorId], references: [id])
+  instructorId  String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ReservationStatus {
+  WAITING
+  GROUPED
+  CANCELLED
+}
+
+enum ReservationGroupStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model Reservation {
+  id                 String            @id @default(cuid())
+  childName          String
+  childAge           Int
+  parentName         String
+  parentEmail        String
+  parentPhone        String?
+  preferredDayOfWeek String
+  preferredHour      Int
+  note               String?
+  status             ReservationStatus @default(WAITING)
+  group              ReservationGroup? @relation(fields: [groupId], references: [id])
+  groupId            String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model ReservationGroup {
+  id           String                 @id @default(cuid())
+  label        String
+  dayOfWeek    String
+  hour         Int
+  status       ReservationGroupStatus @default(CONFIRMED)
+  reservations Reservation[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+}

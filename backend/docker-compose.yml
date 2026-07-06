@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: academy-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: academy
+      POSTGRES_PASSWORD: academy
+      POSTGRES_DB: academy
+    ports:
+      - '5433:5432'
+    volumes:
+      - academy_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  academy_postgres_data:
