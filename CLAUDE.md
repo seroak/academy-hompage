@@ -65,6 +65,12 @@ npm run build                  # tsc -b && vite build
 - **쿼리 훅 배치**: 2곳 이상에서 쓰면 `src/queries/`, 관리자 페이지 전용(1곳)이면 `src/pages/admin/hooks/`. `queryKeys.ts`는 항상 중앙(`src/queries/queryKeys.ts`)에서 관리.
 - **Instructor 삭제**: 담당 강좌가 남아있으면 `ConflictException`(409)을 던진다 — FK 제약 위반을 그대로 노출하지 않는다.
 
+## React 상태 관리 규칙
+
+- props, store 값, 쿼리 결과가 바뀌었다는 이유만으로 `useEffect` 안에서 같은 컴포넌트의 state 일부를 보정하지 않는다.
+- 외부 값 변화에 맞춰 state를 재설정해야 하면 `key`로 하위 컴포넌트를 재마운트하거나, 렌더링 중 `prevValue` 비교로 같은 컴포넌트 state를 조건부 갱신한다.
+- 이벤트, 네트워크 구독, DOM 조작, 타이머처럼 실제 사이드 이펙트가 있는 작업만 `useEffect`에 둔다.
+
 ## Prisma 버전 관련 주의
 
 Prisma 7.x는 새 클라이언트 제너레이터(`prisma-client`)가 driver adapter(`@prisma/adapter-pg` 등)를 강제해 `schema.prisma`의 `url = env(...)` 방식이 아예 막힌다. 이 프로젝트는 표준적인 `prisma-client-js` + `DATABASE_URL` 방식을 쓰므로 **Prisma를 7.x로 업그레이드하지 않는다** (`package.json`에 `prisma`/`@prisma/client` 6.19.3 고정). 업그레이드가 필요해지면 driver adapter 전환을 별도 작업으로 계획한다.

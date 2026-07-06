@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { socialLoginStartUrl } from '../api/auth.api'
-import type { OAuthProvider } from '../api/schemas/auth.schema'
+import type { OAuthProvider, ParentProfile } from '../api/schemas/auth.schema'
 import { useApplyReservationMutation } from './hooks/useApplyReservationMutation'
 import { useParentAuthStore } from '../stores/parentAuthStore'
 import {
@@ -26,6 +26,14 @@ const emptyForm: CreateReservationInput = {
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10]
 
+function formForParent(parent: ParentProfile | null): CreateReservationInput {
+  return {
+    ...emptyForm,
+    parentName: parent?.name ?? '',
+    parentEmail: parent?.email ?? '',
+  }
+}
+
 const SOCIAL_PROVIDERS: Array<{ provider: OAuthProvider; label: string; className: string }> = [
   {
     provider: 'google',
@@ -47,19 +55,16 @@ const SOCIAL_PROVIDERS: Array<{ provider: OAuthProvider; label: string; classNam
 export default function ApplyPage() {
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation()
   const { parent, isAuthenticated, logout } = useParentAuthStore()
-  const [form, setForm] = useState<CreateReservationInput>(emptyForm)
+  const parentKey = parent?.id ?? null
+  const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent))
+  const [prevParentKey, setPrevParentKey] = useState(parentKey)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!parent) return
-
-    setForm((current) => ({
-      ...current,
-      parentName: current.parentName || parent.name || '',
-      parentEmail: current.parentEmail || parent.email || '',
-    }))
-  }, [parent])
+  if (parentKey !== prevParentKey) {
+    setPrevParentKey(parentKey)
+    setForm(formForParent(parent))
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -77,7 +82,7 @@ export default function ApplyPage() {
 
     try {
       await apply(result.data)
-      setForm(emptyForm)
+      setForm(formForParent(parent))
     } catch {
       setSubmitError('신청 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.')
     }
@@ -85,11 +90,7 @@ export default function ApplyPage() {
 
   function applyAgain() {
     reset()
-    setForm({
-      ...emptyForm,
-      parentName: parent?.name ?? '',
-      parentEmail: parent?.email ?? '',
-    })
+    setForm(formForParent(parent))
   }
 
   function startSocialLogin(provider: OAuthProvider) {
