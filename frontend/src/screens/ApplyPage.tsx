@@ -1,19 +1,15 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 import type { ParentProfile } from "../api/schemas/auth.schema";
 import { logoutParent } from "../api/auth.api";
 import { useApplyReservationMutation } from "./hooks/useApplyReservationMutation";
+import PreferredSlotsPicker from "../components/PreferredSlotsPicker";
 import {
   CreateReservationInputSchema,
-  DAY_OF_WEEK_OPTIONS,
-  DAY_OF_WEEK_LABELS,
-  HOUR_OPTIONS,
-  hourLabel,
   type CreateReservationInput,
-  type PreferredSlot,
 } from "../api/schemas/reservation.schema";
 
 const emptyForm: CreateReservationInput = {
@@ -27,10 +23,6 @@ const emptyForm: CreateReservationInput = {
 };
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
-
-function slotKey(slot: Pick<PreferredSlot, "dayOfWeek" | "hour">): string {
-  return `${slot.dayOfWeek}-${slot.hour}`;
-}
 
 function formForParent(parent: ParentProfile): CreateReservationInput {
   return {
@@ -82,24 +74,6 @@ export default function ApplyPage({ initialParent: parent }: { initialParent: Pa
   function applyAgain() {
     reset();
     setForm(formForParent(parent));
-  }
-
-  function isPreferredSlotSelected(slot: Pick<PreferredSlot, "dayOfWeek" | "hour">): boolean {
-    const key = slotKey(slot);
-    return form.preferredSlots.some((selected) => slotKey(selected) === key);
-  }
-
-  function togglePreferredSlot(slot: Pick<PreferredSlot, "dayOfWeek" | "hour">) {
-    const key = slotKey(slot);
-    setForm((current) => {
-      const isSelected = current.preferredSlots.some((selected) => slotKey(selected) === key);
-      return {
-        ...current,
-        preferredSlots: isSelected
-          ? current.preferredSlots.filter((selected) => slotKey(selected) !== key)
-          : [...current.preferredSlots, slot],
-      };
-    });
   }
 
   if (isSuccess) {
@@ -206,49 +180,10 @@ export default function ApplyPage({ initialParent: parent }: { initialParent: Pa
             <legend className="text-sm font-medium text-slate-800">가능한 시간</legend>
             <span className="text-xs text-slate-500">선택된 시간 {form.preferredSlots.length}개</span>
           </div>
-          <div className="mt-2 overflow-x-auto rounded-xl border border-slate-200 bg-brand-50/40 p-2">
-            <div className="grid min-w-[560px] grid-cols-[64px_repeat(6,minmax(72px,1fr))] gap-1">
-              <div />
-              {DAY_OF_WEEK_OPTIONS.map((day) => (
-                <div key={day} className="px-2 py-1 text-center text-xs font-semibold text-slate-600">
-                  {DAY_OF_WEEK_LABELS[day]}
-                </div>
-              ))}
-              {HOUR_OPTIONS.map((hour) => (
-                <Fragment key={hour}>
-                  <div
-                    key={`${hour}-label`}
-                    className="flex min-h-11 items-center justify-center text-xs font-medium text-slate-500"
-                  >
-                    {hourLabel(hour)}
-                  </div>
-                  {DAY_OF_WEEK_OPTIONS.map((day) => {
-                    const slot = { dayOfWeek: day, hour };
-                    const selected = isPreferredSlotSelected(slot);
-                    return (
-                      <button
-                        key={`${day}-${hour}`}
-                        type="button"
-                        aria-pressed={selected}
-                        aria-label={`${DAY_OF_WEEK_LABELS[day]}요일 ${hourLabel(hour)} 선택`}
-                        onClick={() => togglePreferredSlot(slot)}
-                        className={`min-h-11 rounded-lg border px-2 text-xs font-semibold transition ${
-                          selected
-                            ? "border-brand-700 bg-brand-600 text-white shadow-sm"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:bg-white"
-                        }`}
-                      >
-                        {selected ? "가능" : "선택"}
-                      </button>
-                    );
-                  })}
-                </Fragment>
-              ))}
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            수업이 가능한 시간을 모두 선택해 주세요. 비슷한 신청이 모이면 그중 한 시간으로 안내드립니다.
-          </p>
+          <PreferredSlotsPicker
+            value={form.preferredSlots}
+            onChange={(slots) => setForm({ ...form, preferredSlots: slots })}
+          />
           {fieldErrors.preferredSlots && (
             <span className="mt-1 block text-xs text-red-600">{fieldErrors.preferredSlots}</span>
           )}
