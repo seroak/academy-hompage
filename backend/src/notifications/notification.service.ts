@@ -11,7 +11,14 @@ interface ReservationLike {
 interface GroupLike {
   label: string;
   dayOfWeek: string;
-  hour: number;
+  startMinute: number;
+  endMinute: number;
+}
+
+function timeLabel(minute: number): string {
+  const hours = Math.floor(minute / 60);
+  const minutes = minute % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
 @Injectable()
@@ -54,7 +61,7 @@ export class NotificationService {
     await this.sendMail(
       reservation.parentEmail,
       '[학원] 수업 그룹이 확정되었습니다',
-      `${reservation.parentName}님, ${reservation.childName} 어린이가 "${group.label}" 그룹(${group.dayOfWeek} ${group.hour}시)에 편성되었습니다.`,
+      `${reservation.parentName}님, ${reservation.childName} 어린이가 "${group.label}" 그룹(${group.dayOfWeek} ${timeLabel(group.startMinute)}~${timeLabel(group.endMinute)})에 편성되었습니다.`,
     );
   }
 

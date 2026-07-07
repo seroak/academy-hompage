@@ -135,7 +135,7 @@ async function main() {
       parentName: "김지은",
       parentEmail: "parent1@example.com",
       parentPhone: "010-1111-2222",
-      preferredSlots: [{ dayOfWeek: "MON", hour: 12 }],
+      preferredSlots: [{ dayOfWeek: "MON", startMinute: 720, endMinute: 790 }],
     },
     {
       id: "seed-reservation-2",
@@ -144,7 +144,7 @@ async function main() {
       parentName: "이수진",
       parentEmail: "parent2@example.com",
       parentPhone: "010-2222-3333",
-      preferredSlots: [{ dayOfWeek: "MON", hour: 12 }],
+      preferredSlots: [{ dayOfWeek: "MON", startMinute: 720, endMinute: 810 }],
     },
     {
       id: "seed-reservation-3",
@@ -152,7 +152,7 @@ async function main() {
       childAge: 6,
       parentName: "박민영",
       parentEmail: "parent3@example.com",
-      preferredSlots: [{ dayOfWeek: "WED", hour: 15 }],
+      preferredSlots: [{ dayOfWeek: "WED", startMinute: 900, endMinute: 970 }],
     },
     {
       id: "seed-reservation-4",
@@ -160,7 +160,7 @@ async function main() {
       childAge: 4,
       parentName: "최은경",
       parentEmail: "parent4@example.com",
-      preferredSlots: [{ dayOfWeek: "FRI", hour: 12 }],
+      preferredSlots: [{ dayOfWeek: "FRI", startMinute: 720, endMinute: 810 }],
       note: "낯가림이 있어 소규모 그룹을 희망합니다.",
     },
   ];
