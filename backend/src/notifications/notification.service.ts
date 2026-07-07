@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
 interface ReservationLike {
@@ -19,23 +20,26 @@ export class NotificationService {
   private readonly transporter: nodemailer.Transporter | null;
   private readonly from: string;
 
-  constructor() {
-    const host = process.env.SMTP_HOST;
+  constructor(private readonly configService: ConfigService) {
+    const host = this.configService.get<string>('SMTP_HOST');
 
     if (!host) {
       this.transporter = null;
     } else {
       this.transporter = nodemailer.createTransport({
         host,
-        port: Number(process.env.SMTP_PORT ?? 587),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: process.env.SMTP_USER
-          ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+        port: Number(this.configService.get<string | number>('SMTP_PORT', 587)),
+        secure: this.configService.get<string>('SMTP_SECURE') === 'true',
+        auth: this.configService.get<string>('SMTP_USER')
+          ? {
+              user: this.configService.get<string>('SMTP_USER'),
+              pass: this.configService.get<string>('SMTP_PASS'),
+            }
           : undefined,
       });
     }
 
-    this.from = process.env.SMTP_FROM ?? '학원 <no-reply@academy.local>';
+    this.from = this.configService.get<string>('SMTP_FROM', '학원 <no-reply@academy.local>');
   }
 
   async sendReservationReceived(reservation: ReservationLike): Promise<void> {

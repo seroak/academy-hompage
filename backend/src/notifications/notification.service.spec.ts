@@ -1,29 +1,37 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { NotificationService } from './notification.service';
 
 jest.mock('nodemailer');
 
 describe('NotificationService', () => {
-  const originalEnv = process.env;
   let sendMail: jest.Mock;
   let createTransport: jest.Mock;
+  let configValues: Record<string, string | undefined>;
 
   beforeEach(() => {
     sendMail = jest.fn().mockResolvedValue(undefined);
     createTransport = nodemailer.createTransport as jest.Mock;
     createTransport.mockReturnValue({ sendMail });
-    process.env = { ...originalEnv };
+    configValues = {};
   });
 
   afterEach(() => {
-    process.env = originalEnv;
     jest.clearAllMocks();
   });
 
   async function createService(): Promise<NotificationService> {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [NotificationService],
+      providers: [
+        NotificationService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string, defaultValue?: string | number) => configValues[key] ?? defaultValue),
+          },
+        },
+      ],
     }).compile();
 
     return module.get<NotificationService>(NotificationService);
@@ -31,7 +39,7 @@ describe('NotificationService', () => {
 
   describe('SMTP 미설정', () => {
     beforeEach(() => {
-      delete process.env.SMTP_HOST;
+      delete configValues.SMTP_HOST;
     });
 
     it('메일을 발송하지 않고 예외도 던지지 않는다', async () => {
@@ -51,11 +59,11 @@ describe('NotificationService', () => {
 
   describe('SMTP 설정됨', () => {
     beforeEach(() => {
-      process.env.SMTP_HOST = 'smtp.example.com';
-      process.env.SMTP_PORT = '587';
-      process.env.SMTP_USER = 'user';
-      process.env.SMTP_PASS = 'pass';
-      process.env.SMTP_FROM = '학원 <no-reply@academy.local>';
+      configValues.SMTP_HOST = 'smtp.example.com';
+      configValues.SMTP_PORT = '587';
+      configValues.SMTP_USER = 'user';
+      configValues.SMTP_PASS = 'pass';
+      configValues.SMTP_FROM = '학원 <no-reply@academy.local>';
     });
 
     it('접수 이메일을 발송한다', async () => {
