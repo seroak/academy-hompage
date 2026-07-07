@@ -1,0 +1,70 @@
+export const ADMIN_AUTH_COOKIE = 'academy-admin-session';
+export const PARENT_AUTH_COOKIE = 'academy-parent-session';
+
+const AUTH_COOKIE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
+
+type AuthKind = 'admin' | 'parent';
+
+interface CookieResponse {
+  cookie: (name: string, value: string, options: AuthCookieOptions) => void;
+}
+
+interface ClearCookieResponse {
+  clearCookie: (name: string, options: Pick<AuthCookieOptions, 'path'>) => void;
+}
+
+interface AuthCookieOptions {
+  httpOnly: boolean;
+  sameSite: 'lax';
+  secure: boolean;
+  path: string;
+  maxAge: number;
+}
+
+interface CookieRequest {
+  headers?: { cookie?: string };
+}
+
+function cookieName(kind: AuthKind) {
+  return kind === 'admin' ? ADMIN_AUTH_COOKIE : PARENT_AUTH_COOKIE;
+}
+
+function cookieOptions(): AuthCookieOptions {
+  return {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: AUTH_COOKIE_MAX_AGE_MS,
+  };
+}
+
+export function setAuthCookie(response: CookieResponse, kind: AuthKind, token: string) {
+  response.cookie(cookieName(kind), token, cookieOptions());
+}
+
+export function clearAuthCookie(response: ClearCookieResponse, kind: AuthKind) {
+  response.clearCookie(cookieName(kind), { path: '/' });
+}
+
+export function authCookieExtractor(name: string) {
+  return (request: CookieRequest | null) => {
+    const cookieHeader = request?.headers?.cookie;
+    if (!cookieHeader) {
+      return null;
+    }
+
+    const cookies = cookieHeader.split(';').map((entry) => entry.trim());
+    const match = cookies.find((entry) => entry.startsWith(`${name}=`));
+    if (!match) {
+      return null;
+    }
+
+    const value = match.slice(name.length + 1);
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
+}
