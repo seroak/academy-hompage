@@ -31,7 +31,7 @@ export default function Page() {
   }
 
   return (
-    <Layout>
+    <Layout variant="home">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}

@@ -1,18 +1,22 @@
-'use client'
-
-import { usePathname } from 'next/navigation'
 import { Suspense } from 'react'
 import type { ReactNode } from 'react'
 import Header from './Header'
+import { getServerAuth } from '../lib/serverAuth'
 
-export default function Layout({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
-  const isHome = pathname === '/'
+export default async function Layout({
+  children,
+  variant = 'default',
+}: {
+  children: ReactNode
+  variant?: 'home' | 'default'
+}) {
+  const isHome = variant === 'home'
+  const auth = await getServerAuth()
 
   return (
     <div className="flex min-h-screen flex-col bg-[#fff9ec] text-[#222222]">
       <Suspense fallback={null}>
-        <Header />
+        <Header initialAuth={auth} />
       </Suspense>
 
       <main

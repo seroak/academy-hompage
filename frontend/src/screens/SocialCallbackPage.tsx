@@ -29,11 +29,15 @@ export default function SocialCallbackPage() {
     const sessionCode = code
 
     async function exchange() {
+      console.log('[social-callback] exchanging')
       try {
         const result = await exchangeSocialLogin(sessionCode)
+        const returnTo = safeReturnTo(searchParams?.get('returnTo') ?? null)
+        console.log('[social-callback] session set, returnTo=', returnTo)
         setSession(result.accessToken, result.parent)
-        router.replace(safeReturnTo(searchParams?.get('returnTo') ?? null))
-      } catch {
+        router.replace(returnTo)
+      } catch (err) {
+        console.error('[social-callback] exchange failed', err)
         setError('소셜 로그인 처리에 실패했습니다. 다시 시도해 주세요.')
       }
     }

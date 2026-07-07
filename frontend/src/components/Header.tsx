@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { CalendarCheck, LogIn, LogOut, Menu, Shield, X } from 'lucide-react'
+import { CalendarCheck, ChevronDown, LogIn, LogOut, Menu, Shield, X } from 'lucide-react'
+import type { ParentProfile } from '../api/schemas/auth.schema'
 import { useAuthStore } from '../stores/authStore'
 import { useLoginModalStore } from '../stores/loginModalStore'
+import { useParentAuthStore } from '../stores/parentAuthStore'
 import AdminLoginModal from './AdminLoginModal'
 
 const navItems = [
@@ -23,12 +25,111 @@ function navLinkClass(isActive: boolean) {
   }`
 }
 
-export default function Header() {
+function initialOf(parent: { name: string | null; email: string | null }) {
+  const source = parent.name?.trim() || parent.email?.trim() || '회원'
+  return source.charAt(0).toUpperCase()
+}
+
+function ParentProfileMenu({
+  parent,
+  onLogout,
+}: {
+  parent: ParentProfile
+  onLogout: () => void
+}) {
   const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    function handlePointerDown(event: PointerEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen])
+
+  const displayName = parent.name?.trim() || parent.email?.trim() || '회원'
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        aria-expanded={isOpen}
+        className="inline-flex h-12 items-center gap-2 rounded-full border border-[#f2dfb9] bg-white pl-2 pr-4 text-sm font-black text-[#3f3a31] transition duration-250 hover:-translate-y-0.5 hover:border-[#ffd66b] hover:text-[#e86f00]"
+      >
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418]">
+          {initialOf(parent)}
+        </span>
+        <span className="max-w-[8rem] truncate">{displayName}</span>
+        <ChevronDown size={16} strokeWidth={2.5} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-[#f2dfb9] bg-white p-3 shadow-[0_18px_36px_rgba(48,33,10,0.14)]">
+          <div className="border-b border-[#f2dfb9] px-2 pb-3">
+            <p className="truncate text-sm font-black text-[#3f3a31]">{displayName}</p>
+            {parent.email && (
+              <p className="truncate text-xs font-bold text-[#8a8272]">{parent.email}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false)
+              onLogout()
+            }}
+            className="mt-2 flex w-full items-center gap-2 rounded-xl px-2 py-2 text-sm font-black text-[#3f3a31] transition hover:bg-[#fff4dc] hover:text-[#d6452f]"
+          >
+            <LogOut size={18} strokeWidth={2.5} />
+            로그아웃
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export interface HeaderInitialAuth {
+  admin: boolean
+  parent: ParentProfile | null
+}
+
+export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth }) {
+  const [isOpen, setIsOpen] = useState(false)
+  // 서버(쿠키)와 클라이언트 첫 렌더가 항상 일치하도록, mount 전에는 서버가 내려준
+  // initialAuth를 그대로 쓰고 mount 후에야 zustand 스토어 값으로 전환한다.
+  // (전환 시점에 로그인 상태가 바뀌어 있지 않다면 화면상 깜빡임은 없다.)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const adminFromStore = useAuthStore((state) => state.isAuthenticated)
+  const parentAuthFromStore = useParentAuthStore((state) => state.isAuthenticated)
+  const parentFromStore = useParentAuthStore((state) => state.parent)
+  const isAuthenticated = mounted ? adminFromStore : initialAuth.admin
+  const isParentAuthenticated = mounted ? parentAuthFromStore : initialAuth.parent !== null
+  const parent = mounted ? parentFromStore : initialAuth.parent
+  const parentLogout = useParentAuthStore((state) => state.logout)
   const isLoginModalOpen = useLoginModalStore((state) => state.isOpen)
+  const loginModalRedirectTo = useLoginModalStore((state) => state.redirectTo)
   const openSharedLoginModal = useLoginModalStore((state) => state.open)
   const closeSharedLoginModal = useLoginModalStore((state) => state.close)
   const logout = useAuthStore((state) => state.logout)
@@ -42,9 +143,24 @@ export default function Header() {
     router.push('/')
   }
 
+  function handleParentLogout() {
+    parentLogout()
+    setIsOpen(false)
+    router.push('/')
+  }
+
   function openLoginModal() {
     setIsOpen(false)
     openSharedLoginModal()
+  }
+
+  function handleReservationClick() {
+    setIsOpen(false)
+    if (isParentAuthenticated) {
+      router.push('/apply')
+    } else {
+      openSharedLoginModal('/apply')
+    }
   }
 
   function closeLoginModal() {
@@ -63,7 +179,11 @@ export default function Header() {
   }
 
   function handleParentLoginSuccess() {
+    const redirect = loginModalRedirectTo
     closeSharedLoginModal()
+    if (redirect) {
+      router.push(redirect)
+    }
   }
 
   return (
@@ -108,6 +228,8 @@ export default function Header() {
                   로그아웃
                 </button>
               </>
+            ) : isParentAuthenticated && parent ? (
+              <ParentProfileMenu parent={parent} onLogout={handleParentLogout} />
             ) : (
               <button
                 type="button"
@@ -120,7 +242,7 @@ export default function Header() {
             )}
             <button
               type="button"
-              onClick={openLoginModal}
+              onClick={handleReservationClick}
               className="inline-flex h-12 items-center gap-2 rounded-full bg-[#ffd66b] px-6 text-sm font-black text-[#2b2418] shadow-[0_14px_28px_rgba(255,214,107,0.34)] transition duration-250 hover:-translate-y-0.5 hover:bg-[#ffcf4d]"
             >
               <CalendarCheck size={18} strokeWidth={2.5} />
@@ -174,6 +296,30 @@ export default function Header() {
                     로그아웃
                   </button>
                 </div>
+              ) : isParentAuthenticated && parent ? (
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-full border border-[#f2dfb9] bg-white px-4 py-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418]">
+                      {initialOf(parent)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-[#3f3a31]">
+                        {parent.name?.trim() || parent.email?.trim() || '회원'}
+                      </p>
+                      {parent.email && (
+                        <p className="truncate text-xs font-bold text-[#8a8272]">{parent.email}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleParentLogout}
+                    className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-[#f2dfb9] bg-white px-3 text-sm font-black text-[#d6452f]"
+                  >
+                    <LogOut size={16} strokeWidth={2.5} />
+                    로그아웃
+                  </button>
+                </div>
               ) : (
                 <button
                   type="button"
@@ -186,7 +332,7 @@ export default function Header() {
               )}
               <button
                 type="button"
-                onClick={openLoginModal}
+                onClick={handleReservationClick}
                 className="mt-2 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#ffd66b] px-6 text-sm font-black text-[#2b2418]"
               >
                 <CalendarCheck size={18} strokeWidth={2.5} />
@@ -199,6 +345,7 @@ export default function Header() {
 
       <AdminLoginModal
         isOpen={shouldShowLoginModal}
+        redirectTo={loginModalRedirectTo}
         onClose={closeLoginModal}
         onSuccess={handleLoginSuccess}
         onParentSuccess={handleParentLoginSuccess}

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import type { ParentProfile } from '../api/schemas/auth.schema'
+import { cookieStorage } from '../lib/cookieStorage'
 
 interface ParentAuthState {
   accessToken: string | null
@@ -20,6 +21,6 @@ export const useParentAuthStore = create<ParentAuthState>()(
         set({ accessToken: token, parent, isAuthenticated: true }),
       logout: () => set({ accessToken: null, parent: null, isAuthenticated: false }),
     }),
-    { name: 'academy-parent-auth' },
+    { name: 'academy-parent-auth', storage: createJSONStorage(() => cookieStorage) },
   ),
 )

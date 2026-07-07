@@ -12,6 +12,7 @@ import { useParentAuthStore } from '../stores/parentAuthStore'
 
 interface AdminLoginModalProps {
   isOpen: boolean
+  redirectTo?: string | null
   onClose: () => void
   onSuccess: () => void
   onParentSuccess: () => void
@@ -39,6 +40,7 @@ type ParentAuthMode = 'login' | 'signup'
 
 export default function AdminLoginModal({
   isOpen,
+  redirectTo,
   onClose,
   onSuccess,
   onParentSuccess,
@@ -275,7 +277,7 @@ export default function AdminLoginModal({
               key={item.provider}
               type="button"
               onClick={() => {
-                window.location.href = socialLoginStartUrl(item.provider, pathname ?? '/')
+                window.location.href = socialLoginStartUrl(item.provider, redirectTo ?? pathname ?? '/')
               }}
               className={`h-12 rounded-full border px-5 text-sm font-black transition ${item.className}`}
             >
