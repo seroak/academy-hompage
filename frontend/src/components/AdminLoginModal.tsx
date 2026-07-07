@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { usePathname } from 'next/navigation'
 import { ChevronDown, LockKeyhole, X } from 'lucide-react'
 import { loginParentWithPassword, signupParent, socialLoginStartUrl } from '../api/auth.api'
 import type { OAuthProvider } from '../api/schemas/auth.schema'
@@ -52,6 +53,7 @@ export default function AdminLoginModal({
   const [adminPassword, setAdminPassword] = useState('')
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false)
   const { login, isLoggingIn, loginError } = useLoginMutation()
+  const pathname = usePathname()
   const setParentSession = useParentAuthStore((state) => state.setSession)
 
   useEffect(() => {
@@ -273,7 +275,7 @@ export default function AdminLoginModal({
               key={item.provider}
               type="button"
               onClick={() => {
-                window.location.href = socialLoginStartUrl(item.provider, '/apply')
+                window.location.href = socialLoginStartUrl(item.provider, pathname ?? '/')
               }}
               className={`h-12 rounded-full border px-5 text-sm font-black transition ${item.className}`}
             >

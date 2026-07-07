@@ -19,7 +19,7 @@ export async function login(username: string, password: string): Promise<LoginRe
   return LoginResponseSchema.parse(raw)
 }
 
-export function socialLoginStartUrl(provider: OAuthProvider, returnTo = '/apply'): string {
+export function socialLoginStartUrl(provider: OAuthProvider, returnTo = '/'): string {
   const params = new URLSearchParams({ returnTo })
   return `${API_BASE_URL}/auth/social/${provider}/start?${params.toString()}`
 }

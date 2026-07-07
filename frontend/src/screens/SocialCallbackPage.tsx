@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { exchangeSocialLogin } from '../api/auth.api'
 import { useParentAuthStore } from '../stores/parentAuthStore'
 
+function safeReturnTo(value: string | null): string {
+  return value?.startsWith('/') && !value.startsWith('//') ? value : '/'
+}
+
 export default function SocialCallbackPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -28,7 +32,7 @@ export default function SocialCallbackPage() {
       try {
         const result = await exchangeSocialLogin(sessionCode)
         setSession(result.accessToken, result.parent)
-        router.replace('/apply')
+        router.replace(safeReturnTo(searchParams?.get('returnTo') ?? null))
       } catch {
         setError('소셜 로그인 처리에 실패했습니다. 다시 시도해 주세요.')
       }
@@ -43,15 +47,15 @@ export default function SocialCallbackPage() {
         {error ? '로그인 실패' : '로그인 확인 중'}
       </h1>
       <p className="mt-3 text-sm text-slate-600">
-        {error ?? '소셜 계정 정보를 확인하고 신청서로 이동합니다.'}
+        {error ?? '소셜 계정 정보를 확인하고 이전 페이지로 이동합니다.'}
       </p>
       {error && (
         <button
           type="button"
-          onClick={() => router.replace('/apply')}
+          onClick={() => router.replace(safeReturnTo(searchParams?.get('returnTo') ?? null))}
           className="mt-6 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
-          신청 페이지로 돌아가기
+          이전 페이지로 돌아가기
         </button>
       )}
     </div>
