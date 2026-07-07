@@ -6,6 +6,10 @@
 - `CLAUDE.md`를 수정할 때도 같은 의도의 변경을 `AGENTS.md`에 함께 반영한다.
 - 두 파일은 도구별 진입점이 다르므로 문구가 완전히 같을 필요는 없지만, 프로젝트 규칙과 작업 방식은 서로 어긋나면 안 된다.
 
+## Skill Usage
+
+- Before completing any task, invoke the global `update-agents` skill. Only update AGENTS.md when the completed work reveals reusable, project-wide guidance.
+
 ## Language
 
 - 한국어로 응답한다. 사용자가 한국어로 작성하면 한국어로 답한다. 사용자가 영어로 시작하더라도 이후 한국어로 전환하면 즉시 한국어로 응답한다. 세션 초반 언어에 고정되지 않는다.
@@ -110,7 +114,7 @@
 | 영역 | 스택 |
 |------|------|
 | Backend | NestJS + Prisma(**6.x 고정, 7.x 금지** — 아래 참고) + PostgreSQL(docker-compose) + JWT(passport-jwt) |
-| Frontend | React + Vite + TypeScript + TanStack Query + Zod + Zustand + React Router + Tailwind CSS |
+| Frontend | Next.js App Router + React + TypeScript + TanStack Query + Zod + Zustand + Tailwind CSS |
 
 ## 구조
 
@@ -127,10 +131,10 @@ academy-hompage/
 └── frontend/
     └── src/
         ├── api/              # fetch + Zod 파싱 (schemas/ 하위에 스키마)
-        ├── queries/          # 여러 곳에서 쓰는 조회 훅 + queryKeys.ts (중앙 관리)
+        ├── app/              # Next App Router 라우트, metadata/robots/sitemap
+        ├── queries/          # 여러 곳에서 쓰는 클라이언트 조회 훅 + queryKeys.ts (중앙 관리)
         ├── stores/authStore.ts  # Zustand, 관리자 토큰(persist)
-        ├── pages/            # 공개 페이지
-        └── pages/admin/      # 관리자 전용 (RequireAdmin 가드, hooks/ 아래 mutation 훅)
+        └── screens/          # 라우트에서 재사용하는 화면 컴포넌트
 ```
 
 ## 실행 명령어
@@ -146,8 +150,8 @@ npx jest                       # 전체 테스트
 
 # Frontend
 cd frontend
-npm run dev                    # http://localhost:5173
-npm run build                  # tsc -b && vite build
+npm run dev                    # http://localhost:3001
+npm run build                  # next build --webpack
 ```
 
 관리자 계정(시드): `.env`의 `ADMIN_SEED_USERNAME`/`ADMIN_SEED_PASSWORD` (기본 `admin` / `admin1234`).
@@ -158,7 +162,9 @@ npm run build                  # tsc -b && vite build
 - **인증 가드는 쓰기 작업에만**: `GET`은 공개, `POST`/`PATCH`/`DELETE`에만 `@UseGuards(JwtAuthGuard)`. 새 엔드포인트 추가 시 동일하게 적용.
 - **DELETE는 204 반환 필수**: `@HttpCode(HttpStatus.NO_CONTENT)`. Nest 기본값(200 + 빈 바디)은 프론트 `response.json()` 파싱 에러를 유발한다(실제로 겪은 버그, `src/lib/apiClient.ts` 참고).
 - **API 응답은 Zod로 파싱**: `frontend/src/api/*.ts`에서 `schema.parse(raw)` 필수, `as T` 단언 금지. 신규 API 함수 작성 시 `api-zod-boundary` 스킬 참고.
-- **쿼리 훅 배치**: 2곳 이상에서 쓰면 `src/queries/`, 관리자 페이지 전용(1곳)이면 `src/pages/admin/hooks/`. `queryKeys.ts`는 항상 중앙(`src/queries/queryKeys.ts`)에서 관리.
+- **Next 라우팅**: 공개 페이지 SEO는 `frontend/src/app/`의 App Router metadata/서버 렌더링을 기준으로 관리한다. 브라우저 상태가 필요한 화면은 `use client` 컴포넌트로 분리한다.
+- **Agentation 개발 오버레이**: `agentation`은 `frontend/src/components/AgentationDev.tsx`에서 개발 환경에만 렌더링하고, 루트 레이아웃에 유지한다.
+- **쿼리 훅 배치**: 2곳 이상에서 쓰면 `src/queries/`, 관리자 화면 전용(1곳)이면 `src/screens/admin/hooks/`. `queryKeys.ts`는 항상 중앙(`src/queries/queryKeys.ts`)에서 관리.
 - **Instructor 삭제**: 담당 강좌가 남아있으면 `ConflictException`(409)을 던진다 — FK 제약 위반을 그대로 노출하지 않는다.
 
 ## Prisma 버전 관련 주의
