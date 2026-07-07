@@ -1,12 +1,14 @@
 import "dotenv/config";
+import { ConfigService } from "@nestjs/config";
 import * as bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+const configService = new ConfigService();
 
 async function main() {
-  const adminUsername = process.env.ADMIN_SEED_USERNAME ?? "admin";
-  const adminPassword = process.env.ADMIN_SEED_PASSWORD ?? "admin1234";
+  const adminUsername = configService.get<string>("ADMIN_SEED_USERNAME", "admin");
+  const adminPassword = configService.get<string>("ADMIN_SEED_PASSWORD", "admin1234");
 
   const passwordHash = await bcrypt.hash(adminPassword, 10);
   await prisma.admin.upsert({
