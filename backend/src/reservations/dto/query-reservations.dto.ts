@@ -16,11 +16,4 @@ export class QueryReservationsDto {
   @IsOptional()
   @IsIn(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'])
   dayOfWeek?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(12)
-  @Max(17)
-  hour?: number;
 }

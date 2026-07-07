@@ -18,13 +18,8 @@ export class ReservationsService {
 
     if (query.status) where.status = query.status;
     if (query.age !== undefined) where.childAge = query.age;
-    if (query.dayOfWeek || query.hour !== undefined) {
-      where.preferredSlots = {
-        some: {
-          ...(query.dayOfWeek ? { dayOfWeek: query.dayOfWeek } : {}),
-          ...(query.hour !== undefined ? { hour: query.hour } : {}),
-        },
-      };
+    if (query.dayOfWeek) {
+      where.preferredSlots = { some: { dayOfWeek: query.dayOfWeek } };
     }
 
     return this.prisma.reservation.findMany({

@@ -57,21 +57,20 @@ describe('ReservationsService', () => {
       });
     });
 
-    it('status/age/dayOfWeek/hour 필터를 where 절로 조립한다', async () => {
+    it('status/age/dayOfWeek 필터를 where 절로 조립한다', async () => {
       prisma.reservation.findMany.mockResolvedValue([]);
 
       await service.findAll({
         status: 'WAITING',
         age: 5,
         dayOfWeek: 'MON',
-        hour: 12,
       });
 
       expect(prisma.reservation.findMany).toHaveBeenCalledWith({
         where: {
           status: 'WAITING',
           childAge: 5,
-          preferredSlots: { some: { dayOfWeek: 'MON', hour: 12 } },
+          preferredSlots: { some: { dayOfWeek: 'MON' } },
         },
         include: { preferredSlots: true },
         orderBy: { createdAt: 'desc' },
