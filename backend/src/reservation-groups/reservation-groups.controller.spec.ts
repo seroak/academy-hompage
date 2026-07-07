@@ -46,7 +46,8 @@ describe('ReservationGroupsController', () => {
     const dto = {
       label: '월수금 12시반',
       dayOfWeek: 'MON',
-      hour: 12,
+      startMinute: 720,
+      endMinute: 790,
       reservationIds: ['r1', 'r2'],
     };
     service.create.mockResolvedValue('created');
