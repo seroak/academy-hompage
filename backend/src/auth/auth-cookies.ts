@@ -5,11 +5,11 @@ const AUTH_COOKIE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
 
 type AuthKind = 'admin' | 'parent';
 
-interface CookieResponse {
+export interface CookieResponse {
   cookie: (name: string, value: string, options: AuthCookieOptions) => void;
 }
 
-interface ClearCookieResponse {
+export interface ClearCookieResponse {
   clearCookie: (name: string, options: Pick<AuthCookieOptions, 'path'>) => void;
 }
 

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { exchangeSocialLogin } from '../api/auth.api'
-import { useParentAuthStore } from '../stores/parentAuthStore'
 
 function safeReturnTo(value: string | null): string {
   return value?.startsWith('/') && !value.startsWith('//') ? value : '/'
@@ -12,7 +11,6 @@ function safeReturnTo(value: string | null): string {
 export default function SocialCallbackPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const setSession = useParentAuthStore((state) => state.setSession)
   const [error, setError] = useState<string | null>(null)
   const exchangedRef = useRef(false)
 
@@ -29,12 +27,10 @@ export default function SocialCallbackPage() {
     const sessionCode = code
 
     async function exchange() {
-      console.log('[social-callback] exchanging')
       try {
-        const result = await exchangeSocialLogin(sessionCode)
+        await exchangeSocialLogin(sessionCode)
         const returnTo = safeReturnTo(searchParams?.get('returnTo') ?? null)
-        console.log('[social-callback] session set, returnTo=', returnTo)
-        setSession(result.accessToken, result.parent)
+        router.refresh()
         router.replace(returnTo)
       } catch (err) {
         console.error('[social-callback] exchange failed', err)
@@ -43,7 +39,7 @@ export default function SocialCallbackPage() {
     }
 
     void exchange()
-  }, [router, searchParams, setSession])
+  }, [router, searchParams])
 
   return (
     <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center">

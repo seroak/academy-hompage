@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import Layout from '../../components/Layout'
 import ApplyPage from '../../screens/ApplyPage'
+import { getServerAuth } from '../../lib/serverAuth'
 import { siteUrl } from '../../lib/seo'
 
 export const metadata: Metadata = {
@@ -14,10 +16,16 @@ export const metadata: Metadata = {
   },
 }
 
-export default function Page() {
+export default async function Page() {
+  const { parent } = await getServerAuth()
+
+  if (!parent) {
+    redirect('/?login=1')
+  }
+
   return (
     <Layout>
-      <ApplyPage />
+      <ApplyPage initialParent={parent} />
     </Layout>
   )
 }

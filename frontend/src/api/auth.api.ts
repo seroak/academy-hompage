@@ -54,3 +54,7 @@ export async function fetchParentMe(): Promise<ParentProfile> {
   const raw = await apiFetch('/auth/social/me', {}, { authMode: 'parent' })
   return ParentProfileSchema.parse(raw)
 }
+
+export async function logoutParent(): Promise<void> {
+  await apiFetch('/auth/parents/logout', { method: 'POST' }, { authMode: 'none' })
+}

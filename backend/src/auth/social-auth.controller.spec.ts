@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SocialAuthController } from './social-auth.controller';
 import { SocialAuthService } from './social-auth.service';
+import { PARENT_AUTH_COOKIE } from './auth-cookies';
 
 describe('SocialAuthController', () => {
   let controller: SocialAuthController;
@@ -48,11 +49,23 @@ describe('SocialAuthController', () => {
     );
   });
 
-  it('exchanges a one-time session code', async () => {
-    service.exchangeSessionCode.mockResolvedValue({ accessToken: 'token' });
-
-    await expect(controller.exchange({ code: 'session-code' })).resolves.toEqual({
+  it('exchanges a one-time session code and sets an httpOnly parent cookie', async () => {
+    service.exchangeSessionCode.mockResolvedValue({
       accessToken: 'token',
+      parent: { id: '1' },
     });
+    const response = { cookie: jest.fn() };
+
+    await expect(
+      controller.exchange({ code: 'session-code' }, response as never),
+    ).resolves.toEqual({
+      accessToken: 'token',
+      parent: { id: '1' },
+    });
+    expect(response.cookie).toHaveBeenCalledWith(
+      PARENT_AUTH_COOKIE,
+      'token',
+      expect.objectContaining({ httpOnly: true }),
+    );
   });
 });

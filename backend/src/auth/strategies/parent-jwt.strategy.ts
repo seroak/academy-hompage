@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { PARENT_AUTH_COOKIE, authCookieExtractor } from '../auth-cookies';
 
 export interface ParentJwtPayload {
   sub: string;
@@ -20,7 +21,10 @@ export interface ParentPrincipal {
 export class ParentJwtStrategy extends PassportStrategy(Strategy, 'parent-jwt') {
   constructor(configService: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        authCookieExtractor(PARENT_AUTH_COOKIE),
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET', 'dev-only-change-me-academy-jwt-secret'),
     });

@@ -2,6 +2,8 @@ import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '
 import { ParentJwtGuard } from './guards/parent-jwt.guard';
 import { SocialAuthService } from './social-auth.service';
 import { ParentPrincipal } from './strategies/parent-jwt.strategy';
+import { setAuthCookie } from './auth-cookies';
+import type { CookieResponse } from './auth-cookies';
 
 interface RedirectResponse {
   redirect: (url: string) => void;
@@ -34,8 +36,13 @@ export class SocialAuthController {
   }
 
   @Post('exchange')
-  exchange(@Body() dto: { code: string }) {
-    return this.socialAuthService.exchangeSessionCode(dto.code);
+  async exchange(
+    @Body() dto: { code: string },
+    @Res({ passthrough: true }) response: CookieResponse,
+  ) {
+    const result = await this.socialAuthService.exchangeSessionCode(dto.code);
+    setAuthCookie(response, 'parent', result.accessToken);
+    return result;
   }
 
   @UseGuards(ParentJwtGuard)

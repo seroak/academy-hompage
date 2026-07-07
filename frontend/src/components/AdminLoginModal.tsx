@@ -8,7 +8,6 @@ import { loginParentWithPassword, signupParent, socialLoginStartUrl } from '../a
 import type { OAuthProvider } from '../api/schemas/auth.schema'
 import { useLoginMutation } from '../screens/admin/hooks/useLoginMutation'
 import { ApiError } from '../lib/apiClient'
-import { useParentAuthStore } from '../stores/parentAuthStore'
 
 interface AdminLoginModalProps {
   isOpen: boolean
@@ -56,7 +55,6 @@ export default function AdminLoginModal({
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false)
   const { login, isLoggingIn, loginError } = useLoginMutation()
   const pathname = usePathname()
-  const setParentSession = useParentAuthStore((state) => state.setSession)
 
   useEffect(() => {
     if (!isOpen) {
@@ -113,18 +111,18 @@ export default function AdminLoginModal({
 
     setIsParentSubmitting(true)
     try {
-      const result =
-        parentAuthMode === 'signup'
-          ? await signupParent({
-              name: parentName.trim(),
-              email: parentEmail.trim(),
-              password: parentPassword,
-            })
-          : await loginParentWithPassword({
-              email: parentEmail.trim(),
-              password: parentPassword,
-            })
-      setParentSession(result.accessToken, result.parent)
+      if (parentAuthMode === 'signup') {
+        await signupParent({
+          name: parentName.trim(),
+          email: parentEmail.trim(),
+          password: parentPassword,
+        })
+      } else {
+        await loginParentWithPassword({
+          email: parentEmail.trim(),
+          password: parentPassword,
+        })
+      }
       setParentPassword('')
       onParentSuccess()
     } catch (error) {

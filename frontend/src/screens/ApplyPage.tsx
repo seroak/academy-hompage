@@ -1,12 +1,11 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 
 import { useRouter } from "next/navigation";
 import type { ParentProfile } from "../api/schemas/auth.schema";
+import { logoutParent } from "../api/auth.api";
 import { useApplyReservationMutation } from "./hooks/useApplyReservationMutation";
-import { useLoginModalStore } from "../stores/loginModalStore";
-import { useParentAuthStore } from "../stores/parentAuthStore";
 import {
   CreateReservationInputSchema,
   DAY_OF_WEEK_OPTIONS,
@@ -33,39 +32,24 @@ function slotKey(slot: Pick<PreferredSlot, "dayOfWeek" | "hour">): string {
   return `${slot.dayOfWeek}-${slot.hour}`;
 }
 
-function formForParent(parent: ParentProfile | null): CreateReservationInput {
+function formForParent(parent: ParentProfile): CreateReservationInput {
   return {
     ...emptyForm,
-    parentName: parent?.name ?? "",
-    parentEmail: parent?.email ?? "",
+    parentName: parent.name ?? "",
+    parentEmail: parent.email ?? "",
   };
 }
 
-export default function ApplyPage() {
+export default function ApplyPage({ initialParent: parent }: { initialParent: ParentProfile }) {
   const router = useRouter();
-  const openLoginModal = useLoginModalStore((state) => state.open);
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation();
-  const { parent, isAuthenticated, logout } = useParentAuthStore();
-  const parentKey = parent?.id ?? null;
   const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent));
-  const [prevParentKey, setPrevParentKey] = useState(parentKey);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      openLoginModal("/apply");
-      router.replace("/");
-    }
-  }, [isAuthenticated, openLoginModal, router]);
-
-  if (parentKey !== prevParentKey) {
-    setPrevParentKey(parentKey);
-    setForm(formForParent(parent));
-  }
-
-  if (!isAuthenticated) {
-    return null;
+  async function handleSwitchAccount() {
+    await logoutParent();
+    router.refresh();
   }
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
@@ -145,10 +129,14 @@ export default function ApplyPage() {
       </p>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
         <p className="text-sm text-slate-700">
-          <span className="font-semibold text-slate-900">{parent?.name ?? parent?.email ?? "보호자"}</span>님 계정으로
+          <span className="font-semibold text-slate-900">{parent.name ?? parent.email ?? "보호자"}</span>님 계정으로
           신청합니다.
         </p>
-        <button type="button" onClick={logout} className="text-sm font-medium text-brand-700 hover:text-brand-800">
+        <button
+          type="button"
+          onClick={handleSwitchAccount}
+          className="text-sm font-medium text-brand-700 hover:text-brand-800"
+        >
           다른 계정으로 로그인
         </button>
       </div>

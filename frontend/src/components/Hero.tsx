@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { BookOpen, Cloud, Pencil, Rocket, Star } from "lucide-react";
-import { useLoginModalStore } from "../stores/loginModalStore";
-import { useParentAuthStore } from "../stores/parentAuthStore";
 
 const childrenImagePath = "/images/children_cutout.png";
 
@@ -26,15 +24,9 @@ function Rainbow() {
 export default function Hero() {
   const [imageFailed, setImageFailed] = useState(false);
   const router = useRouter();
-  const openLoginModal = useLoginModalStore((state) => state.open);
-  const isParentAuthenticated = useParentAuthStore((state) => state.isAuthenticated);
 
   function handleReservationClick() {
-    if (isParentAuthenticated) {
-      router.push("/apply");
-    } else {
-      openLoginModal("/apply");
-    }
+    router.push("/apply");
   }
 
   return (
