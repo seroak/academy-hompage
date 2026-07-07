@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "ReservationPreferredSlot_reservationId_dayOfWeek_startMinute_en" RENAME TO "ReservationPreferredSlot_reservationId_dayOfWeek_startMinut_key";

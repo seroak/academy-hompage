@@ -127,17 +127,19 @@ model ReservationPreferredSlot {
   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   reservationId String
   dayOfWeek     String
-  hour          Int
+  startMinute   Int
+  endMinute     Int
 
-  @@unique([reservationId, dayOfWeek, hour])
-  @@index([dayOfWeek, hour])
+  @@unique([reservationId, dayOfWeek, startMinute, endMinute])
+  @@index([dayOfWeek, startMinute, endMinute])
 }
 
 model ReservationGroup {
   id           String                 @id @default(cuid())
   label        String
   dayOfWeek    String
-  hour         Int
+  startMinute  Int
+  endMinute    Int
   status       ReservationGroupStatus @default(CONFIRMED)
   reservations Reservation[]
   createdAt    DateTime               @default(now())
