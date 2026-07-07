@@ -24,3 +24,16 @@ export const ParentLoginResponseSchema = z.object({
 })
 
 export type ParentLoginResponse = z.infer<typeof ParentLoginResponseSchema>
+
+export const ParentPasswordAuthInputSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+})
+
+export type ParentPasswordAuthInput = z.infer<typeof ParentPasswordAuthInputSchema>
+
+export const ParentSignupInputSchema = ParentPasswordAuthInputSchema.extend({
+  name: z.string().min(1),
+})
+
+export type ParentSignupInput = z.infer<typeof ParentSignupInputSchema>

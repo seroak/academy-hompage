@@ -1,65 +1,39 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+'use client'
 
-const navItems = [
-  { to: '/', label: '홈', end: true },
-  { to: '/courses', label: '강좌 안내' },
-  { to: '/instructors', label: '강사진' },
-  { to: '/notices', label: '공지사항' },
-  { to: '/apply', label: '수업 신청' },
-]
+import { usePathname } from 'next/navigation'
+import { Suspense } from 'react'
+import type { ReactNode } from 'react'
+import Header from './Header'
 
-function navLinkClass({ isActive }: { isActive: boolean }) {
-  return `relative pb-1 text-sm transition-colors ${
-    isActive
-      ? 'font-semibold text-brand-600 after:absolute after:inset-x-0 after:-bottom-[1px] after:h-0.5 after:rounded-full after:bg-brand-600'
-      : 'font-medium text-slate-600 hover:text-brand-600'
-  }`
-}
+export default function Layout({ children }: { children: ReactNode }) {
+  const pathname = usePathname()
+  const isHome = pathname === '/'
 
-export default function Layout() {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <NavLink to="/" className="text-lg font-bold text-slate-900">
-              푸른들 학원
-            </NavLink>
-            <Link
-              to="/courses"
-              className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200"
-            >
-              전체 강좌
-            </Link>
-          </div>
-          <div className="flex items-center gap-6">
-            <nav className="flex gap-6">
-              {navItems.map((item) => (
-                <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-            <Link
-              to="/admin/login"
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:border-brand-600 hover:text-brand-600"
-            >
-              관리자 로그인
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col bg-[#fff9ec] text-[#222222]">
+      <Suspense fallback={null}>
+        <Header />
+      </Suspense>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
-        <Outlet />
+      <main
+        className={
+          isHome
+            ? 'mx-auto w-full max-w-[1280px] flex-1 px-4 pb-0 pt-4 sm:px-6'
+            : 'mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-8'
+        }
+      >
+        {children}
       </main>
 
-      <footer className="border-t border-slate-200 bg-white py-6">
-        <div className="mx-auto max-w-5xl px-6">
-          <p className="text-sm font-semibold text-slate-800">푸른들 학원</p>
-          <p className="mt-1 text-xs text-slate-500">
-            경기도 어딘가 123 · 문의 02-000-0000
-          </p>
+      <footer className="border-t border-[#f2dfb9] bg-[#fff4df] py-8">
+        <div className="mx-auto flex max-w-[1280px] flex-col gap-3 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-black text-[#222222]">아이꿈 학원</p>
+            <p className="mt-1 text-xs font-medium text-[#6a6256]">
+              경기도 어딘가 123 · 문의 02-000-0000
+            </p>
+          </div>
+          <p className="text-xs font-semibold text-[#8a7a61]">유치부부터 초등 저학년까지 함께합니다.</p>
         </div>
       </footer>
     </div>

@@ -55,8 +55,25 @@ describe('ReservationGroupsService', () => {
       reservationIds: ['r1', 'r2'],
     };
     const waitingReservations = [
-      { id: 'r1', status: 'WAITING', childName: '민준', parentName: '김엄마', parentEmail: 'a@example.com' },
-      { id: 'r2', status: 'WAITING', childName: '서연', parentName: '이엄마', parentEmail: 'b@example.com' },
+      {
+        id: 'r1',
+        status: 'WAITING',
+        childName: '민준',
+        parentName: '김엄마',
+        parentEmail: 'a@example.com',
+        preferredSlots: [{ dayOfWeek: 'MON', hour: 12 }],
+      },
+      {
+        id: 'r2',
+        status: 'WAITING',
+        childName: '서연',
+        parentName: '이엄마',
+        parentEmail: 'b@example.com',
+        preferredSlots: [
+          { dayOfWeek: 'MON', hour: 12 },
+          { dayOfWeek: 'WED', hour: 15 },
+        ],
+      },
     ];
 
     it('그룹을 생성하고 신청들을 GROUPED로 전환한 뒤 확정 이메일을 발송한다', async () => {
@@ -78,6 +95,19 @@ describe('ReservationGroupsService', () => {
       expect(notification.sendGroupConfirmed).toHaveBeenCalledTimes(2);
       expect(notification.sendGroupConfirmed).toHaveBeenCalledWith(waitingReservations[0], createdGroup);
       expect(notification.sendGroupConfirmed).toHaveBeenCalledWith(waitingReservations[1], createdGroup);
+    });
+
+    it('확정 시간이 신청의 후보 시간에 없으면 ConflictException을 던진다', async () => {
+      prisma.reservation.findMany.mockResolvedValue([
+        waitingReservations[0],
+        {
+          ...waitingReservations[1],
+          preferredSlots: [{ dayOfWeek: 'WED', hour: 15 }],
+        },
+      ]);
+
+      await expect(service.create(dto)).rejects.toThrow(ConflictException);
+      expect(prisma.reservationGroup.create).not.toHaveBeenCalled();
     });
 
     it('reservationIds 중 존재하지 않는 것이 있으면 ConflictException을 던진다', async () => {
@@ -107,7 +137,7 @@ describe('ReservationGroupsService', () => {
 
       expect(result).toBe(groups);
       expect(prisma.reservationGroup.findMany).toHaveBeenCalledWith({
-        include: { reservations: true },
+        include: { reservations: { include: { preferredSlots: true } } },
         orderBy: { createdAt: 'desc' },
       });
     });

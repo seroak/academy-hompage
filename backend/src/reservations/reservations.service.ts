@@ -18,17 +18,27 @@ export class ReservationsService {
 
     if (query.status) where.status = query.status;
     if (query.age !== undefined) where.childAge = query.age;
-    if (query.dayOfWeek) where.preferredDayOfWeek = query.dayOfWeek;
-    if (query.hour !== undefined) where.preferredHour = query.hour;
+    if (query.dayOfWeek || query.hour !== undefined) {
+      where.preferredSlots = {
+        some: {
+          ...(query.dayOfWeek ? { dayOfWeek: query.dayOfWeek } : {}),
+          ...(query.hour !== undefined ? { hour: query.hour } : {}),
+        },
+      };
+    }
 
     return this.prisma.reservation.findMany({
       where,
+      include: { preferredSlots: true },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async findOne(id: string) {
-    const reservation = await this.prisma.reservation.findUnique({ where: { id } });
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { id },
+      include: { preferredSlots: true },
+    });
 
     if (!reservation) {
       throw new NotFoundException(`Reservation ${id} not found`);
@@ -48,16 +58,36 @@ export class ReservationsService {
       throw new NotFoundException(`ParentUser ${parentUserId} not found`);
     }
 
+    const { preferredSlots, ...reservationData } = dto;
     const reservation = await this.prisma.reservation.create({
-      data: { ...dto, parentUserId },
+      data: {
+        ...reservationData,
+        parentUserId,
+        preferredSlots: { create: preferredSlots },
+      },
+      include: { preferredSlots: true },
     });
     await this.notification.sendReservationReceived(reservation);
     return reservation;
   }
 
   async update(id: string, dto: UpdateReservationDto) {
+    const { preferredSlots, ...reservationData } = dto;
+    const data: Prisma.ReservationUpdateInput = { ...reservationData };
+
+    if (preferredSlots) {
+      data.preferredSlots = {
+        deleteMany: {},
+        create: preferredSlots,
+      };
+    }
+
     try {
-      return await this.prisma.reservation.update({ where: { id }, data: dto });
+      return await this.prisma.reservation.update({
+        where: { id },
+        data,
+        include: { preferredSlots: true },
+      });
     } catch (error) {
       if (this.isNotFoundError(error)) {
         throw new NotFoundException(`Reservation ${id} not found`);

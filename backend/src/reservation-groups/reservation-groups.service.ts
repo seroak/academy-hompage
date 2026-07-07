@@ -13,7 +13,7 @@ export class ReservationGroupsService {
 
   findAll() {
     return this.prisma.reservationGroup.findMany({
-      include: { reservations: true },
+      include: { reservations: { include: { preferredSlots: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -21,7 +21,7 @@ export class ReservationGroupsService {
   async findOne(id: string) {
     const group = await this.prisma.reservationGroup.findUnique({
       where: { id },
-      include: { reservations: true },
+      include: { reservations: { include: { preferredSlots: true } } },
     });
 
     if (!group) {
@@ -34,6 +34,7 @@ export class ReservationGroupsService {
   async create(dto: CreateReservationGroupDto) {
     const reservations = await this.prisma.reservation.findMany({
       where: { id: { in: dto.reservationIds } },
+      include: { preferredSlots: true },
     });
 
     if (reservations.length !== dto.reservationIds.length) {
@@ -42,6 +43,17 @@ export class ReservationGroupsService {
 
     if (reservations.some((reservation) => reservation.status !== 'WAITING')) {
       throw new ConflictException('대기 중인 신청만 그룹으로 확정할 수 있습니다');
+    }
+
+    if (
+      reservations.some(
+        (reservation) =>
+          !reservation.preferredSlots.some(
+            (slot) => slot.dayOfWeek === dto.dayOfWeek && slot.hour === dto.hour,
+          ),
+      )
+    ) {
+      throw new ConflictException('확정 시간은 모든 신청의 후보 시간에 포함되어야 합니다');
     }
 
     const group = await this.prisma.$transaction(async (tx) => {

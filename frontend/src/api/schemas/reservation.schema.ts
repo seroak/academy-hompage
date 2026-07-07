@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
 export const DAY_OF_WEEK_OPTIONS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
-export const WEEKDAY_OPTIONS = ['MON', 'TUE', 'WED', 'THU', 'FRI'] as const
 export const HOUR_OPTIONS = [12, 13, 14, 15, 16, 17] as const
 export const RESERVATION_STATUS_OPTIONS = ['WAITING', 'GROUPED', 'CANCELLED'] as const
 
@@ -24,6 +23,21 @@ export const RESERVATION_STATUS_LABELS: Record<(typeof RESERVATION_STATUS_OPTION
   CANCELLED: '취소됨',
 }
 
+export const PreferredSlotSchema = z.object({
+  id: z.string().optional(),
+  reservationId: z.string().optional(),
+  dayOfWeek: z.enum(DAY_OF_WEEK_OPTIONS, {
+    message: '희망 요일을 선택해 주세요',
+  }),
+  hour: z
+    .number()
+    .int('시간은 정수로 입력해 주세요')
+    .min(12, '12시~17시 중에서 선택해 주세요')
+    .max(17, '12시~17시 중에서 선택해 주세요'),
+})
+
+export type PreferredSlot = z.infer<typeof PreferredSlotSchema>
+
 export const ReservationSchema = z.object({
   id: z.string(),
   childName: z.string(),
@@ -31,8 +45,7 @@ export const ReservationSchema = z.object({
   parentName: z.string(),
   parentEmail: z.string(),
   parentPhone: z.string().nullable().optional(),
-  preferredDayOfWeek: z.string(),
-  preferredHour: z.number(),
+  preferredSlots: z.array(PreferredSlotSchema),
   note: z.string().nullable().optional(),
   status: z.enum(RESERVATION_STATUS_OPTIONS),
   groupId: z.string().nullable().optional(),
@@ -54,14 +67,7 @@ export const CreateReservationInputSchema = z.object({
   parentName: z.string().min(1, '보호자 이름을 입력해 주세요'),
   parentEmail: z.string().min(1, '이메일을 입력해 주세요').email('올바른 이메일 형식이 아닙니다'),
   parentPhone: z.string().optional(),
-  preferredDayOfWeek: z.enum(DAY_OF_WEEK_OPTIONS, {
-    message: '희망 요일을 선택해 주세요',
-  }),
-  preferredHour: z
-    .number()
-    .int('시간은 정수로 입력해 주세요')
-    .min(12, '12시~17시 중에서 선택해 주세요')
-    .max(17, '12시~17시 중에서 선택해 주세요'),
+  preferredSlots: z.array(PreferredSlotSchema).min(1, '가능한 시간을 1개 이상 선택해 주세요'),
   note: z.string().optional(),
 })
 

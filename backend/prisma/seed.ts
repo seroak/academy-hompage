@@ -133,8 +133,7 @@ async function main() {
       parentName: "김지은",
       parentEmail: "parent1@example.com",
       parentPhone: "010-1111-2222",
-      preferredDayOfWeek: "MON",
-      preferredHour: 12,
+      preferredSlots: [{ dayOfWeek: "MON", hour: 12 }],
     },
     {
       id: "seed-reservation-2",
@@ -143,8 +142,7 @@ async function main() {
       parentName: "이수진",
       parentEmail: "parent2@example.com",
       parentPhone: "010-2222-3333",
-      preferredDayOfWeek: "MON",
-      preferredHour: 12,
+      preferredSlots: [{ dayOfWeek: "MON", hour: 12 }],
     },
     {
       id: "seed-reservation-3",
@@ -152,8 +150,7 @@ async function main() {
       childAge: 6,
       parentName: "박민영",
       parentEmail: "parent3@example.com",
-      preferredDayOfWeek: "WED",
-      preferredHour: 15,
+      preferredSlots: [{ dayOfWeek: "WED", hour: 15 }],
     },
     {
       id: "seed-reservation-4",
@@ -161,17 +158,20 @@ async function main() {
       childAge: 4,
       parentName: "최은경",
       parentEmail: "parent4@example.com",
-      preferredDayOfWeek: "FRI",
-      preferredHour: 12,
+      preferredSlots: [{ dayOfWeek: "FRI", hour: 12 }],
       note: "낯가림이 있어 소규모 그룹을 희망합니다.",
     },
   ];
 
   for (const reservation of reservations) {
+    const { preferredSlots, ...reservationData } = reservation;
     await prisma.reservation.upsert({
       where: { id: reservation.id },
       update: {},
-      create: reservation,
+      create: {
+        ...reservationData,
+        preferredSlots: { create: preferredSlots },
+      },
     });
   }
 

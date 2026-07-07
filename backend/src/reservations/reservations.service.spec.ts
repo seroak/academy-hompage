@@ -52,6 +52,7 @@ describe('ReservationsService', () => {
       expect(result).toBe(reservations);
       expect(prisma.reservation.findMany).toHaveBeenCalledWith({
         where: {},
+        include: { preferredSlots: true },
         orderBy: { createdAt: 'desc' },
       });
     });
@@ -70,9 +71,9 @@ describe('ReservationsService', () => {
         where: {
           status: 'WAITING',
           childAge: 5,
-          preferredDayOfWeek: 'MON',
-          preferredHour: 12,
+          preferredSlots: { some: { dayOfWeek: 'MON', hour: 12 } },
         },
+        include: { preferredSlots: true },
         orderBy: { createdAt: 'desc' },
       });
     });
@@ -99,11 +100,13 @@ describe('ReservationsService', () => {
       childAge: 5,
       parentName: '김엄마',
       parentEmail: 'parent@example.com',
-      preferredDayOfWeek: 'MON',
-      preferredHour: 12,
+      preferredSlots: [
+        { dayOfWeek: 'MON', hour: 12 },
+        { dayOfWeek: 'WED', hour: 15 },
+      ],
     };
 
-    it('신청을 생성하고 접수 이메일을 발송한다', async () => {
+    it('신청과 여러 후보 시간을 생성하고 접수 이메일을 발송한다', async () => {
       const created = { id: '1', ...dto, status: 'WAITING' };
       prisma.parentUser.findUnique.mockResolvedValue({
         id: 'parent-1',
@@ -116,7 +119,17 @@ describe('ReservationsService', () => {
 
       expect(result).toBe(created);
       expect(prisma.reservation.create).toHaveBeenCalledWith({
-        data: { ...dto, parentUserId: 'parent-1' },
+        data: {
+          childName: dto.childName,
+          childAge: dto.childAge,
+          parentName: dto.parentName,
+          parentEmail: dto.parentEmail,
+          parentUserId: 'parent-1',
+          preferredSlots: {
+            create: dto.preferredSlots,
+          },
+        },
+        include: { preferredSlots: true },
       });
       expect(notification.sendReservationReceived).toHaveBeenCalledWith(created);
     });
@@ -135,6 +148,40 @@ describe('ReservationsService', () => {
       prisma.reservation.update.mockResolvedValue(updated);
 
       await expect(service.update('1', { status: 'CANCELLED' })).resolves.toBe(updated);
+    });
+
+    it('후보 시간이 포함되면 기존 후보 시간을 새 목록으로 교체한다', async () => {
+      const updated = {
+        id: '1',
+        preferredSlots: [
+          { dayOfWeek: 'TUE', hour: 13 },
+          { dayOfWeek: 'THU', hour: 16 },
+        ],
+      };
+      prisma.reservation.update.mockResolvedValue(updated);
+
+      await expect(
+        service.update('1', {
+          preferredSlots: [
+            { dayOfWeek: 'TUE', hour: 13 },
+            { dayOfWeek: 'THU', hour: 16 },
+          ],
+        }),
+      ).resolves.toBe(updated);
+
+      expect(prisma.reservation.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          preferredSlots: {
+            deleteMany: {},
+            create: [
+              { dayOfWeek: 'TUE', hour: 13 },
+              { dayOfWeek: 'THU', hour: 16 },
+            ],
+          },
+        },
+        include: { preferredSlots: true },
+      });
     });
 
     it('없으면 NotFoundException을 던진다', async () => {

@@ -5,8 +5,10 @@ import {
   ParentProfileSchema,
   type LoginResponse,
   type OAuthProvider,
+  type ParentPasswordAuthInput,
   type ParentLoginResponse,
   type ParentProfile,
+  type ParentSignupInput,
 } from './schemas/auth.schema'
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
@@ -26,6 +28,24 @@ export async function exchangeSocialLogin(code: string): Promise<ParentLoginResp
   const raw = await apiFetch('/auth/social/exchange', {
     method: 'POST',
     body: JSON.stringify({ code }),
+  }, { authMode: 'none' })
+  return ParentLoginResponseSchema.parse(raw)
+}
+
+export async function loginParentWithPassword(
+  input: ParentPasswordAuthInput,
+): Promise<ParentLoginResponse> {
+  const raw = await apiFetch('/auth/parents/login', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  }, { authMode: 'none' })
+  return ParentLoginResponseSchema.parse(raw)
+}
+
+export async function signupParent(input: ParentSignupInput): Promise<ParentLoginResponse> {
+  const raw = await apiFetch('/auth/parents/signup', {
+    method: 'POST',
+    body: JSON.stringify(input),
   }, { authMode: 'none' })
   return ParentLoginResponseSchema.parse(raw)
 }

@@ -49,8 +49,7 @@ describe('ReservationsController', () => {
       childAge: 5,
       parentName: '김엄마',
       parentEmail: 'parent@example.com',
-      preferredDayOfWeek: 'MON',
-      preferredHour: 12,
+      preferredSlots: [{ dayOfWeek: 'MON', hour: 12 }],
     };
     service.create.mockResolvedValue('created');
 
