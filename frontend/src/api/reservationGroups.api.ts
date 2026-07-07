@@ -28,7 +28,7 @@ export async function createReservationGroup(
 
 export async function updateReservationGroup(
   id: string,
-  input: Partial<Pick<CreateReservationGroupInput, 'label' | 'dayOfWeek' | 'hour'>>,
+  input: Partial<Pick<CreateReservationGroupInput, 'label' | 'dayOfWeek' | 'startMinute' | 'endMinute'>>,
 ): Promise<ReservationGroup> {
   const raw = await apiFetch(`/reservation-groups/${id}`, {
     method: 'PATCH',

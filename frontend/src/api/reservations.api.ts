@@ -12,7 +12,6 @@ function toQueryString(filters: ReservationFilters): string {
   if (filters.status) params.set('status', filters.status)
   if (filters.age !== undefined) params.set('age', String(filters.age))
   if (filters.dayOfWeek) params.set('dayOfWeek', filters.dayOfWeek)
-  if (filters.hour !== undefined) params.set('hour', String(filters.hour))
   const query = params.toString()
   return query ? `?${query}` : ''
 }
