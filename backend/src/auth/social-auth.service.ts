@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OAuthProvider } from '@prisma/client';
@@ -28,6 +28,8 @@ interface TokenResponse {
 
 @Injectable()
 export class SocialAuthService {
+  private readonly logger = new Logger('SocialAuth');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -38,34 +40,54 @@ export class SocialAuthService {
     const normalizedProvider = this.normalizeProvider(provider);
     const config = this.getProviderConfig(normalizedProvider);
     const url = new URL(config.authorizationUrl);
+    const redirectUri = this.redirectUri(normalizedProvider);
 
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', config.clientId);
-    url.searchParams.set('redirect_uri', this.redirectUri(normalizedProvider));
+    url.searchParams.set('redirect_uri', redirectUri);
     url.searchParams.set('state', this.createState(normalizedProvider, this.safeReturnTo(returnTo)));
 
     if (config.scope) {
       url.searchParams.set('scope', config.scope);
     }
 
+    this.logger.log(
+      `[start] provider=${normalizedProvider} redirect_uri=${redirectUri} returnTo=${returnTo}`,
+    );
+
     return url.toString();
   }
 
   async handleCallback(provider: string, query: { code?: string; state?: string; error?: string }) {
     const normalizedProvider = this.normalizeProvider(provider);
+    this.logger.log(
+      `[callback] provider=${normalizedProvider} hasCode=${!!query.code} hasState=${!!query.state} error=${query.error ?? 'none'}`,
+    );
 
     if (query.error || !query.code || !query.state) {
+      this.logger.warn(
+        `[callback] rejected: error=${query.error ?? 'none'} hasCode=${!!query.code} hasState=${!!query.state}`,
+      );
       throw new UnauthorizedException('Social login failed');
     }
 
     const state = this.verifyState(query.state);
     if (state.provider !== normalizedProvider) {
+      this.logger.warn(
+        `[callback] state mismatch expected=${normalizedProvider} got=${state.provider}`,
+      );
       throw new UnauthorizedException('Invalid OAuth state');
     }
 
     const token = await this.exchangeProviderCode(normalizedProvider, query.code);
+    this.logger.log(
+      `[callback] token acquired hasAccessToken=${!!token.access_token} hasIdToken=${!!token.id_token}`,
+    );
+
     const profile = await this.fetchProviderProfile(normalizedProvider, token);
     const parentUser = await this.upsertParentUser(normalizedProvider, profile);
+    this.logger.log(`[callback] parent upserted id=${parentUser.id} email=${parentUser.email ?? 'none'}`);
+
     const sessionCode = randomBytes(32).toString('base64url');
 
     await this.prisma.parentAuthSession.create({
@@ -79,16 +101,19 @@ export class SocialAuthService {
     const callbackUrl = new URL('/auth/social/callback', this.frontendUrl());
     callbackUrl.searchParams.set('code', sessionCode);
     callbackUrl.searchParams.set('returnTo', state.returnTo);
+    this.logger.log(`[callback] redirecting to ${callbackUrl.toString()}`);
     return callbackUrl.toString();
   }
 
   async exchangeSessionCode(code: string) {
+    this.logger.log('[exchange] code received');
     const session = await this.prisma.parentAuthSession.findUnique({
       where: { code },
       include: { parentUser: true },
     });
 
     if (!session || session.consumedAt || session.expiresAt.getTime() < Date.now()) {
+      this.logger.warn('[exchange] invalid or expired session');
       throw new UnauthorizedException('Invalid social login session');
     }
 
@@ -109,6 +134,7 @@ export class SocialAuthService {
       tokenType: 'parent',
     });
 
+    this.logger.log(`[exchange] issued token for parent=${parent.id}`);
     return { accessToken, parent };
   }
 
@@ -144,6 +170,10 @@ export class SocialAuthService {
     });
 
     if (!response.ok) {
+      const errorBody = await response.text().catch(() => '');
+      this.logger.error(
+        `[token] provider=${provider} status=${response.status} body=${errorBody.slice(0, 200)}`,
+      );
       throw new UnauthorizedException('Failed to exchange social login code');
     }
 
@@ -160,6 +190,10 @@ export class SocialAuthService {
     });
 
     if (!response.ok) {
+      const errorBody = await response.text().catch(() => '');
+      this.logger.error(
+        `[profile] provider=${provider} status=${response.status} body=${errorBody.slice(0, 200)}`,
+      );
       throw new UnauthorizedException('Failed to fetch social profile');
     }
 
