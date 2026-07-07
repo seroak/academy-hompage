@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
 export const DAY_OF_WEEK_OPTIONS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
-export const HOUR_OPTIONS = [12, 13, 14, 15, 16, 17] as const
 export const RESERVATION_STATUS_OPTIONS = ['WAITING', 'GROUPED', 'CANCELLED'] as const
 
 export const DAY_OF_WEEK_LABELS: Record<(typeof DAY_OF_WEEK_OPTIONS)[number], string> = {
@@ -13,8 +12,24 @@ export const DAY_OF_WEEK_LABELS: Record<(typeof DAY_OF_WEEK_OPTIONS)[number], st
   SAT: '토',
 }
 
-export function hourLabel(hour: number): string {
-  return `${hour}시`
+export const OPERATING_START_MINUTE = 720
+export const OPERATING_END_MINUTE = 1080
+export const SLOT_STEP_MINUTES = 10
+export const MIN_SLOT_DURATION_MINUTES = 30
+
+export function timeLabel(minute: number): string {
+  const hours = Math.floor(minute / 60)
+  const minutes = minute % 60
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
+export function timeRangeLabel(startMinute: number, endMinute: number): string {
+  return `${timeLabel(startMinute)}~${timeLabel(endMinute)} · ${endMinute - startMinute}분`
+}
+
+export function parseTimeLabel(value: string): number {
+  const [hoursText, minutesText] = value.split(':')
+  return Number(hoursText) * 60 + Number(minutesText)
 }
 
 export const RESERVATION_STATUS_LABELS: Record<(typeof RESERVATION_STATUS_OPTIONS)[number], string> = {
@@ -23,18 +38,36 @@ export const RESERVATION_STATUS_LABELS: Record<(typeof RESERVATION_STATUS_OPTION
   CANCELLED: '취소됨',
 }
 
-export const PreferredSlotSchema = z.object({
-  id: z.string().optional(),
-  reservationId: z.string().optional(),
-  dayOfWeek: z.enum(DAY_OF_WEEK_OPTIONS, {
-    message: '희망 요일을 선택해 주세요',
-  }),
-  hour: z
-    .number()
-    .int('시간은 정수로 입력해 주세요')
-    .min(12, '12시~17시 중에서 선택해 주세요')
-    .max(17, '12시~17시 중에서 선택해 주세요'),
-})
+export const PreferredSlotSchema = z
+  .object({
+    id: z.string().optional(),
+    reservationId: z.string().optional(),
+    dayOfWeek: z.enum(DAY_OF_WEEK_OPTIONS, {
+      message: '희망 요일을 선택해 주세요',
+    }),
+    startMinute: z
+      .number()
+      .int('시작 시각은 10분 단위 정수로 입력해 주세요')
+      .min(OPERATING_START_MINUTE, '12:00~18:00 사이에서 선택해 주세요')
+      .max(OPERATING_END_MINUTE, '12:00~18:00 사이에서 선택해 주세요'),
+    endMinute: z
+      .number()
+      .int('종료 시각은 10분 단위 정수로 입력해 주세요')
+      .min(OPERATING_START_MINUTE, '12:00~18:00 사이에서 선택해 주세요')
+      .max(OPERATING_END_MINUTE, '12:00~18:00 사이에서 선택해 주세요'),
+  })
+  .refine((slot) => slot.startMinute % SLOT_STEP_MINUTES === 0, {
+    message: `${SLOT_STEP_MINUTES}분 단위로 선택해 주세요`,
+    path: ['startMinute'],
+  })
+  .refine((slot) => slot.endMinute % SLOT_STEP_MINUTES === 0, {
+    message: `${SLOT_STEP_MINUTES}분 단위로 선택해 주세요`,
+    path: ['endMinute'],
+  })
+  .refine((slot) => slot.endMinute - slot.startMinute >= MIN_SLOT_DURATION_MINUTES, {
+    message: `최소 ${MIN_SLOT_DURATION_MINUTES}분 이상 선택해 주세요`,
+    path: ['endMinute'],
+  })
 
 export type PreferredSlot = z.infer<typeof PreferredSlotSchema>
 
@@ -77,5 +110,4 @@ export interface ReservationFilters {
   status?: (typeof RESERVATION_STATUS_OPTIONS)[number]
   age?: number
   dayOfWeek?: string
-  hour?: number
 }
