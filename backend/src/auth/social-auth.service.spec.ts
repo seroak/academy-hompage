@@ -1,4 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { OAuthProvider } from '@prisma/client';
@@ -14,17 +15,20 @@ describe('SocialAuthService', () => {
   };
   let jwtService: { sign: jest.Mock };
   let fetchMock: jest.Mock;
+  let configValues: Record<string, string>;
 
   beforeEach(async () => {
-    process.env.BACKEND_PUBLIC_URL = 'http://localhost:3000';
-    process.env.FRONTEND_URL = 'http://localhost:5173';
-    process.env.OAUTH_STATE_SECRET = 'test-state-secret';
-    process.env.GOOGLE_CLIENT_ID = 'google-client';
-    process.env.GOOGLE_CLIENT_SECRET = 'google-secret';
-    process.env.KAKAO_CLIENT_ID = 'kakao-client';
-    process.env.KAKAO_CLIENT_SECRET = 'kakao-secret';
-    process.env.NAVER_CLIENT_ID = 'naver-client';
-    process.env.NAVER_CLIENT_SECRET = 'naver-secret';
+    configValues = {
+      BACKEND_PUBLIC_URL: 'http://localhost:3000',
+      FRONTEND_URL: 'http://localhost:3001',
+      OAUTH_STATE_SECRET: 'test-state-secret',
+      GOOGLE_CLIENT_ID: 'google-client',
+      GOOGLE_CLIENT_SECRET: 'google-secret',
+      KAKAO_CLIENT_ID: 'kakao-client',
+      KAKAO_CLIENT_SECRET: 'kakao-secret',
+      NAVER_CLIENT_ID: 'naver-client',
+      NAVER_CLIENT_SECRET: 'naver-secret',
+    };
 
     prisma = {
       parentSocialAccount: {
@@ -52,6 +56,12 @@ describe('SocialAuthService', () => {
         SocialAuthService,
         { provide: PrismaService, useValue: prisma },
         { provide: JwtService, useValue: jwtService },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string, defaultValue?: string) => configValues[key] ?? defaultValue),
+          },
+        },
       ],
     }).compile();
 
@@ -63,7 +73,7 @@ describe('SocialAuthService', () => {
   });
 
   it('builds a Google authorization URL with callback and signed state', () => {
-    const url = new URL(service.buildAuthorizationUrl('google', '/apply'));
+    const url = new URL(service.buildAuthorizationUrl('google', '/courses'));
 
     expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
     expect(url.searchParams.get('client_id')).toBe('google-client');
@@ -76,7 +86,7 @@ describe('SocialAuthService', () => {
   });
 
   it('rejects a callback when state provider does not match', async () => {
-    const state = service.createStateForTest('google', '/apply');
+    const state = service.createStateForTest('google', '/courses');
 
     await expect(service.handleCallback('kakao', { code: 'code', state })).rejects.toThrow(
       UnauthorizedException,
@@ -84,7 +94,7 @@ describe('SocialAuthService', () => {
   });
 
   it('exchanges provider code, upserts parent identity, and creates a one-time session', async () => {
-    const state = service.createStateForTest('google', '/apply');
+    const state = service.createStateForTest('google', '/courses');
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
@@ -113,8 +123,9 @@ describe('SocialAuthService', () => {
     const sessionCode = redirect.searchParams.get('code');
 
     expect(redirect.origin + redirect.pathname).toBe(
-      'http://localhost:5173/auth/social/callback',
+      'http://localhost:3001/auth/social/callback',
     );
+    expect(redirect.searchParams.get('returnTo')).toBe('/courses');
     expect(sessionCode).toBeTruthy();
     expect(prisma.parentAuthSession.create).toHaveBeenCalledWith({
       data: {

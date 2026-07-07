@@ -1,13 +1,12 @@
 import { JwtStrategy } from './jwt.strategy';
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 describe('JwtStrategy', () => {
-  beforeEach(() => {
-    process.env.JWT_SECRET = 'test-secret';
-  });
+  const configService = new ConfigService({ JWT_SECRET: 'test-secret' });
 
   it('maps the JWT payload to an admin principal', async () => {
-    const strategy = new JwtStrategy();
+    const strategy = new JwtStrategy(configService);
 
     const result = await strategy.validate({
       sub: 'admin-1',
@@ -19,7 +18,7 @@ describe('JwtStrategy', () => {
   });
 
   it('rejects a parent JWT payload', async () => {
-    const strategy = new JwtStrategy();
+    const strategy = new JwtStrategy(configService);
 
     await expect(
       strategy.validate({

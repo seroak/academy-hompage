@@ -31,20 +31,20 @@ describe('SocialAuthController', () => {
     service.buildAuthorizationUrl.mockReturnValue('https://accounts.example/auth');
     const response = { redirect: jest.fn() };
 
-    controller.start('google', '/apply', response);
+    controller.start('google', '/courses', response);
 
     expect(response.redirect).toHaveBeenCalledWith('https://accounts.example/auth');
-    expect(service.buildAuthorizationUrl).toHaveBeenCalledWith('google', '/apply');
+    expect(service.buildAuthorizationUrl).toHaveBeenCalledWith('google', '/courses');
   });
 
   it('redirects callback completion to the frontend callback URL', async () => {
-    service.handleCallback.mockResolvedValue('http://localhost:5173/auth/social/callback?code=abc');
+    service.handleCallback.mockResolvedValue('http://localhost:3001/auth/social/callback?code=abc');
     const response = { redirect: jest.fn() };
 
     await controller.callback('google', { code: 'provider-code', state: 'state' }, response);
 
     expect(response.redirect).toHaveBeenCalledWith(
-      'http://localhost:5173/auth/social/callback?code=abc',
+      'http://localhost:3001/auth/social/callback?code=abc',
     );
   });
 

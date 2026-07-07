@@ -21,7 +21,7 @@ export class SocialAuthController {
     @Query('returnTo') returnTo: string | undefined,
     @Res() response: RedirectResponse,
   ) {
-    response.redirect(this.socialAuthService.buildAuthorizationUrl(provider, returnTo ?? '/apply'));
+    response.redirect(this.socialAuthService.buildAuthorizationUrl(provider, returnTo ?? '/'));
   }
 
   @Get(':provider/callback')

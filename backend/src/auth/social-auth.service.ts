@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OAuthProvider } from '@prisma/client';
 import { createHmac, randomBytes } from 'node:crypto';
@@ -30,9 +31,10 @@ export class SocialAuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
-  buildAuthorizationUrl(provider: string, returnTo = '/apply'): string {
+  buildAuthorizationUrl(provider: string, returnTo = '/'): string {
     const normalizedProvider = this.normalizeProvider(provider);
     const config = this.getProviderConfig(normalizedProvider);
     const url = new URL(config.authorizationUrl);
@@ -76,6 +78,7 @@ export class SocialAuthService {
 
     const callbackUrl = new URL('/auth/social/callback', this.frontendUrl());
     callbackUrl.searchParams.set('code', sessionCode);
+    callbackUrl.searchParams.set('returnTo', state.returnTo);
     return callbackUrl.toString();
   }
 
@@ -272,7 +275,13 @@ export class SocialAuthService {
   }
 
   private sign(payload: string) {
-    return createHmac('sha256', process.env.OAUTH_STATE_SECRET ?? process.env.JWT_SECRET ?? 'dev-only-change-me-academy-jwt-secret')
+    return createHmac(
+      'sha256',
+      this.configService.get<string>(
+        'OAUTH_STATE_SECRET',
+        this.configService.get<string>('JWT_SECRET', 'dev-only-change-me-academy-jwt-secret'),
+      ),
+    )
       .update(payload)
       .digest('base64url');
   }
@@ -296,24 +305,24 @@ export class SocialAuthService {
   private getProviderConfig(provider: ProviderParam) {
     const configs = {
       google: {
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        clientId: this.configService.get<string>('GOOGLE_CLIENT_ID'),
+        clientSecret: this.configService.get<string>('GOOGLE_CLIENT_SECRET'),
         authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         tokenUrl: 'https://oauth2.googleapis.com/token',
         profileUrl: 'https://openidconnect.googleapis.com/v1/userinfo',
         scope: 'openid email profile',
       },
       kakao: {
-        clientId: process.env.KAKAO_CLIENT_ID,
-        clientSecret: process.env.KAKAO_CLIENT_SECRET,
+        clientId: this.configService.get<string>('KAKAO_CLIENT_ID'),
+        clientSecret: this.configService.get<string>('KAKAO_CLIENT_SECRET'),
         authorizationUrl: 'https://kauth.kakao.com/oauth/authorize',
         tokenUrl: 'https://kauth.kakao.com/oauth/token',
         profileUrl: 'https://kapi.kakao.com/v2/user/me',
         scope: 'profile_nickname account_email',
       },
       naver: {
-        clientId: process.env.NAVER_CLIENT_ID,
-        clientSecret: process.env.NAVER_CLIENT_SECRET,
+        clientId: this.configService.get<string>('NAVER_CLIENT_ID'),
+        clientSecret: this.configService.get<string>('NAVER_CLIENT_SECRET'),
         authorizationUrl: 'https://nid.naver.com/oauth2.0/authorize',
         tokenUrl: 'https://nid.naver.com/oauth2.0/token',
         profileUrl: 'https://openapi.naver.com/v1/nid/me',
@@ -333,14 +342,14 @@ export class SocialAuthService {
   }
 
   private backendUrl() {
-    return process.env.BACKEND_PUBLIC_URL ?? 'http://localhost:3000';
+    return this.configService.get<string>('BACKEND_PUBLIC_URL', 'http://localhost:3000');
   }
 
   private frontendUrl() {
-    return process.env.FRONTEND_URL ?? 'http://localhost:5173';
+    return this.configService.get<string>('FRONTEND_URL', 'http://localhost:3001');
   }
 
   private safeReturnTo(returnTo: string) {
-    return returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/apply';
+    return returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/';
   }
 }
