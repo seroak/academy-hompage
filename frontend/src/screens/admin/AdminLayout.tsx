@@ -13,8 +13,10 @@ const adminNavItems = [
 ]
 
 function navLinkClass(isActive: boolean) {
-  return `text-sm font-medium transition-colors ${
-    isActive ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'
+  return `rounded-full px-4 py-2 text-sm font-black transition duration-200 ${
+    isActive
+      ? 'bg-[#fff0cf] text-[#e86f00]'
+      : 'text-[#3f3a31] hover:bg-[#fff4dc] hover:text-[#e86f00]'
   }`
 }
 
@@ -29,19 +31,22 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-8">
+    <div className="flex min-h-screen flex-col bg-[#fff9ec]">
+      <header className="border-b border-[#f2dfb9] bg-[#fff9ec]/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
             <div className="flex shrink-0 items-center gap-3">
-              <Link href="/" className="text-lg font-bold text-slate-900 hover:text-indigo-600">
-                푸른들 학원
+              <Link
+                href="/"
+                className="text-xl font-black tracking-[-0.01em] text-[#222222] hover:text-[#e86f00]"
+              >
+                아이꿈 학원
               </Link>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#e86f00] shadow-[0_8px_20px_rgba(127,88,22,0.08)]">
                 관리자
               </span>
             </div>
-            <nav className="flex gap-6">
+            <nav className="flex flex-wrap gap-2">
               {adminNavItems.map((item) => (
                 <Link key={item.to} href={item.to} className={navLinkClass(pathname === item.to)}>
                   {item.label}
@@ -49,14 +54,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-sm font-medium text-slate-600 hover:text-indigo-600">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex h-11 items-center rounded-full border border-[#f2dfb9] bg-white px-4 text-sm font-black text-[#3f3a31] transition duration-200 hover:-translate-y-0.5 hover:border-[#ffd66b] hover:text-[#e86f00]"
+            >
               메인 화면
             </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="text-sm text-slate-500 hover:text-red-600"
+              className="inline-flex h-11 items-center rounded-full border border-[#f2dfb9] bg-white px-4 text-sm font-black text-[#6f6253] transition duration-200 hover:-translate-y-0.5 hover:border-[#ff9f8a] hover:text-[#d6452f]"
             >
               로그아웃
             </button>
@@ -64,7 +72,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8 sm:px-8 lg:py-10">
         {children}
       </main>
     </div>
