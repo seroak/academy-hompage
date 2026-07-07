@@ -1,14 +1,11 @@
 import { Type } from 'class-transformer';
+import { ArrayMinSize, IsIn, IsInt, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import {
-  ArrayMinSize,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-  ValidateNested,
-} from 'class-validator';
+  IsMultipleOfSlotStep,
+  IsValidSlotEndMinute,
+  OPERATING_END_MINUTE,
+  OPERATING_START_MINUTE,
+} from '../../common/validators/time-range.validators';
 
 const DAYS_OF_WEEK = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -17,9 +14,17 @@ export class PreferredSlotDto {
   dayOfWeek: string;
 
   @IsInt()
-  @Min(12)
-  @Max(17)
-  hour: number;
+  @Min(OPERATING_START_MINUTE)
+  @Max(OPERATING_END_MINUTE)
+  @IsMultipleOfSlotStep()
+  startMinute: number;
+
+  @IsInt()
+  @Min(OPERATING_START_MINUTE)
+  @Max(OPERATING_END_MINUTE)
+  @IsMultipleOfSlotStep()
+  @IsValidSlotEndMinute()
+  endMinute: number;
 }
 
 export class CreateReservationDto {
