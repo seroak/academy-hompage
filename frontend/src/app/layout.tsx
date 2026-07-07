@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import './globals.css'
+import AgentationDev from '../components/AgentationDev'
 import Providers from './providers'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="ko">
       <body>
         <Providers>{children}</Providers>
+        <AgentationDev />
       </body>
     </html>
   )

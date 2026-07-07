@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { BookOpen, Cloud, Pencil, Rocket, Star } from "lucide-react";
+import { useLoginModalStore } from "../stores/loginModalStore";
 
 const childrenImagePath = "/images/children_cutout.png";
 
@@ -22,6 +23,7 @@ function Rainbow() {
 
 export default function Hero() {
   const [imageFailed, setImageFailed] = useState(false);
+  const openLoginModal = useLoginModalStore((state) => state.open);
 
   return (
     <section className="relative min-h-[640px] overflow-hidden rounded-[36px] bg-[linear-gradient(135deg,#fff9ec_0%,#fff5dc_50%,#fff0c7_100%)] px-6 pt-16 shadow-[0_24px_80px_rgba(127,88,22,0.08)] sm:px-10 lg:px-16">
@@ -86,12 +88,13 @@ export default function Hero() {
             >
               교육과정 보기
             </Link>
-            <Link
-              href="/apply"
+            <button
+              type="button"
+              onClick={openLoginModal}
               className="inline-flex h-12 items-center justify-center rounded-full border-2 border-[#ff8a1f] bg-white px-6 text-sm font-black text-[#ff8a1f] transition duration-250 hover:-translate-y-0.5 hover:bg-[#fff4e8]"
             >
               상담 신청하기
-            </Link>
+            </button>
           </motion.div>
         </div>
 

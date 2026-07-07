@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build --webpack",
     "lint": "oxlint src next.config.ts postcss.config.mjs",
-    "start": "next start"
+    "start": "next start -p 3001"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
@@ -25,6 +25,7 @@
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "agentation": "^3.0.2",
     "oxlint": "^1.71.0",
     "tailwindcss": "^4.3.2",
     "typescript": "~6.0.2"
