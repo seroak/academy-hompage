@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Info } from 'lucide-react'
 import { useReservationsQuery } from './hooks/useReservationsQuery'
 import { useReservationGroupsQuery } from './hooks/useReservationGroupsQuery'
 import { useReservationMutations } from './hooks/useReservationMutations'
@@ -9,18 +10,31 @@ import { useReservationGroupMutations } from './hooks/useReservationGroupMutatio
 import {
   DAY_OF_WEEK_LABELS,
   DAY_OF_WEEK_OPTIONS,
-  HOUR_OPTIONS,
-  hourLabel,
+  MIN_SLOT_DURATION_MINUTES,
+  OPERATING_END_MINUTE,
+  OPERATING_START_MINUTE,
+  parseTimeLabel,
+  SLOT_STEP_MINUTES,
+  timeLabel,
+  timeRangeLabel,
   type Reservation,
 } from '../../api/schemas/reservation.schema'
 import { CreateReservationGroupInputSchema } from '../../api/schemas/reservation-group.schema'
+import ReservationDetailModal from '../../components/ReservationDetailModal'
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10]
+
+const ADMIN_ROW_MINUTES = 30
+const ADMIN_ROW_STARTS = Array.from(
+  { length: (OPERATING_END_MINUTE - OPERATING_START_MINUTE) / ADMIN_ROW_MINUTES },
+  (_, index) => OPERATING_START_MINUTE + index * ADMIN_ROW_MINUTES,
+)
 
 const emptyGroupForm = {
   label: '',
   dayOfWeek: 'MON' as (typeof DAY_OF_WEEK_OPTIONS)[number],
-  hour: 12 as (typeof HOUR_OPTIONS)[number],
+  startMinute: OPERATING_START_MINUTE,
+  endMinute: OPERATING_START_MINUTE + MIN_SLOT_DURATION_MINUTES,
 }
 
 const fieldClass =
@@ -49,6 +63,7 @@ export default function ReservationsAdminPage() {
   const [groupForm, setGroupForm] = useState(emptyGroupForm)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [detailReservation, setDetailReservation] = useState<Reservation | null>(null)
 
   const groupLabelByReservationId = useMemo(() => {
     const map = new Map<string, string>()
@@ -63,15 +78,25 @@ export default function ReservationsAdminPage() {
   const waiting = reservations.filter((r) => r.status === 'WAITING')
   const grouped = reservations.filter((r) => r.status === 'GROUPED')
   const cancelledCount = reservations.filter((r) => r.status === 'CANCELLED').length
-  function hasPreferredSlot(reservation: Reservation, day: string, hour: number): boolean {
-    return reservation.preferredSlots.some((slot) => slot.dayOfWeek === day && slot.hour === hour)
+  function slotOverlapsRow(reservation: Reservation, day: string, rowStart: number): boolean {
+    const rowEnd = rowStart + ADMIN_ROW_MINUTES
+    return reservation.preferredSlots.some(
+      (slot) => slot.dayOfWeek === day && slot.startMinute < rowEnd && slot.endMinute > rowStart,
+    )
   }
 
-  function cellReservations(day: string, hour: number) {
+  function cellReservations(day: string, rowStart: number) {
+    const rowEnd = rowStart + ADMIN_ROW_MINUTES
     return {
-      waitingInCell: waiting.filter((r) => hasPreferredSlot(r, day, hour)),
+      waitingInCell: waiting.filter((r) => slotOverlapsRow(r, day, rowStart)),
       groupedInCell: groups
-        .filter((group) => group.status === 'CONFIRMED' && group.dayOfWeek === day && group.hour === hour)
+        .filter(
+          (group) =>
+            group.status === 'CONFIRMED' &&
+            group.dayOfWeek === day &&
+            group.startMinute < rowEnd &&
+            group.endMinute > rowStart,
+        )
         .flatMap((group) => group.reservations ?? []),
     }
   }
@@ -88,13 +113,14 @@ export default function ReservationsAdminPage() {
     })
   }
 
-  function selectCell(day: (typeof DAY_OF_WEEK_OPTIONS)[number], hour: (typeof HOUR_OPTIONS)[number]) {
-    const { waitingInCell } = cellReservations(day, hour)
+  function selectCell(day: (typeof DAY_OF_WEEK_OPTIONS)[number], rowStart: number) {
+    const { waitingInCell } = cellReservations(day, rowStart)
     setSelectedIds(new Set(waitingInCell.map((r) => r.id)))
     setGroupForm({
-      label: groupForm.label || `${DAY_OF_WEEK_LABELS[day]}요일 ${hourLabel(hour)}반`,
+      label: groupForm.label || `${DAY_OF_WEEK_LABELS[day]}요일 ${timeLabel(rowStart)}반`,
       dayOfWeek: day,
-      hour,
+      startMinute: rowStart,
+      endMinute: rowStart + ADMIN_ROW_MINUTES,
     })
   }
 
@@ -241,13 +267,13 @@ export default function ReservationsAdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {HOUR_OPTIONS.map((hour) => (
-                  <tr key={hour}>
+                {ADMIN_ROW_STARTS.map((rowStart) => (
+                  <tr key={rowStart}>
                     <td className="border-b border-[#f6ead0] p-3 text-xs font-black text-[#6f6253]">
-                      {hourLabel(hour)}
+                      {timeLabel(rowStart)}
                     </td>
                     {DAY_OF_WEEK_OPTIONS.map((day) => {
-                      const { waitingInCell, groupedInCell } = cellReservations(day, hour)
+                      const { waitingInCell, groupedInCell } = cellReservations(day, rowStart)
                       return (
                         <td
                           key={day}
@@ -271,6 +297,14 @@ export default function ReservationsAdminPage() {
                                 </button>
                                 <button
                                   type="button"
+                                  onClick={() => setDetailReservation(reservation)}
+                                  aria-label="예약 상세 보기"
+                                  className="grid size-7 shrink-0 place-items-center rounded-full text-[#8a7a61] transition hover:bg-[#fff0cf] hover:text-[#e86f00]"
+                                >
+                                  <Info size={15} strokeWidth={2.5} />
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => handleCancelReservation(reservation.id)}
                                   aria-label="신청 취소"
                                   className="grid size-7 shrink-0 place-items-center rounded-full text-[#d8bfa0] transition hover:bg-[#fff5f1] hover:text-[#d6452f]"
@@ -280,18 +314,20 @@ export default function ReservationsAdminPage() {
                               </div>
                             ))}
                             {groupedInCell.map((reservation) => (
-                              <span
+                              <button
                                 key={reservation.id}
+                                type="button"
+                                onClick={() => setDetailReservation(reservation)}
                                 title={groupLabelByReservationId.get(reservation.id) ?? '편성됨'}
-                                className="rounded-full bg-[#e7f4ff] px-3 py-1 text-[11px] font-bold text-[#236c9c]"
+                                className="w-fit rounded-full bg-[#e7f4ff] px-3 py-1 text-left text-[11px] font-bold text-[#236c9c] transition hover:bg-[#d8ecff]"
                               >
                                 {reservation.childName} · 편성됨
-                              </span>
+                              </button>
                             ))}
                             {waitingInCell.length >= 1 && (
                               <button
                                 type="button"
-                                onClick={() => selectCell(day, hour)}
+                                onClick={() => selectCell(day, rowStart)}
                                 className="text-left text-[10px] font-black text-[#e86f00] hover:underline"
                               >
                                 이 칸 전체 선택
@@ -359,20 +395,29 @@ export default function ReservationsAdminPage() {
         </label>
 
         <label className={labelClass}>
-          확정 시간
-          <select
+          시작 시각
+          <input
+            type="time"
             className={fieldClass}
-            value={groupForm.hour}
-            onChange={(e) =>
-              setGroupForm({ ...groupForm, hour: Number(e.target.value) as (typeof HOUR_OPTIONS)[number] })
-            }
-          >
-            {HOUR_OPTIONS.map((hour) => (
-              <option key={hour} value={hour}>
-                {hourLabel(hour)}
-              </option>
-            ))}
-          </select>
+            min={timeLabel(OPERATING_START_MINUTE)}
+            max={timeLabel(OPERATING_END_MINUTE - SLOT_STEP_MINUTES)}
+            step={SLOT_STEP_MINUTES * 60}
+            value={timeLabel(groupForm.startMinute)}
+            onChange={(e) => setGroupForm({ ...groupForm, startMinute: parseTimeLabel(e.target.value) })}
+          />
+        </label>
+
+        <label className={labelClass}>
+          종료 시각
+          <input
+            type="time"
+            className={fieldClass}
+            min={timeLabel(OPERATING_START_MINUTE + SLOT_STEP_MINUTES)}
+            max={timeLabel(OPERATING_END_MINUTE)}
+            step={SLOT_STEP_MINUTES * 60}
+            value={timeLabel(groupForm.endMinute)}
+            onChange={(e) => setGroupForm({ ...groupForm, endMinute: parseTimeLabel(e.target.value) })}
+          />
         </label>
 
         <p className="col-span-full rounded-[20px] bg-[#fff9ec] px-4 py-3 text-sm font-black text-[#6f6253]">
@@ -426,7 +471,7 @@ export default function ReservationsAdminPage() {
                     <span className="rounded-full bg-[#fff3c8] px-3 py-1 text-xs font-black text-[#9f4d00]">
                       {DAY_OF_WEEK_LABELS[group.dayOfWeek as keyof typeof DAY_OF_WEEK_LABELS] ??
                         group.dayOfWeek}{' '}
-                      {hourLabel(group.hour)}
+                      {timeRangeLabel(group.startMinute, group.endMinute)}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-[#6f6253]">
@@ -458,6 +503,8 @@ export default function ReservationsAdminPage() {
           ))}
         </ul>
       </section>
+
+      <ReservationDetailModal reservation={detailReservation} onClose={() => setDetailReservation(null)} />
     </div>
   )
 }
