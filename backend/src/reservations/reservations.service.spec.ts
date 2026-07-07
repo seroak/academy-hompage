@@ -101,8 +101,8 @@ describe('ReservationsService', () => {
       parentName: '김엄마',
       parentEmail: 'parent@example.com',
       preferredSlots: [
-        { dayOfWeek: 'MON', hour: 12 },
-        { dayOfWeek: 'WED', hour: 15 },
+        { dayOfWeek: 'MON', startMinute: 720, endMinute: 790 },
+        { dayOfWeek: 'WED', startMinute: 900, endMinute: 970 },
       ],
     };
 
@@ -154,8 +154,8 @@ describe('ReservationsService', () => {
       const updated = {
         id: '1',
         preferredSlots: [
-          { dayOfWeek: 'TUE', hour: 13 },
-          { dayOfWeek: 'THU', hour: 16 },
+          { dayOfWeek: 'TUE', startMinute: 780, endMinute: 850 },
+          { dayOfWeek: 'THU', startMinute: 960, endMinute: 1050 },
         ],
       };
       prisma.reservation.update.mockResolvedValue(updated);
@@ -163,8 +163,8 @@ describe('ReservationsService', () => {
       await expect(
         service.update('1', {
           preferredSlots: [
-            { dayOfWeek: 'TUE', hour: 13 },
-            { dayOfWeek: 'THU', hour: 16 },
+            { dayOfWeek: 'TUE', startMinute: 780, endMinute: 850 },
+            { dayOfWeek: 'THU', startMinute: 960, endMinute: 1050 },
           ],
         }),
       ).resolves.toBe(updated);
@@ -175,8 +175,8 @@ describe('ReservationsService', () => {
           preferredSlots: {
             deleteMany: {},
             create: [
-              { dayOfWeek: 'TUE', hour: 13 },
-              { dayOfWeek: 'THU', hour: 16 },
+              { dayOfWeek: 'TUE', startMinute: 780, endMinute: 850 },
+              { dayOfWeek: 'THU', startMinute: 960, endMinute: 1050 },
             ],
           },
         },
