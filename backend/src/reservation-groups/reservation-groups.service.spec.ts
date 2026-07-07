@@ -51,7 +51,8 @@ describe('ReservationGroupsService', () => {
     const dto = {
       label: '월수금 12시반',
       dayOfWeek: 'MON',
-      hour: 12,
+      startMinute: 720,
+      endMinute: 790,
       reservationIds: ['r1', 'r2'],
     };
     const waitingReservations = [
@@ -61,7 +62,7 @@ describe('ReservationGroupsService', () => {
         childName: '민준',
         parentName: '김엄마',
         parentEmail: 'a@example.com',
-        preferredSlots: [{ dayOfWeek: 'MON', hour: 12 }],
+        preferredSlots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 800 }],
       },
       {
         id: 'r2',
@@ -70,15 +71,22 @@ describe('ReservationGroupsService', () => {
         parentName: '이엄마',
         parentEmail: 'b@example.com',
         preferredSlots: [
-          { dayOfWeek: 'MON', hour: 12 },
-          { dayOfWeek: 'WED', hour: 15 },
+          { dayOfWeek: 'MON', startMinute: 700, endMinute: 800 },
+          { dayOfWeek: 'WED', startMinute: 900, endMinute: 970 },
         ],
       },
     ];
 
     it('그룹을 생성하고 신청들을 GROUPED로 전환한 뒤 확정 이메일을 발송한다', async () => {
       prisma.reservation.findMany.mockResolvedValue(waitingReservations);
-      const createdGroup = { id: 'g1', label: dto.label, dayOfWeek: dto.dayOfWeek, hour: dto.hour, status: 'CONFIRMED' };
+      const createdGroup = {
+        id: 'g1',
+        label: dto.label,
+        dayOfWeek: dto.dayOfWeek,
+        startMinute: dto.startMinute,
+        endMinute: dto.endMinute,
+        status: 'CONFIRMED',
+      };
       prisma.reservationGroup.create.mockResolvedValue(createdGroup);
       prisma.reservation.updateMany.mockResolvedValue({ count: 2 });
 
@@ -86,7 +94,12 @@ describe('ReservationGroupsService', () => {
 
       expect(result).toBe(createdGroup);
       expect(prisma.reservationGroup.create).toHaveBeenCalledWith({
-        data: { label: dto.label, dayOfWeek: dto.dayOfWeek, hour: dto.hour },
+        data: {
+          label: dto.label,
+          dayOfWeek: dto.dayOfWeek,
+          startMinute: dto.startMinute,
+          endMinute: dto.endMinute,
+        },
       });
       expect(prisma.reservation.updateMany).toHaveBeenCalledWith({
         where: { id: { in: dto.reservationIds } },
@@ -97,12 +110,25 @@ describe('ReservationGroupsService', () => {
       expect(notification.sendGroupConfirmed).toHaveBeenCalledWith(waitingReservations[1], createdGroup);
     });
 
-    it('확정 시간이 신청의 후보 시간에 없으면 ConflictException을 던진다', async () => {
+    it('확정 범위와 겹치는 후보 시간이 아예 없으면 ConflictException을 던진다', async () => {
       prisma.reservation.findMany.mockResolvedValue([
         waitingReservations[0],
         {
           ...waitingReservations[1],
-          preferredSlots: [{ dayOfWeek: 'WED', hour: 15 }],
+          preferredSlots: [{ dayOfWeek: 'WED', startMinute: 900, endMinute: 970 }],
+        },
+      ]);
+
+      await expect(service.create(dto)).rejects.toThrow(ConflictException);
+      expect(prisma.reservationGroup.create).not.toHaveBeenCalled();
+    });
+
+    it('확정 범위를 완전히 포함하지 못하는 후보 시간(부분 겹침)만 있으면 ConflictException을 던진다', async () => {
+      prisma.reservation.findMany.mockResolvedValue([
+        waitingReservations[0],
+        {
+          ...waitingReservations[1],
+          preferredSlots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 760 }],
         },
       ]);
 

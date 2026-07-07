@@ -49,16 +49,24 @@ export class ReservationGroupsService {
       reservations.some(
         (reservation) =>
           !reservation.preferredSlots.some(
-            (slot) => slot.dayOfWeek === dto.dayOfWeek && slot.hour === dto.hour,
+            (slot) =>
+              slot.dayOfWeek === dto.dayOfWeek &&
+              slot.startMinute <= dto.startMinute &&
+              slot.endMinute >= dto.endMinute,
           ),
       )
     ) {
-      throw new ConflictException('확정 시간은 모든 신청의 후보 시간에 포함되어야 합니다');
+      throw new ConflictException('확정 시간은 모든 신청의 후보 시간 범위 안에 포함되어야 합니다');
     }
 
     const group = await this.prisma.$transaction(async (tx) => {
       const createdGroup = await tx.reservationGroup.create({
-        data: { label: dto.label, dayOfWeek: dto.dayOfWeek, hour: dto.hour },
+        data: {
+          label: dto.label,
+          dayOfWeek: dto.dayOfWeek,
+          startMinute: dto.startMinute,
+          endMinute: dto.endMinute,
+        },
       });
 
       await tx.reservation.updateMany({
