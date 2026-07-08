@@ -105,21 +105,24 @@ enum ReservationGroupStatus {
 }
 
 model Reservation {
-  id             String                     @id @default(cuid())
-  childName      String
-  childAge       Int
-  parentName     String
-  parentEmail    String
-  parentPhone    String?
-  preferredSlots ReservationPreferredSlot[]
-  note           String?
-  status         ReservationStatus          @default(WAITING)
-  group          ReservationGroup?          @relation(fields: [groupId], references: [id])
-  groupId        String?
-  parentUser     ParentUser?                @relation(fields: [parentUserId], references: [id])
-  parentUserId   String?
-  createdAt      DateTime                   @default(now())
-  updatedAt      DateTime                   @updatedAt
+  id               String                     @id @default(cuid())
+  childName        String
+  childAge         Int
+  parentName       String
+  parentEmail      String
+  parentPhone      String?
+  preferredSlots   ReservationPreferredSlot[]
+  note             String?
+  status           ReservationStatus          @default(WAITING)
+  group            ReservationGroup?          @relation(fields: [groupId], references: [id])
+  groupId          String?
+  groupSlots       ReservationGroupSlot[]
+  requestedGroup   ReservationGroup?          @relation("RequestedGroup", fields: [requestedGroupId], references: [id], onDelete: SetNull)
+  requestedGroupId String?
+  parentUser       ParentUser?                @relation(fields: [parentUserId], references: [id])
+  parentUserId     String?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
 }
 
 model ReservationPreferredSlot {
@@ -137,11 +140,27 @@ model ReservationPreferredSlot {
 model ReservationGroup {
   id           String                 @id @default(cuid())
   label        String
-  dayOfWeek    String
-  startMinute  Int
-  endMinute    Int
   status       ReservationGroupStatus @default(CONFIRMED)
+  capacity     Int
+  minAge       Int
+  maxAge       Int
   reservations Reservation[]
+  requestedBy  Reservation[]          @relation("RequestedGroup")
+  slots        ReservationGroupSlot[]
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
+}
+
+model ReservationGroupSlot {
+  id            String           @id @default(cuid())
+  group         ReservationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId       String
+  reservation   Reservation      @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  reservationId String
+  dayOfWeek     String
+  startMinute   Int
+  endMinute     Int
+
+  @@index([groupId])
+  @@index([dayOfWeek, startMinute, endMinute])
 }

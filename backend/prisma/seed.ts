@@ -177,6 +177,71 @@ async function main() {
     });
   }
 
+  // 여석이 남은 확정 그룹 하나를 시드해, 관리자 편입/학부모 합류 UI를 시드 직후 바로 확인할 수 있게 한다.
+  const groupedMembers = [
+    {
+      id: "seed-reservation-grouped-1",
+      childName: "정하은",
+      childAge: 5,
+      parentName: "정미란",
+      parentEmail: "parent5@example.com",
+      parentPhone: "010-5555-6666",
+      preferredSlots: [{ dayOfWeek: "TUE", startMinute: 720, endMinute: 790 }],
+    },
+    {
+      id: "seed-reservation-grouped-2",
+      childName: "한소율",
+      childAge: 6,
+      parentName: "한지원",
+      parentEmail: "parent6@example.com",
+      preferredSlots: [{ dayOfWeek: "TUE", startMinute: 720, endMinute: 790 }],
+    },
+  ];
+
+  for (const reservation of groupedMembers) {
+    const { preferredSlots, ...reservationData } = reservation;
+    await prisma.reservation.upsert({
+      where: { id: reservation.id },
+      update: {},
+      create: {
+        ...reservationData,
+        status: "GROUPED",
+        preferredSlots: { create: preferredSlots },
+      },
+    });
+  }
+
+  const seedGroup = await prisma.reservationGroup.upsert({
+    where: { id: "seed-group-tuesday" },
+    update: {},
+    create: {
+      id: "seed-group-tuesday",
+      label: "화요일 12시반",
+      capacity: 4,
+      minAge: 5,
+      maxAge: 6,
+    },
+  });
+
+  for (const reservation of groupedMembers) {
+    await prisma.reservation.update({
+      where: { id: reservation.id },
+      data: { groupId: seedGroup.id },
+    });
+    await prisma.reservationGroupSlot.upsert({
+      where: { id: `${reservation.id}-slot` },
+      update: {},
+      create: {
+        id: `${reservation.id}-slot`,
+        groupId: seedGroup.id,
+        reservationId: reservation.id,
+        dayOfWeek: "TUE",
+        startMinute: 720,
+        endMinute: 790,
+      },
+    });
+  }
+
   console.log("Seed completed.");
 }
 

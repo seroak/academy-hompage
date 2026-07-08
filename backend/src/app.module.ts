@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { NotificationModule } from './notifications/notification.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { ReservationGroupsModule } from './reservation-groups/reservation-groups.module';
+import { MembersModule } from './members/members.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ReservationGroupsModule } from './reservation-groups/reservation-groups
     AuthModule,
     ReservationsModule,
     ReservationGroupsModule,
+    MembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
