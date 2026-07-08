@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notifications/notification.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { CreateWalkInReservationDto } from './dto/create-walk-in-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { QueryReservationsDto } from './dto/query-reservations.dto';
 
@@ -65,6 +66,19 @@ export class ReservationsService {
     });
     await this.notification.sendReservationReceived(reservation);
     return reservation;
+  }
+
+  async createWalkIn(dto: CreateWalkInReservationDto) {
+    const { preferredSlots, parentEmail, ...reservationData } = dto;
+
+    return this.prisma.reservation.create({
+      data: {
+        ...reservationData,
+        parentEmail: parentEmail ?? '',
+        preferredSlots: { create: preferredSlots },
+      },
+      include: { preferredSlots: true },
+    });
   }
 
   async update(id: string, dto: UpdateReservationDto) {

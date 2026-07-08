@@ -13,15 +13,24 @@ import {
 import { ReservationGroupsService } from './reservation-groups.service';
 import { CreateReservationGroupDto } from './dto/create-reservation-group.dto';
 import { UpdateReservationGroupDto } from './dto/update-reservation-group.dto';
+import { AddGroupMemberDto } from './dto/add-group-member.dto';
+import { ReplaceMemberSlotsDto } from './dto/replace-member-slots.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('reservation-groups')
 export class ReservationGroupsController {
-  constructor(private readonly reservationGroupsService: ReservationGroupsService) {}
+  constructor(
+    private readonly reservationGroupsService: ReservationGroupsService,
+  ) {}
 
   @Get('confirmed-slots')
   findConfirmedSlots() {
     return this.reservationGroupsService.findConfirmedSlots();
+  }
+
+  @Get('joinable')
+  findJoinable() {
+    return this.reservationGroupsService.findJoinable();
   }
 
   @UseGuards(JwtAuthGuard)
@@ -46,6 +55,36 @@ export class ReservationGroupsController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateReservationGroupDto) {
     return this.reservationGroupsService.update(id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/members')
+  addMember(@Param('id') id: string, @Body() dto: AddGroupMemberDto) {
+    return this.reservationGroupsService.addMember(id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/members/:reservationId')
+  replaceMemberSlots(
+    @Param('id') id: string,
+    @Param('reservationId') reservationId: string,
+    @Body() dto: ReplaceMemberSlotsDto,
+  ) {
+    return this.reservationGroupsService.replaceMemberSlots(
+      id,
+      reservationId,
+      dto,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/members/:reservationId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeMember(
+    @Param('id') id: string,
+    @Param('reservationId') reservationId: string,
+  ) {
+    return this.reservationGroupsService.removeMember(id, reservationId);
   }
 
   @UseGuards(JwtAuthGuard)

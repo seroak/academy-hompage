@@ -11,6 +11,10 @@ describe('ReservationGroupsController', () => {
     update: jest.Mock;
     remove: jest.Mock;
     findConfirmedSlots: jest.Mock;
+    findJoinable: jest.Mock;
+    addMember: jest.Mock;
+    removeMember: jest.Mock;
+    replaceMemberSlots: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -21,6 +25,10 @@ describe('ReservationGroupsController', () => {
       update: jest.fn(),
       remove: jest.fn(),
       findConfirmedSlots: jest.fn(),
+      findJoinable: jest.fn(),
+      addMember: jest.fn(),
+      removeMember: jest.fn(),
+      replaceMemberSlots: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -28,7 +36,9 @@ describe('ReservationGroupsController', () => {
       providers: [{ provide: ReservationGroupsService, useValue: service }],
     }).compile();
 
-    controller = module.get<ReservationGroupsController>(ReservationGroupsController);
+    controller = module.get<ReservationGroupsController>(
+      ReservationGroupsController,
+    );
   });
 
   it('delegates findAll to the service', async () => {
@@ -47,10 +57,21 @@ describe('ReservationGroupsController', () => {
   it('delegates create to the service', async () => {
     const dto = {
       label: '월수금 12시반',
-      dayOfWeek: 'MON',
-      startMinute: 720,
-      endMinute: 790,
-      reservationIds: ['r1', 'r2'],
+      capacity: 4,
+      slots: [
+        {
+          reservationId: 'r1',
+          dayOfWeek: 'MON',
+          startMinute: 720,
+          endMinute: 730,
+        },
+        {
+          reservationId: 'r2',
+          dayOfWeek: 'MON',
+          startMinute: 720,
+          endMinute: 730,
+        },
+      ],
     };
     service.create.mockResolvedValue('created');
 
@@ -61,7 +82,9 @@ describe('ReservationGroupsController', () => {
   it('delegates update to the service', async () => {
     service.update.mockResolvedValue('updated');
 
-    await expect(controller.update('1', { label: 'x' })).resolves.toBe('updated');
+    await expect(controller.update('1', { label: 'x' })).resolves.toBe(
+      'updated',
+    );
     expect(service.update).toHaveBeenCalledWith('1', { label: 'x' });
   });
 
@@ -77,5 +100,52 @@ describe('ReservationGroupsController', () => {
     service.findConfirmedSlots.mockResolvedValue(slots);
 
     await expect(controller.findConfirmedSlots()).resolves.toBe(slots);
+  });
+
+  it('delegates findJoinable to the service', async () => {
+    const groups = [
+      {
+        id: 'g1',
+        label: '월요일반',
+        capacity: 4,
+        filledCount: 2,
+        minAge: 5,
+        maxAge: 6,
+        slots: [],
+      },
+    ];
+    service.findJoinable.mockResolvedValue(groups);
+
+    await expect(controller.findJoinable()).resolves.toBe(groups);
+  });
+
+  it('delegates addMember to the service', async () => {
+    const dto = {
+      reservationId: 'r3',
+      slots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 730 }],
+    };
+    service.addMember.mockResolvedValue('updated');
+
+    await expect(controller.addMember('g1', dto)).resolves.toBe('updated');
+    expect(service.addMember).toHaveBeenCalledWith('g1', dto);
+  });
+
+  it('delegates removeMember to the service', async () => {
+    service.removeMember.mockResolvedValue(undefined);
+
+    await controller.removeMember('g1', 'r1');
+    expect(service.removeMember).toHaveBeenCalledWith('g1', 'r1');
+  });
+
+  it('delegates replaceMemberSlots to the service', async () => {
+    const dto = {
+      slots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 730 }],
+    };
+    service.replaceMemberSlots.mockResolvedValue('updated');
+
+    await expect(
+      controller.replaceMemberSlots('g1', 'r1', dto),
+    ).resolves.toBe('updated');
+    expect(service.replaceMemberSlots).toHaveBeenCalledWith('g1', 'r1', dto);
   });
 });

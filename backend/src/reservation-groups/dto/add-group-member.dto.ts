@@ -2,7 +2,6 @@ import {
   ArrayNotEmpty,
   IsIn,
   IsInt,
-  IsOptional,
   IsString,
   Max,
   Min,
@@ -18,10 +17,7 @@ import {
 
 const DAYS_OF_WEEK = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-export class GroupSlotDto {
-  @IsString()
-  reservationId: string;
-
+export class MemberSlotDto {
   @IsIn(DAYS_OF_WEEK)
   dayOfWeek: string;
 
@@ -39,28 +35,12 @@ export class GroupSlotDto {
   endMinute: number;
 }
 
-export class CreateReservationGroupDto {
+export class AddGroupMemberDto {
   @IsString()
-  label: string;
-
-  @IsInt()
-  @Min(1)
-  capacity: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(4)
-  @Max(10)
-  minAge?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(4)
-  @Max(10)
-  maxAge?: number;
+  reservationId: string;
 
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => GroupSlotDto)
-  slots: GroupSlotDto[];
+  @Type(() => MemberSlotDto)
+  slots: MemberSlotDto[];
 }

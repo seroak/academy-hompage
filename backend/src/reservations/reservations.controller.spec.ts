@@ -8,6 +8,7 @@ describe('ReservationsController', () => {
     findAll: jest.Mock;
     findOne: jest.Mock;
     create: jest.Mock;
+    createWalkIn: jest.Mock;
     update: jest.Mock;
     remove: jest.Mock;
   };
@@ -17,6 +18,7 @@ describe('ReservationsController', () => {
       findAll: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
+      createWalkIn: jest.fn(),
       update: jest.fn(),
       remove: jest.fn(),
     };
@@ -57,6 +59,19 @@ describe('ReservationsController', () => {
       controller.create(dto, { user: { parentUserId: 'parent-1' } }),
     ).resolves.toBe('created');
     expect(service.create).toHaveBeenCalledWith(dto, 'parent-1');
+  });
+
+  it('delegates createWalkIn to the service', async () => {
+    const dto = {
+      childName: '지훈',
+      childAge: 6,
+      parentName: '최엄마',
+      preferredSlots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 730 }],
+    };
+    service.createWalkIn.mockResolvedValue('created');
+
+    await expect(controller.createWalkIn(dto)).resolves.toBe('created');
+    expect(service.createWalkIn).toHaveBeenCalledWith(dto);
   });
 
   it('delegates update to the service', async () => {

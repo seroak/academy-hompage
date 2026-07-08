@@ -29,7 +29,9 @@ describe('ReservationsService', () => {
       },
       parentUser: { findUnique: jest.fn() },
     };
-    notification = { sendReservationReceived: jest.fn().mockResolvedValue(undefined) };
+    notification = {
+      sendReservationReceived: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -89,7 +91,9 @@ describe('ReservationsService', () => {
     it('없으면 NotFoundException을 던진다', async () => {
       prisma.reservation.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -130,14 +134,46 @@ describe('ReservationsService', () => {
         },
         include: { preferredSlots: true },
       });
-      expect(notification.sendReservationReceived).toHaveBeenCalledWith(created);
+      expect(notification.sendReservationReceived).toHaveBeenCalledWith(
+        created,
+      );
     });
 
     it('학부모 계정이 없으면 NotFoundException을 던진다', async () => {
       prisma.parentUser.findUnique.mockResolvedValue(null);
 
-      await expect(service.create(dto, 'missing-parent')).rejects.toThrow(NotFoundException);
+      await expect(service.create(dto, 'missing-parent')).rejects.toThrow(
+        NotFoundException,
+      );
       expect(prisma.reservation.create).not.toHaveBeenCalled();
+    });
+
+    it('requestedGroupId가 함께 전달되면 합류 희망으로 저장한다', async () => {
+      const dtoWithRequest = { ...dto, requestedGroupId: 'g1' };
+      const created = { id: '1', ...dtoWithRequest, status: 'WAITING' };
+      prisma.parentUser.findUnique.mockResolvedValue({
+        id: 'parent-1',
+        name: '김엄마',
+        email: 'parent@example.com',
+      });
+      prisma.reservation.create.mockResolvedValue(created);
+
+      await service.create(dtoWithRequest, 'parent-1');
+
+      expect(prisma.reservation.create).toHaveBeenCalledWith({
+        data: {
+          childName: dto.childName,
+          childAge: dto.childAge,
+          parentName: dto.parentName,
+          parentEmail: dto.parentEmail,
+          parentUserId: 'parent-1',
+          requestedGroupId: 'g1',
+          preferredSlots: {
+            create: dto.preferredSlots,
+          },
+        },
+        include: { preferredSlots: true },
+      });
     });
 
     it('후보 시간이 확정된 그룹과 겹쳐도 정상 생성한다', async () => {
@@ -159,7 +195,9 @@ describe('ReservationsService', () => {
       const updated = { id: '1', status: 'CANCELLED' };
       prisma.reservation.update.mockResolvedValue(updated);
 
-      await expect(service.update('1', { status: 'CANCELLED' })).resolves.toBe(updated);
+      await expect(service.update('1', { status: 'CANCELLED' })).resolves.toBe(
+        updated,
+      );
     });
 
     it('후보 시간이 포함되면 기존 후보 시간을 새 목록으로 교체한다', async () => {
@@ -199,7 +237,58 @@ describe('ReservationsService', () => {
     it('없으면 NotFoundException을 던진다', async () => {
       prisma.reservation.update.mockRejectedValue({ code: 'P2025' });
 
-      await expect(service.update('missing', {})).rejects.toThrow(NotFoundException);
+      await expect(service.update('missing', {})).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('createWalkIn', () => {
+    const dto = {
+      childName: '지훈',
+      childAge: 6,
+      parentName: '최엄마',
+      preferredSlots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 730 }],
+    };
+
+    it('학부모 계정 없이 신청을 생성하고 접수 이메일은 보내지 않는다', async () => {
+      const created = { id: '1', ...dto, parentEmail: '', status: 'WAITING' };
+      prisma.reservation.create.mockResolvedValue(created);
+
+      const result = await service.createWalkIn(dto);
+
+      expect(result).toBe(created);
+      expect(prisma.reservation.create).toHaveBeenCalledWith({
+        data: {
+          childName: dto.childName,
+          childAge: dto.childAge,
+          parentName: dto.parentName,
+          parentEmail: '',
+          preferredSlots: { create: dto.preferredSlots },
+        },
+        include: { preferredSlots: true },
+      });
+      expect(notification.sendReservationReceived).not.toHaveBeenCalled();
+      expect(prisma.parentUser.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('이메일이 주어지면 그대로 저장한다', async () => {
+      const dtoWithEmail = { ...dto, parentEmail: 'walkin@example.com' };
+      const created = { id: '2', ...dtoWithEmail, status: 'WAITING' };
+      prisma.reservation.create.mockResolvedValue(created);
+
+      await service.createWalkIn(dtoWithEmail);
+
+      expect(prisma.reservation.create).toHaveBeenCalledWith({
+        data: {
+          childName: dto.childName,
+          childAge: dto.childAge,
+          parentName: dto.parentName,
+          parentEmail: 'walkin@example.com',
+          preferredSlots: { create: dto.preferredSlots },
+        },
+        include: { preferredSlots: true },
+      });
     });
   });
 
@@ -209,13 +298,17 @@ describe('ReservationsService', () => {
 
       await service.remove('1');
 
-      expect(prisma.reservation.delete).toHaveBeenCalledWith({ where: { id: '1' } });
+      expect(prisma.reservation.delete).toHaveBeenCalledWith({
+        where: { id: '1' },
+      });
     });
 
     it('없으면 NotFoundException을 던진다', async () => {
       prisma.reservation.delete.mockRejectedValue({ code: 'P2025' });
 
-      await expect(service.remove('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

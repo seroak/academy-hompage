@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
+import { CreateWalkInReservationDto } from './dto/create-walk-in-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { QueryReservationsDto } from './dto/query-reservations.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -44,6 +45,12 @@ export class ReservationsController {
   @Post()
   create(@Body() dto: CreateReservationDto, @Req() request: ParentRequest) {
     return this.reservationsService.create(dto, request.user.parentUserId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('walk-in')
+  createWalkIn(@Body() dto: CreateWalkInReservationDto) {
+    return this.reservationsService.createWalkIn(dto);
   }
 
   @UseGuards(JwtAuthGuard)
