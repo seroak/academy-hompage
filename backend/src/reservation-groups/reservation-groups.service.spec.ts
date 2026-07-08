@@ -199,6 +199,25 @@ describe('ReservationGroupsService', () => {
     });
   });
 
+  describe('findConfirmedSlots', () => {
+    it('CONFIRMED 그룹의 요일/시간만 요일·시작 순으로 반환한다', async () => {
+      const slots = [
+        { dayOfWeek: 'MON', startMinute: 720, endMinute: 790 },
+        { dayOfWeek: 'WED', startMinute: 900, endMinute: 970 },
+      ];
+      prisma.reservationGroup.findMany.mockResolvedValue(slots);
+
+      const result = await service.findConfirmedSlots();
+
+      expect(result).toBe(slots);
+      expect(prisma.reservationGroup.findMany).toHaveBeenCalledWith({
+        where: { status: 'CONFIRMED' },
+        select: { dayOfWeek: true, startMinute: true, endMinute: true },
+        orderBy: [{ dayOfWeek: 'asc' }, { startMinute: 'asc' }],
+      });
+    });
+  });
+
   describe('remove', () => {
     it('그룹을 취소하고 소속 신청을 WAITING으로 되돌린다', async () => {
       prisma.reservation.updateMany.mockResolvedValue({ count: 2 });

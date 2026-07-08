@@ -24,7 +24,9 @@ const emptyForm: CreateReservationInput = {
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
 
-function formForParent(parent: ParentProfile): CreateReservationInput {
+function formForParent(parent: ParentProfile | null): CreateReservationInput {
+  if (!parent) return emptyForm;
+
   return {
     ...emptyForm,
     parentName: parent.name ?? "",
@@ -32,7 +34,13 @@ function formForParent(parent: ParentProfile): CreateReservationInput {
   };
 }
 
-export default function ApplyPage({ initialParent: parent }: { initialParent: ParentProfile }) {
+export default function ApplyPage({
+  initialParent: parent,
+  isAdminPreview = false,
+}: {
+  initialParent: ParentProfile | null;
+  isAdminPreview?: boolean;
+}) {
   const router = useRouter();
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation();
   const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent));
@@ -46,6 +54,11 @@ export default function ApplyPage({ initialParent: parent }: { initialParent: Pa
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isAdminPreview) {
+      alert("관리자는 상담 신청을 할 수 없습니다.");
+      return;
+    }
 
     const result = CreateReservationInputSchema.safeParse(form);
 
@@ -101,19 +114,27 @@ export default function ApplyPage({ initialParent: parent }: { initialParent: Pa
         그룹을 직접 모으지 못하셨다면, 아래 정보를 남겨 주세요. 비슷한 희망 시간대의 신청이 모이면 그룹을 편성해
         안내드립니다.
       </p>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
-        <p className="text-sm text-slate-700">
-          <span className="font-semibold text-slate-900">{parent.name ?? parent.email ?? "보호자"}</span>님 계정으로
-          신청합니다.
-        </p>
-        <button
-          type="button"
-          onClick={handleSwitchAccount}
-          className="text-sm font-medium text-brand-700 hover:text-brand-800"
-        >
-          다른 계정으로 로그인
-        </button>
-      </div>
+      {parent && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
+          <p className="text-sm text-slate-700">
+            <span className="font-semibold text-slate-900">{parent.name ?? parent.email ?? "보호자"}</span>님 계정으로
+            신청합니다.
+          </p>
+          <button
+            type="button"
+            onClick={handleSwitchAccount}
+            className="text-sm font-medium text-brand-700 hover:text-brand-800"
+          >
+            다른 계정으로 로그인
+          </button>
+        </div>
+      )}
+
+      {isAdminPreview && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          관리자 미리보기 화면입니다. 신청하기를 눌러도 실제로 접수되지 않습니다.
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -176,10 +197,7 @@ export default function ApplyPage({ initialParent: parent }: { initialParent: Pa
         </label>
 
         <fieldset className="col-span-full">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <legend className="text-sm font-medium text-slate-800">가능한 시간</legend>
-            <span className="text-xs text-slate-500">선택된 시간 {form.preferredSlots.length}개</span>
-          </div>
+          <legend className="text-sm font-medium text-slate-800">가능한 시간</legend>
           <PreferredSlotsPicker
             value={form.preferredSlots}
             onChange={(slots) => setForm({ ...form, preferredSlots: slots })}

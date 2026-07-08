@@ -139,6 +139,19 @@ describe('ReservationsService', () => {
       await expect(service.create(dto, 'missing-parent')).rejects.toThrow(NotFoundException);
       expect(prisma.reservation.create).not.toHaveBeenCalled();
     });
+
+    it('후보 시간이 확정된 그룹과 겹쳐도 정상 생성한다', async () => {
+      const created = { id: '1', ...dto, status: 'WAITING' };
+      prisma.parentUser.findUnique.mockResolvedValue({
+        id: 'parent-1',
+        name: '김엄마',
+        email: 'parent@example.com',
+      });
+      prisma.reservation.create.mockResolvedValue(created);
+
+      await expect(service.create(dto, 'parent-1')).resolves.toBe(created);
+      expect(prisma.reservation.create).toHaveBeenCalled();
+    });
   });
 
   describe('update', () => {

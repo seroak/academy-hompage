@@ -10,7 +10,6 @@ import { useReservationGroupMutations } from './hooks/useReservationGroupMutatio
 import {
   DAY_OF_WEEK_LABELS,
   DAY_OF_WEEK_OPTIONS,
-  MIN_SLOT_DURATION_MINUTES,
   OPERATING_END_MINUTE,
   OPERATING_START_MINUTE,
   parseTimeLabel,
@@ -24,7 +23,7 @@ import ReservationDetailModal from '../../components/ReservationDetailModal'
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10]
 
-const ADMIN_ROW_MINUTES = 30
+const ADMIN_ROW_MINUTES = SLOT_STEP_MINUTES
 const ADMIN_ROW_STARTS = Array.from(
   { length: (OPERATING_END_MINUTE - OPERATING_START_MINUTE) / ADMIN_ROW_MINUTES },
   (_, index) => OPERATING_START_MINUTE + index * ADMIN_ROW_MINUTES,
@@ -34,7 +33,7 @@ const emptyGroupForm = {
   label: '',
   dayOfWeek: 'MON' as (typeof DAY_OF_WEEK_OPTIONS)[number],
   startMinute: OPERATING_START_MINUTE,
-  endMinute: OPERATING_START_MINUTE + MIN_SLOT_DURATION_MINUTES,
+  endMinute: OPERATING_START_MINUTE + ADMIN_ROW_MINUTES,
 }
 
 const fieldClass =
@@ -269,8 +268,12 @@ export default function ReservationsAdminPage() {
               <tbody>
                 {ADMIN_ROW_STARTS.map((rowStart) => (
                   <tr key={rowStart}>
-                    <td className="border-b border-[#f6ead0] p-3 text-xs font-black text-[#6f6253]">
-                      {timeLabel(rowStart)}
+                    <td className="relative border-b border-[#f6ead0] px-3 py-2 align-top text-xs font-black text-[#6f6253]">
+                      {rowStart % 30 === 0 ? (
+                        <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-1">
+                          {timeLabel(rowStart)}
+                        </span>
+                      ) : null}
                     </td>
                     {DAY_OF_WEEK_OPTIONS.map((day) => {
                       const { waitingInCell, groupedInCell } = cellReservations(day, rowStart)

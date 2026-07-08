@@ -10,6 +10,7 @@ describe('ReservationGroupsController', () => {
     create: jest.Mock;
     update: jest.Mock;
     remove: jest.Mock;
+    findConfirmedSlots: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -19,6 +20,7 @@ describe('ReservationGroupsController', () => {
       create: jest.fn(),
       update: jest.fn(),
       remove: jest.fn(),
+      findConfirmedSlots: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -68,5 +70,12 @@ describe('ReservationGroupsController', () => {
 
     await controller.remove('1');
     expect(service.remove).toHaveBeenCalledWith('1');
+  });
+
+  it('delegates findConfirmedSlots to the service', async () => {
+    const slots = [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 790 }];
+    service.findConfirmedSlots.mockResolvedValue(slots);
+
+    await expect(controller.findConfirmedSlots()).resolves.toBe(slots);
   });
 });

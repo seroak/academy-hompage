@@ -9,7 +9,6 @@ import {
 export const OPERATING_START_MINUTE = 720; // 12:00
 export const OPERATING_END_MINUTE = 1080; // 18:00
 export const SLOT_STEP_MINUTES = 10;
-export const MIN_SLOT_DURATION_MINUTES = 30;
 
 @ValidatorConstraint({ name: 'isMultipleOfSlotStep', async: false })
 class IsMultipleOfSlotStepConstraint implements ValidatorConstraintInterface {
@@ -40,11 +39,11 @@ class IsValidSlotEndMinuteConstraint implements ValidatorConstraintInterface {
     if (typeof endMinute !== 'number' || typeof object.startMinute !== 'number') {
       return false;
     }
-    return endMinute - object.startMinute >= MIN_SLOT_DURATION_MINUTES;
+    return endMinute > object.startMinute;
   }
 
   defaultMessage(): string {
-    return `종료 시각은 시작 시각보다 ${MIN_SLOT_DURATION_MINUTES}분 이상 이후여야 합니다`;
+    return `종료 시각은 시작 시각보다 이후여야 합니다`;
   }
 }
 

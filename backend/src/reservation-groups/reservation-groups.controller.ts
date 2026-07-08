@@ -15,31 +15,40 @@ import { CreateReservationGroupDto } from './dto/create-reservation-group.dto';
 import { UpdateReservationGroupDto } from './dto/update-reservation-group.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
 @Controller('reservation-groups')
 export class ReservationGroupsController {
   constructor(private readonly reservationGroupsService: ReservationGroupsService) {}
 
+  @Get('confirmed-slots')
+  findConfirmedSlots() {
+    return this.reservationGroupsService.findConfirmedSlots();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
     return this.reservationGroupsService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.reservationGroupsService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreateReservationGroupDto) {
     return this.reservationGroupsService.create(dto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateReservationGroupDto) {
     return this.reservationGroupsService.update(id, dto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {

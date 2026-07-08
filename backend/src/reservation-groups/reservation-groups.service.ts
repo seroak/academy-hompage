@@ -18,6 +18,14 @@ export class ReservationGroupsService {
     });
   }
 
+  findConfirmedSlots() {
+    return this.prisma.reservationGroup.findMany({
+      where: { status: 'CONFIRMED' },
+      select: { dayOfWeek: true, startMinute: true, endMinute: true },
+      orderBy: [{ dayOfWeek: 'asc' }, { startMinute: 'asc' }],
+    });
+  }
+
   async findOne(id: string) {
     const group = await this.prisma.reservationGroup.findUnique({
       where: { id },

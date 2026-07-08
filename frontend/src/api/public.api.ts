@@ -1,6 +1,7 @@
 import { CourseListSchema, CourseSchema, type Course } from './schemas/course.schema'
 import { InstructorListSchema, type Instructor } from './schemas/instructor.schema'
 import { NoticeListSchema, NoticeSchema, type Notice } from './schemas/notice.schema'
+import { ConfirmedSlotListSchema, type ConfirmedSlot } from './schemas/reservation-group.schema'
 
 export const PUBLIC_REVALIDATE_SECONDS = 300
 
@@ -10,6 +11,20 @@ async function publicApiFetch(path: string): Promise<unknown> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: { Accept: 'application/json' },
     next: { revalidate: PUBLIC_REVALIDATE_SECONDS },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Public API request failed: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+// 확정 시간은 신청 폼의 실시간 차단 기준이라 5분 캐시(publicApiFetch)를 쓰지 않는다.
+async function publicApiFetchFresh(path: string): Promise<unknown> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
   })
 
   if (!response.ok) {
@@ -49,5 +64,14 @@ export async function fetchPublicNotice(id: string): Promise<Notice | null> {
     return NoticeSchema.parse(raw)
   } catch {
     return null
+  }
+}
+
+export async function fetchPublicConfirmedSlots(): Promise<ConfirmedSlot[]> {
+  try {
+    const raw = await publicApiFetchFresh('/reservation-groups/confirmed-slots')
+    return ConfirmedSlotListSchema.parse(raw)
+  } catch {
+    return []
   }
 }

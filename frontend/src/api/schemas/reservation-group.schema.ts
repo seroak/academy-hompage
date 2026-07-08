@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import {
   DAY_OF_WEEK_OPTIONS,
-  MIN_SLOT_DURATION_MINUTES,
   OPERATING_END_MINUTE,
   OPERATING_START_MINUTE,
   ReservationListSchema,
@@ -50,9 +49,19 @@ export const CreateReservationGroupInputSchema = z
     message: `${SLOT_STEP_MINUTES}분 단위로 선택해 주세요`,
     path: ['endMinute'],
   })
-  .refine((input) => input.endMinute - input.startMinute >= MIN_SLOT_DURATION_MINUTES, {
-    message: `최소 ${MIN_SLOT_DURATION_MINUTES}분 이상 선택해 주세요`,
+  .refine((input) => input.endMinute > input.startMinute, {
+    message: '종료 시각은 시작 시각보다 이후여야 합니다',
     path: ['endMinute'],
   })
 
 export type CreateReservationGroupInput = z.infer<typeof CreateReservationGroupInputSchema>
+
+export const ConfirmedSlotSchema = z.object({
+  dayOfWeek: z.enum(DAY_OF_WEEK_OPTIONS),
+  startMinute: z.number(),
+  endMinute: z.number(),
+})
+
+export const ConfirmedSlotListSchema = z.array(ConfirmedSlotSchema)
+
+export type ConfirmedSlot = z.infer<typeof ConfirmedSlotSchema>

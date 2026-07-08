@@ -54,6 +54,7 @@ export class ReservationsService {
     }
 
     const { preferredSlots, ...reservationData } = dto;
+
     const reservation = await this.prisma.reservation.create({
       data: {
         ...reservationData,

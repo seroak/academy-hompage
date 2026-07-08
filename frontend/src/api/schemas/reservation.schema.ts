@@ -15,7 +15,6 @@ export const DAY_OF_WEEK_LABELS: Record<(typeof DAY_OF_WEEK_OPTIONS)[number], st
 export const OPERATING_START_MINUTE = 720
 export const OPERATING_END_MINUTE = 1080
 export const SLOT_STEP_MINUTES = 10
-export const MIN_SLOT_DURATION_MINUTES = 30
 
 export function timeLabel(minute: number): string {
   const hours = Math.floor(minute / 60)
@@ -64,8 +63,8 @@ export const PreferredSlotSchema = z
     message: `${SLOT_STEP_MINUTES}분 단위로 선택해 주세요`,
     path: ['endMinute'],
   })
-  .refine((slot) => slot.endMinute - slot.startMinute >= MIN_SLOT_DURATION_MINUTES, {
-    message: `최소 ${MIN_SLOT_DURATION_MINUTES}분 이상 선택해 주세요`,
+  .refine((slot) => slot.endMinute > slot.startMinute, {
+    message: '종료 시각은 시작 시각보다 이후여야 합니다',
     path: ['endMinute'],
   })
 

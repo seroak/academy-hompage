@@ -240,7 +240,6 @@ export default function PreferredSlotsPicker({ value, onChange }: PreferredSlots
               선택 취소
             </button>
           )}
-          <span className="text-xs text-slate-500">선택된 시간 {value.length}개</span>
         </div>
       </div>
 
@@ -281,9 +280,13 @@ export default function PreferredSlotsPicker({ value, onChange }: PreferredSlots
             <Fragment key={minute}>
               <div
                 key={`${minute}-label`}
-                className="flex h-8 items-center justify-center text-[11px] font-medium text-slate-500"
+                className="relative h-8 text-[11px] font-medium text-slate-500"
               >
-                {minute % 30 === 0 ? timeLabel(minute) : ''}
+                {minute % 30 === 0 ? (
+                  <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-50 px-1">
+                    {timeLabel(minute)}
+                  </span>
+                ) : null}
               </div>
               {DAY_OF_WEEK_OPTIONS.map((day) => {
                 const selectedSlot = slotAt(day, minute)
@@ -329,13 +332,19 @@ export default function PreferredSlotsPicker({ value, onChange }: PreferredSlots
                       inCancelPreview
                         ? 'border-red-400 bg-red-500 text-white'
                         : selected
-                        ? 'border-brand-700 bg-brand-600 text-white hover:border-red-300 hover:bg-red-500'
-                        : inPreview
-                          ? 'border-brand-500 bg-brand-200 text-brand-900'
-                          : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
+                          ? 'border-brand-700 bg-brand-600 text-white hover:border-red-300 hover:bg-red-500'
+                          : inPreview
+                            ? 'border-brand-500 bg-brand-200 text-brand-900'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
                     }`}
                   >
-                    {selected ? '가능' : ''}
+                    {selectedSlot
+                      ? minute === selectedSlot.startMinute
+                        ? timeLabel(selectedSlot.startMinute)
+                        : minute === selectedSlot.endMinute - SLOT_STEP_MINUTES
+                          ? timeLabel(selectedSlot.endMinute)
+                          : ''
+                      : ''}
                   </button>
                 )
               })}

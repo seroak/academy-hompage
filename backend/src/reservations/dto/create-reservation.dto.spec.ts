@@ -23,9 +23,14 @@ describe('PreferredSlotDto', () => {
     expect(errors.some((error) => error.property === 'startMinute')).toBe(true);
   });
 
-  it('종료 시각이 시작 시각보다 30분 이상 이후가 아니면 실패한다', async () => {
-    const errors = await validate(makeSlot({ startMinute: 720, endMinute: 740 }));
+  it('종료 시각이 시작 시각 이하이면 실패한다', async () => {
+    const errors = await validate(makeSlot({ startMinute: 720, endMinute: 720 }));
     expect(errors.some((error) => error.property === 'endMinute')).toBe(true);
+  });
+
+  it('10분짜리 짧은 범위도 통과한다', async () => {
+    const errors = await validate(makeSlot({ startMinute: 720, endMinute: 730 }));
+    expect(errors).toHaveLength(0);
   });
 
   it('운영 시간(12:00~18:00)보다 이른 시작 시각은 실패한다', async () => {
