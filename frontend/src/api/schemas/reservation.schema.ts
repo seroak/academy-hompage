@@ -81,6 +81,7 @@ export const ReservationSchema = z.object({
   note: z.string().nullable().optional(),
   status: z.enum(RESERVATION_STATUS_OPTIONS),
   groupId: z.string().nullable().optional(),
+  requestedGroupId: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })
@@ -101,9 +102,25 @@ export const CreateReservationInputSchema = z.object({
   parentPhone: z.string().optional(),
   preferredSlots: z.array(PreferredSlotSchema).min(1, '가능한 시간을 1개 이상 선택해 주세요'),
   note: z.string().optional(),
+  requestedGroupId: z.string().optional(),
 })
 
 export type CreateReservationInput = z.infer<typeof CreateReservationInputSchema>
+
+export const CreateWalkInReservationInputSchema = z.object({
+  childName: z.string().min(1, '아이 이름을 입력해 주세요'),
+  childAge: z
+    .number()
+    .int('나이는 정수로 입력해 주세요')
+    .min(4, '만 4세 이상만 신청 가능합니다')
+    .max(10, '만 10세 이하만 신청 가능합니다'),
+  parentName: z.string().min(1, '보호자 이름을 입력해 주세요'),
+  parentEmail: z.union([z.string().email('올바른 이메일 형식이 아닙니다'), z.literal('')]).optional(),
+  parentPhone: z.string().optional(),
+  preferredSlots: z.array(PreferredSlotSchema).min(1, '가능한 시간을 1개 이상 선택해 주세요'),
+})
+
+export type CreateWalkInReservationInput = z.infer<typeof CreateWalkInReservationInputSchema>
 
 export interface ReservationFilters {
   status?: (typeof RESERVATION_STATUS_OPTIONS)[number]

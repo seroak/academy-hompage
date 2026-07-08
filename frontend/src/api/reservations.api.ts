@@ -3,6 +3,7 @@ import {
   ReservationListSchema,
   ReservationSchema,
   type CreateReservationInput,
+  type CreateWalkInReservationInput,
   type Reservation,
   type ReservationFilters,
 } from './schemas/reservation.schema'
@@ -31,6 +32,14 @@ export async function createReservation(input: CreateReservationInput): Promise<
     method: 'POST',
     body: JSON.stringify(input),
   }, { authMode: 'parent' })
+  return ReservationSchema.parse(raw)
+}
+
+export async function createWalkInReservation(input: CreateWalkInReservationInput): Promise<Reservation> {
+  const raw = await apiFetch('/reservations/walk-in', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
   return ReservationSchema.parse(raw)
 }
 

@@ -1,7 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteReservationGroup, createReservationGroup } from '../../../api/reservationGroups.api'
+import {
+  deleteReservationGroup,
+  createReservationGroup,
+  addGroupMember,
+  updateReservationGroup,
+  removeGroupMember,
+  replaceGroupMemberSlots,
+} from '../../../api/reservationGroups.api'
 import { queryKeys } from '../../../queries/queryKeys'
-import type { CreateReservationGroupInput } from '../../../api/schemas/reservation-group.schema'
+import type {
+  AddGroupMemberInput,
+  CreateReservationGroupInput,
+  ReplaceMemberSlotsInput,
+  UpdateReservationGroupInput,
+} from '../../../api/schemas/reservation-group.schema'
 
 export function useReservationGroupMutations() {
   const queryClient = useQueryClient()
@@ -25,11 +37,81 @@ export function useReservationGroupMutations() {
     onSuccess: invalidateAll,
   })
 
+  const addMemberMutation = useMutation({
+    mutationKey: ['reservationGroups', 'addMember'],
+    mutationFn: ({ groupId, input }: { groupId: string; input: AddGroupMemberInput }) =>
+      addGroupMember(groupId, input),
+    onSuccess: invalidateAll,
+  })
+
+  const updateMutation = useMutation({
+    mutationKey: ['reservationGroups', 'update'],
+    mutationFn: ({ id, input }: { id: string; input: UpdateReservationGroupInput }) =>
+      updateReservationGroup(id, input),
+    onSuccess: invalidateAll,
+  })
+
+  const removeMemberMutation = useMutation({
+    mutationKey: ['reservationGroups', 'removeMember'],
+    mutationFn: ({ groupId, reservationId }: { groupId: string; reservationId: string }) =>
+      removeGroupMember(groupId, reservationId),
+    onSuccess: invalidateAll,
+  })
+
+  const replaceMemberSlotsMutation = useMutation({
+    mutationKey: ['reservationGroups', 'replaceMemberSlots'],
+    mutationFn: ({
+      groupId,
+      reservationId,
+      input,
+    }: {
+      groupId: string
+      reservationId: string
+      input: ReplaceMemberSlotsInput
+    }) => replaceGroupMemberSlots(groupId, reservationId, input),
+    onSuccess: invalidateAll,
+  })
+
+  const moveMemberMutation = useMutation({
+    mutationKey: ['reservationGroups', 'moveMember'],
+    mutationFn: async ({
+      reservationId,
+      fromGroupId,
+      toGroupId,
+      slots,
+    }: {
+      reservationId: string
+      fromGroupId: string
+      toGroupId: string
+      slots: AddGroupMemberInput['slots']
+    }) => {
+      await removeGroupMember(fromGroupId, reservationId)
+      return addGroupMember(toGroupId, { reservationId, slots })
+    },
+    onSuccess: invalidateAll,
+  })
+
   return {
     createGroup: (input: CreateReservationGroupInput) => createMutation.mutateAsync(input),
     deleteGroup: (id: string) => deleteMutation.mutateAsync(id),
+    addMember: (groupId: string, input: AddGroupMemberInput) =>
+      addMemberMutation.mutateAsync({ groupId, input }),
+    updateGroup: (id: string, input: UpdateReservationGroupInput) =>
+      updateMutation.mutateAsync({ id, input }),
+    removeMember: (groupId: string, reservationId: string) =>
+      removeMemberMutation.mutateAsync({ groupId, reservationId }),
+    replaceMemberSlots: (groupId: string, reservationId: string, input: ReplaceMemberSlotsInput) =>
+      replaceMemberSlotsMutation.mutateAsync({ groupId, reservationId, input }),
+    moveMember: (reservationId: string, fromGroupId: string, toGroupId: string, slots: AddGroupMemberInput['slots']) =>
+      moveMemberMutation.mutateAsync({ reservationId, fromGroupId, toGroupId, slots }),
     isCreating: createMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isAddingMember: addMemberMutation.isPending,
+    isUpdatingGroup: updateMutation.isPending,
+    isRemovingMember: removeMemberMutation.isPending,
+    isReplacingMemberSlots: replaceMemberSlotsMutation.isPending,
+    isMovingMember: moveMemberMutation.isPending,
     createError: createMutation.error,
+    addMemberError: addMemberMutation.error,
   }
 }

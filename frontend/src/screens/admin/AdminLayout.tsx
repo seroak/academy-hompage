@@ -10,6 +10,7 @@ const adminNavItems = [
   { to: '/admin/notices', label: '공지 관리' },
   { to: '/admin/instructors', label: '강사 관리' },
   { to: '/admin/reservations', label: '예약 관리' },
+  { to: '/admin/members', label: '회원 관리' },
 ]
 
 function navLinkClass(isActive: boolean) {

@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import type { ParentProfile } from "../api/schemas/auth.schema";
 import { logoutParent } from "../api/auth.api";
 import { useApplyReservationMutation } from "./hooks/useApplyReservationMutation";
+import { useJoinableGroupsQuery } from "./hooks/useJoinableGroupsQuery";
 import PreferredSlotsPicker from "../components/PreferredSlotsPicker";
 import {
   CreateReservationInputSchema,
+  DAY_OF_WEEK_LABELS,
+  timeRangeLabel,
   type CreateReservationInput,
 } from "../api/schemas/reservation.schema";
 
@@ -20,6 +23,7 @@ const emptyForm: CreateReservationInput = {
   parentPhone: "",
   preferredSlots: [],
   note: "",
+  requestedGroupId: undefined,
 };
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
@@ -43,13 +47,33 @@ export default function ApplyPage({
 }) {
   const router = useRouter();
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation();
+  const { joinableGroups } = useJoinableGroupsQuery();
   const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const matchingGroups = joinableGroups.filter(
+    (group) => form.childAge >= group.minAge && form.childAge <= group.maxAge,
+  );
+  const requestedGroup = matchingGroups.find((group) => group.id === form.requestedGroupId) ?? null;
+
   async function handleSwitchAccount() {
     await logoutParent();
     router.refresh();
+  }
+
+  function joinGroup(groupId: string) {
+    const group = matchingGroups.find((candidate) => candidate.id === groupId);
+    if (!group) return;
+    setForm({
+      ...form,
+      requestedGroupId: group.id,
+      preferredSlots: group.slots.map((slot) => ({ ...slot })),
+    });
+  }
+
+  function cancelJoinRequest() {
+    setForm({ ...form, requestedGroupId: undefined, preferredSlots: [] });
   }
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
@@ -94,7 +118,8 @@ export default function ApplyPage({
       <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center">
         <h1 className="text-xl font-bold text-slate-900">접수 완료</h1>
         <p className="mt-3 text-sm text-slate-600">
-          수업 신청이 접수되었습니다. 비슷한 신청이 모이면 그룹 편성 결과를 이메일로 안내드리겠습니다.
+          수업 신청이 접수되었습니다. 모집 중인 반에 합류를 신청하셨다면 관리자 확인 후, 그렇지 않다면 비슷한
+          신청이 모이면 그룹 편성 결과를 이메일로 안내드리겠습니다.
         </p>
         <button
           type="button"
@@ -111,8 +136,8 @@ export default function ApplyPage({
     <div className="mx-auto max-w-4xl">
       <h1 className="text-2xl font-bold text-slate-900">수업 신청</h1>
       <p className="mt-2 text-sm text-slate-600">
-        그룹을 직접 모으지 못하셨다면, 아래 정보를 남겨 주세요. 비슷한 희망 시간대의 신청이 모이면 그룹을 편성해
-        안내드립니다.
+        지금 모집 중인 반이 있으면 바로 합류를 신청할 수 있고, 없다면 비슷한 희망 시간대의 신청이 모일 때
+        그룹을 편성해 안내드립니다.
       </p>
       {parent && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
@@ -155,7 +180,14 @@ export default function ApplyPage({
           <select
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
             value={form.childAge}
-            onChange={(e) => setForm({ ...form, childAge: Number(e.target.value) })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                childAge: Number(e.target.value),
+                requestedGroupId: undefined,
+                preferredSlots: [],
+              })
+            }
           >
             {CHILD_AGE_OPTIONS.map((age) => (
               <option key={age} value={age}>
@@ -196,11 +228,57 @@ export default function ApplyPage({
           />
         </label>
 
+        {matchingGroups.length > 0 && (
+          <div className="col-span-full rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-sm font-semibold text-emerald-800">
+              만 {form.childAge}세가 합류할 수 있는 모집 중인 반이 있어요.
+            </p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {matchingGroups.map((group) => (
+                <li key={group.id}>
+                  <button
+                    type="button"
+                    onClick={() => joinGroup(group.id)}
+                    disabled={form.requestedGroupId === group.id}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      form.requestedGroupId === group.id
+                        ? 'border-emerald-600 bg-emerald-600 text-white'
+                        : 'border-emerald-300 bg-white text-emerald-700 hover:border-emerald-500'
+                    }`}
+                  >
+                    {group.label} ({group.filledCount}/{group.capacity}명) ·{' '}
+                    {group.slots
+                      .map((slot) => `${DAY_OF_WEEK_LABELS[slot.dayOfWeek]} ${timeRangeLabel(slot.startMinute, slot.endMinute)}`)
+                      .join(', ')}
+                    {form.requestedGroupId === group.id ? ' · 합류 신청됨' : ' · 이 반에 합류 신청'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {requestedGroup && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-emerald-800">
+                <span>
+                  "{requestedGroup.label}" 반에 합류를 신청했습니다. 아래 희망 시간이 자동으로 채워졌습니다.
+                </span>
+                <button
+                  type="button"
+                  onClick={cancelJoinRequest}
+                  className="font-semibold text-emerald-700 underline hover:text-emerald-900"
+                >
+                  합류 신청 취소
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <fieldset className="col-span-full">
           <legend className="text-sm font-medium text-slate-800">가능한 시간</legend>
           <PreferredSlotsPicker
             value={form.preferredSlots}
-            onChange={(slots) => setForm({ ...form, preferredSlots: slots })}
+            onChange={(slots) => setForm({ ...form, preferredSlots: slots, requestedGroupId: undefined })}
+            joinableGroups={matchingGroups}
+            childAge={form.childAge}
           />
           {fieldErrors.preferredSlots && (
             <span className="mt-1 block text-xs text-red-600">{fieldErrors.preferredSlots}</span>

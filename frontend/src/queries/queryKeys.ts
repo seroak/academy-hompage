@@ -20,4 +20,10 @@ export const queryKeys = {
     all: ['reservationGroups'] as const,
     detail: (id: string) => ['reservationGroups', id] as const,
   },
+  joinableGroups: {
+    all: ['joinableGroups'] as const,
+  },
+  members: {
+    all: ['members'] as const,
+  },
 }

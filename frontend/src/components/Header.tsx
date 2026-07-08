@@ -203,9 +203,6 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                 {item.label}
               </Link>
             ))}
-            <button type="button" onClick={openLoginModal} className={navLinkClass(false)}>
-              학부모센터
-            </button>
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
@@ -273,9 +270,6 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                   {item.label}
                 </Link>
               ))}
-              <button type="button" onClick={openLoginModal} className={navLinkClass(false)}>
-                학부모센터
-              </button>
               {isAuthenticated ? (
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <Link

@@ -1,7 +1,12 @@
 import { CourseListSchema, CourseSchema, type Course } from './schemas/course.schema'
 import { InstructorListSchema, type Instructor } from './schemas/instructor.schema'
 import { NoticeListSchema, NoticeSchema, type Notice } from './schemas/notice.schema'
-import { ConfirmedSlotListSchema, type ConfirmedSlot } from './schemas/reservation-group.schema'
+import {
+  ConfirmedSlotListSchema,
+  JoinableGroupListSchema,
+  type ConfirmedSlot,
+  type JoinableGroup,
+} from './schemas/reservation-group.schema'
 
 export const PUBLIC_REVALIDATE_SECONDS = 300
 
@@ -71,6 +76,16 @@ export async function fetchPublicConfirmedSlots(): Promise<ConfirmedSlot[]> {
   try {
     const raw = await publicApiFetchFresh('/reservation-groups/confirmed-slots')
     return ConfirmedSlotListSchema.parse(raw)
+  } catch {
+    return []
+  }
+}
+
+// 여석 여부는 신청 폼의 실시간 합류 안내 기준이라 5분 캐시(publicApiFetch)를 쓰지 않는다.
+export async function fetchJoinableGroups(): Promise<JoinableGroup[]> {
+  try {
+    const raw = await publicApiFetchFresh('/reservation-groups/joinable')
+    return JoinableGroupListSchema.parse(raw)
   } catch {
     return []
   }

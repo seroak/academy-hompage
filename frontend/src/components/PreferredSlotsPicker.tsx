@@ -12,10 +12,13 @@ import {
   timeRangeLabel,
   type PreferredSlot,
 } from '../api/schemas/reservation.schema'
+import type { JoinableGroup } from '../api/schemas/reservation-group.schema'
 
 interface PreferredSlotsPickerProps {
   value: PreferredSlot[]
   onChange: (slots: PreferredSlot[]) => void
+  joinableGroups?: JoinableGroup[]
+  childAge?: number
 }
 
 interface Anchor {
@@ -68,7 +71,12 @@ function buildSlot(anchor: Anchor, target: Anchor, existingSlots: PreferredSlot[
   return { dayOfWeek: anchor.dayOfWeek, startMinute, endMinute }
 }
 
-export default function PreferredSlotsPicker({ value, onChange }: PreferredSlotsPickerProps) {
+export default function PreferredSlotsPicker({
+  value,
+  onChange,
+  joinableGroups = [],
+  childAge,
+}: PreferredSlotsPickerProps) {
   const gridRef = useRef<HTMLDivElement>(null)
   const didDragRef = useRef(false)
   const dragModeRef = useRef<DragMode>('select')
@@ -110,6 +118,17 @@ export default function PreferredSlotsPicker({ value, onChange }: PreferredSlots
     return value.find(
       (slot) => slot.dayOfWeek === dayOfWeek && slot.startMinute <= minute && slot.endMinute > minute,
     )
+  }
+
+  function joinableGroupsAt(dayOfWeek: Anchor['dayOfWeek'], minute: number): JoinableGroup[] {
+    return joinableGroups.filter((group) => {
+      if (childAge !== undefined && (childAge < group.minAge || childAge > group.maxAge)) {
+        return false
+      }
+      return group.slots.some(
+        (slot) => slot.dayOfWeek === dayOfWeek && slot.startMinute <= minute && slot.endMinute > minute,
+      )
+    })
   }
 
   function removeSlot(slot: PreferredSlot) {
@@ -228,6 +247,12 @@ export default function PreferredSlotsPicker({ value, onChange }: PreferredSlots
 
   return (
     <div className="rounded-xl border border-slate-200 bg-brand-50/40 p-3">
+      {joinableGroups.length > 0 && (
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+          <span aria-hidden className="size-1.5 rounded-full bg-emerald-500" />
+          초록색 칸은 지금 모집 중인 반이 있는 시간입니다. 선택하면 바로 합류를 신청할 수 있어요.
+        </p>
+      )}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-semibold text-slate-600">{previewLabel}</span>
         <div className="flex items-center gap-2">
@@ -298,6 +323,8 @@ export default function PreferredSlotsPicker({ value, onChange }: PreferredSlots
                   cancelRange.startMinute <= minute &&
                   cancelRange.endMinute > minute &&
                   selected
+                const joinable = joinableGroupsAt(day, minute)
+                const isJoinable = joinable.length > 0
 
                 return (
                   <button
@@ -305,7 +332,16 @@ export default function PreferredSlotsPicker({ value, onChange }: PreferredSlots
                     type="button"
                     data-slot-day={day}
                     data-slot-minute={minute}
-                    aria-label={`${DAY_OF_WEEK_LABELS[day]}요일 ${timeLabel(minute)} 선택`}
+                    title={
+                      isJoinable
+                        ? joinable
+                            .map((group) => `${group.label} 모집중 ${group.filledCount}/${group.capacity}`)
+                            .join(', ')
+                        : undefined
+                    }
+                    aria-label={`${DAY_OF_WEEK_LABELS[day]}요일 ${timeLabel(minute)} 선택${
+                      isJoinable ? ' (모집중인 반 있음)' : ''
+                    }`}
                     onPointerDown={(event) => {
                       event.currentTarget.setPointerCapture(event.pointerId)
                       handleCellPointerDown({ dayOfWeek: day, minute })
@@ -328,16 +364,24 @@ export default function PreferredSlotsPicker({ value, onChange }: PreferredSlots
                         }
                       }
                     }}
-                    className={`h-8 rounded-md border text-[10px] font-semibold transition ${
+                    className={`relative h-8 rounded-md border text-[10px] font-semibold transition ${
                       inCancelPreview
                         ? 'border-red-400 bg-red-500 text-white'
                         : selected
                           ? 'border-brand-700 bg-brand-600 text-white hover:border-red-300 hover:bg-red-500'
                           : inPreview
                             ? 'border-brand-500 bg-brand-200 text-brand-900'
-                            : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
+                            : isJoinable
+                              ? 'border-emerald-400 bg-emerald-50 text-emerald-700 hover:border-brand-300'
+                              : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
                     }`}
                   >
+                    {isJoinable && !selected && (
+                      <span
+                        aria-hidden
+                        className="absolute right-0.5 top-0.5 size-1.5 rounded-full bg-emerald-500"
+                      />
+                    )}
                     {selectedSlot
                       ? minute === selectedSlot.startMinute
                         ? timeLabel(selectedSlot.startMinute)
