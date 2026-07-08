@@ -10,15 +10,32 @@ interface ReservationLike {
 
 interface GroupLike {
   label: string;
+}
+
+interface SlotLike {
   dayOfWeek: string;
   startMinute: number;
   endMinute: number;
 }
 
+const DAY_LABELS: Record<string, string> = {
+  MON: '월',
+  TUE: '화',
+  WED: '수',
+  THU: '목',
+  FRI: '금',
+  SAT: '토',
+};
+
 function timeLabel(minute: number): string {
   const hours = Math.floor(minute / 60);
   const minutes = minute % 60;
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function slotLabel(slot: SlotLike): string {
+  const day = DAY_LABELS[slot.dayOfWeek] ?? slot.dayOfWeek;
+  return `${day} ${timeLabel(slot.startMinute)}~${timeLabel(slot.endMinute)}`;
 }
 
 @Injectable()
@@ -57,15 +74,36 @@ export class NotificationService {
     );
   }
 
-  async sendGroupConfirmed(reservation: ReservationLike, group: GroupLike): Promise<void> {
+  async sendGroupConfirmed(
+    reservation: ReservationLike,
+    group: GroupLike,
+    slots: SlotLike[],
+  ): Promise<void> {
+    const scheduleText = slots.map(slotLabel).join(', ');
     await this.sendMail(
       reservation.parentEmail,
       '[학원] 수업 그룹이 확정되었습니다',
-      `${reservation.parentName}님, ${reservation.childName} 어린이가 "${group.label}" 그룹(${group.dayOfWeek} ${timeLabel(group.startMinute)}~${timeLabel(group.endMinute)})에 편성되었습니다.`,
+      `${reservation.parentName}님, ${reservation.childName} 어린이가 "${group.label}" 그룹(${scheduleText})에 편성되었습니다.`,
+    );
+  }
+
+  async sendGroupMemberRemoved(
+    reservation: ReservationLike,
+    group: GroupLike,
+  ): Promise<void> {
+    await this.sendMail(
+      reservation.parentEmail,
+      '[학원] 그룹 편성이 변경되었습니다',
+      `${reservation.parentName}님, ${reservation.childName} 어린이가 "${group.label}" 그룹에서 제외되어 다시 대기 상태로 변경되었습니다.`,
     );
   }
 
   private async sendMail(to: string, subject: string, text: string): Promise<void> {
+    if (!to) {
+      this.logger.log(`(수신 이메일 없음) subject=${subject}`);
+      return;
+    }
+
     if (!this.transporter) {
       this.logger.log(`(SMTP 미설정) to=${to} subject=${subject}`);
       return;

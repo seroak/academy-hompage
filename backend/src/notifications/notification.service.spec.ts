@@ -86,13 +86,42 @@ describe('NotificationService', () => {
 
       await service.sendGroupConfirmed(
         { childName: '민준', parentName: '김엄마', parentEmail: 'parent@example.com' },
-        { label: '월수금 12시반', dayOfWeek: 'MON', hour: 12 },
+        { label: '월수금 12시반' },
+        [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 790 }],
       );
 
       expect(sendMail).toHaveBeenCalledTimes(1);
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'parent@example.com' }),
       );
+    });
+
+    it('그룹 제외 이메일을 발송한다', async () => {
+      const service = await createService();
+
+      await service.sendGroupMemberRemoved(
+        { childName: '민준', parentName: '김엄마', parentEmail: 'parent@example.com' },
+        { label: '월수금 12시반' },
+      );
+
+      expect(sendMail).toHaveBeenCalledTimes(1);
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'parent@example.com' }),
+      );
+    });
+
+    it('수신 이메일이 빈 문자열이면 발송을 시도하지 않는다', async () => {
+      const service = await createService();
+
+      await expect(
+        service.sendGroupConfirmed(
+          { childName: '민준', parentName: '김엄마', parentEmail: '' },
+          { label: '월수금 12시반' },
+          [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 790 }],
+        ),
+      ).resolves.not.toThrow();
+
+      expect(sendMail).not.toHaveBeenCalled();
     });
 
     it('발송 실패 시 예외를 삼키고 요청 흐름을 막지 않는다', async () => {
