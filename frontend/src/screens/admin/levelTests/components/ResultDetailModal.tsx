@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import { LEVEL_TEST_QUESTION_TYPE_LABELS, type LevelTestResult } from '../../../../api/schemas/levelTest.schema'
+import { API_BASE_URL } from '../../../../lib/apiClient'
 
 type Props = {
   result: LevelTestResult | null
@@ -53,6 +54,14 @@ export default function ResultDetailModal({ result, onClose }: Props) {
                 )}
               </p>
               <p className="mt-1 text-sm font-bold text-[#222222]">{answer.prompt}</p>
+              {answer.promptImageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`${API_BASE_URL}${answer.promptImageUrl}`}
+                  alt="문제 이미지"
+                  className="mt-2 h-28 w-28 rounded-lg border border-[#f2dfb9] object-cover"
+                />
+              )}
               {answer.type === 'MULTIPLE_CHOICE' ? (
                 <p className="mt-1 text-sm font-semibold text-[#6f6253]">
                   응답: {answer.choices[answer.selectedChoiceIndex ?? -1] ?? '(응답 없음)'} · 정답:{' '}

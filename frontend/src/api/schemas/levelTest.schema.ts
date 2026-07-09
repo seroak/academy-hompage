@@ -18,6 +18,7 @@ export const LevelTestQuestionSchema = z.object({
   age: z.number(),
   type: z.enum(LEVEL_TEST_QUESTION_TYPE_OPTIONS),
   prompt: z.string(),
+  promptImageUrl: z.string().nullable().optional(),
   choices: z.array(z.string()),
   correctChoiceIndex: z.number().nullable().optional(),
   active: z.boolean(),
@@ -34,6 +35,7 @@ export const CreateLevelTestQuestionInputSchema = z
     age: z.number().int('나이는 정수로 입력해 주세요').min(4, '만 4세 이상이어야 합니다').max(10, '만 10세 이하여야 합니다'),
     type: z.enum(LEVEL_TEST_QUESTION_TYPE_OPTIONS),
     prompt: z.string().min(1, '문제를 입력해 주세요'),
+    promptImageUrl: z.string().optional(),
     choices: z.array(z.string().min(1, '보기 내용을 입력해 주세요')).optional(),
     correctChoiceIndex: z.number().int().optional(),
     active: z.boolean().optional(),
@@ -59,6 +61,7 @@ export const QuizQuestionSchema = z.object({
   age: z.number(),
   type: z.enum(LEVEL_TEST_QUESTION_TYPE_OPTIONS),
   prompt: z.string(),
+  promptImageUrl: z.string().nullable().optional(),
   choices: z.array(z.string()),
 })
 
@@ -105,6 +108,7 @@ const LevelTestResultAnswerSchema = z.object({
   questionId: z.string(),
   type: z.enum(LEVEL_TEST_QUESTION_TYPE_OPTIONS),
   prompt: z.string(),
+  promptImageUrl: z.string().nullable().optional(),
   choices: z.array(z.string()),
   correctChoiceIndex: z.number().nullable().optional(),
   selectedChoiceIndex: z.number().nullable().optional(),

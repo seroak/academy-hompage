@@ -1,10 +1,13 @@
 'use client'
 
+import { useRef, useState } from 'react'
+import { ImagePlus, X } from 'lucide-react'
 import {
   LEVEL_TEST_AGE_OPTIONS,
   LEVEL_TEST_QUESTION_TYPE_LABELS,
   LEVEL_TEST_QUESTION_TYPE_OPTIONS,
 } from '../../../../api/schemas/levelTest.schema'
+import { API_BASE_URL } from '../../../../lib/apiClient'
 import type { QuestionFormState } from '../types'
 
 type Props = {
@@ -15,6 +18,8 @@ type Props = {
   onSubmit: () => void
   onCancel: () => void
   isSubmitting: boolean
+  onUploadImage: (file: File) => Promise<{ url: string }>
+  isUploadingImage: boolean
 }
 
 export default function QuestionForm({
@@ -25,7 +30,37 @@ export default function QuestionForm({
   onSubmit,
   onCancel,
   isSubmitting,
+  onUploadImage,
+  isUploadingImage,
 }: Props) {
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  async function uploadFile(file: File) {
+    setUploadError(null)
+    try {
+      const { url } = await onUploadImage(file)
+      onChange({ ...form, promptImageUrl: url })
+    } catch {
+      setUploadError('이미지 업로드에 실패했습니다.')
+    }
+  }
+
+  async function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    await uploadFile(file)
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    setIsDragging(false)
+    const file = event.dataTransfer.files?.[0]
+    if (file) void uploadFile(file)
+  }
+
   function updateChoice(index: number, value: string) {
     const choices = [...form.choices]
     choices[index] = value
@@ -102,6 +137,73 @@ export default function QuestionForm({
         />
         {fieldErrors.prompt && <span className="text-xs font-semibold text-[#d6452f]">{fieldErrors.prompt}</span>}
       </label>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-bold text-[#6f6253]">문제 이미지(선택)</p>
+
+        {form.promptImageUrl ? (
+          <div className="flex items-center gap-4 rounded-2xl border border-[#f2dfb9] bg-[#fff9ec] p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`${API_BASE_URL}${form.promptImageUrl}`}
+              alt="문제 이미지 미리보기"
+              className="h-20 w-20 shrink-0 rounded-xl border border-[#f2dfb9] object-cover"
+            />
+            <div className="flex flex-1 flex-col items-start gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingImage}
+                className="rounded-full border border-[#f2dfb9] bg-white px-3 py-1.5 text-xs font-bold text-[#9f4d00] transition hover:bg-[#fff3c8] disabled:opacity-50"
+              >
+                다른 이미지로 교체
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ ...form, promptImageUrl: undefined })}
+                className="flex items-center gap-1 text-xs font-bold text-[#d6452f]"
+              >
+                <X size={14} />
+                이미지 제거
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(event) => {
+              event.preventDefault()
+              setIsDragging(true)
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            disabled={isUploadingImage}
+            className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-8 text-center transition disabled:opacity-50 ${
+              isDragging
+                ? 'border-[#e86f00] bg-[#fff3c8]'
+                : 'border-[#f2dfb9] bg-[#fff9ec] hover:border-[#ffd66b] hover:bg-[#fff3c8]'
+            }`}
+          >
+            <ImagePlus size={26} className="text-[#9f4d00]" />
+            <span className="text-sm font-bold text-[#6f6253]">
+              {isUploadingImage ? '업로드 중...' : '클릭하거나 이미지를 끌어다 놓으세요'}
+            </span>
+            <span className="text-xs font-semibold text-[#a89a86]">JPG, PNG, WEBP, GIF · 최대 5MB</span>
+          </button>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={handleImageSelect}
+          disabled={isUploadingImage}
+          className="hidden"
+        />
+
+        {uploadError && <span className="text-xs font-semibold text-[#d6452f]">{uploadError}</span>}
+      </div>
 
       {form.type === 'MULTIPLE_CHOICE' && (
         <div className="flex flex-col gap-2">

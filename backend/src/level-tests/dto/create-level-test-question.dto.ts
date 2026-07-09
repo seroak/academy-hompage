@@ -25,6 +25,10 @@ export class CreateLevelTestQuestionDto {
   @IsString()
   prompt: string;
 
+  @IsOptional()
+  @IsString()
+  promptImageUrl?: string;
+
   @ValidateIf((dto) => dto.type === LevelTestQuestionType.MULTIPLE_CHOICE)
   @IsArray()
   @ArrayMinSize(2)

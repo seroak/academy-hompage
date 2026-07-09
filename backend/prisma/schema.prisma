@@ -178,6 +178,7 @@ model LevelTestQuestion {
   age                Int
   type               LevelTestQuestionType
   prompt             String
+  promptImageUrl     String?
   choices            String[]              @default([])
   correctChoiceIndex Int?
   active             Boolean               @default(true)

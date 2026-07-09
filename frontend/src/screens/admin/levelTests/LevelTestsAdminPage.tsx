@@ -42,9 +42,11 @@ export default function LevelTestsAdminPage() {
     updateQuestion,
     deleteQuestion,
     upsertConfig,
+    uploadQuestionImage,
     isCreating,
     isUpdating,
     isUpsertingConfig,
+    isUploadingImage,
   } = useLevelTestMutations()
 
   function startEdit(question: LevelTestQuestion) {
@@ -53,6 +55,7 @@ export default function LevelTestsAdminPage() {
       age: question.age,
       type: question.type,
       prompt: question.prompt,
+      promptImageUrl: question.promptImageUrl ?? undefined,
       choices: question.choices.length > 0 ? question.choices : ['', ''],
       correctChoiceIndex: question.correctChoiceIndex ?? 0,
       active: question.active,
@@ -132,6 +135,8 @@ export default function LevelTestsAdminPage() {
             onSubmit={handleSubmit}
             onCancel={cancelEdit}
             isSubmitting={isCreating || isUpdating}
+            onUploadImage={uploadQuestionImage}
+            isUploadingImage={isUploadingImage}
           />
           <AgeConfigPanel configs={configs} onSave={handleSaveConfig} isSaving={isUpsertingConfig} />
           {isLoadingQuestions ? (

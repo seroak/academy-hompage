@@ -1,4 +1,7 @@
+import { mkdirSync } from 'fs';
+import { join } from 'path';
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -12,13 +15,22 @@ import {
   Put,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { LevelTestsService } from './level-tests.service';
 import { CreateLevelTestQuestionDto } from './dto/create-level-test-question.dto';
 import { UpdateLevelTestQuestionDto } from './dto/update-level-test-question.dto';
 import { UpsertLevelTestAgeConfigDto } from './dto/upsert-level-test-age-config.dto';
 import { CreateLevelTestResultDto } from './dto/create-level-test-result.dto';
+import {
+  MAX_IMAGE_SIZE_BYTES,
+  buildUploadFilename,
+  isAllowedImageMimeType,
+} from './level-test-image.utils';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ParentJwtGuard } from '../auth/guards/parent-jwt.guard';
 import { ParentPrincipal } from '../auth/strategies/parent-jwt.strategy';
@@ -26,6 +38,9 @@ import { ParentPrincipal } from '../auth/strategies/parent-jwt.strategy';
 interface ParentRequest {
   user: ParentPrincipal;
 }
+
+const UPLOAD_DIR = join(process.cwd(), 'uploads', 'level-test-questions');
+const UPLOAD_URL_PREFIX = '/uploads/level-test-questions/';
 
 @Controller('level-tests')
 export class LevelTestsController {
@@ -62,6 +77,41 @@ export class LevelTestsController {
   @Get('questions')
   findAllQuestions(@Query('age') age?: string) {
     return this.levelTestsService.findAllQuestions(age !== undefined ? Number(age) : undefined);
+  }
+
+  // 관리자: 문항 이미지 업로드
+  @UseGuards(JwtAuthGuard)
+  @Post('question-images')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, callback) => {
+          mkdirSync(UPLOAD_DIR, { recursive: true });
+          callback(null, UPLOAD_DIR);
+        },
+        filename: (_req, file, callback) => {
+          try {
+            callback(null, buildUploadFilename(file.mimetype));
+          } catch (error) {
+            callback(error as Error, '');
+          }
+        },
+      }),
+      limits: { fileSize: MAX_IMAGE_SIZE_BYTES },
+      fileFilter: (_req, file, callback) => {
+        if (!isAllowedImageMimeType(file.mimetype)) {
+          callback(new BadRequestException('지원하지 않는 이미지 형식입니다') as unknown as Error, false);
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  uploadQuestionImage(@UploadedFile() file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('이미지 파일이 필요합니다');
+    }
+    return { url: `${UPLOAD_URL_PREFIX}${file.filename}` };
   }
 
   @UseGuards(JwtAuthGuard)

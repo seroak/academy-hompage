@@ -4,6 +4,7 @@ import {
   updateLevelTestQuestion,
   deleteLevelTestQuestion,
   upsertLevelTestConfig,
+  uploadLevelTestQuestionImage,
 } from '../../../api/levelTests.api'
 import { queryKeys } from '../../../queries/queryKeys'
 import type {
@@ -48,6 +49,11 @@ export function useLevelTestMutations() {
     onSuccess: invalidateConfigs,
   })
 
+  const uploadImageMutation = useMutation({
+    mutationKey: ['levelTests', 'questions', 'upload-image'],
+    mutationFn: (file: File) => uploadLevelTestQuestionImage(file),
+  })
+
   return {
     createQuestion: (input: CreateLevelTestQuestionInput) => createMutation.mutateAsync(input),
     updateQuestion: (id: string, input: Partial<CreateLevelTestQuestionInput>) =>
@@ -55,11 +61,14 @@ export function useLevelTestMutations() {
     deleteQuestion: (id: string) => deleteMutation.mutateAsync(id),
     upsertConfig: (age: number, input: UpsertLevelTestAgeConfigInput) =>
       upsertConfigMutation.mutateAsync({ age, input }),
+    uploadQuestionImage: (file: File) => uploadImageMutation.mutateAsync(file),
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isUpsertingConfig: upsertConfigMutation.isPending,
+    isUploadingImage: uploadImageMutation.isPending,
     createError: createMutation.error,
     updateError: updateMutation.error,
+    uploadImageError: uploadImageMutation.error,
   }
 }

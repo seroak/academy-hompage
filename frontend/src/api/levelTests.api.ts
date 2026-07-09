@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { apiFetch } from '../lib/apiClient'
 import {
   LevelTestQuestionListSchema,
@@ -44,6 +45,18 @@ export async function updateLevelTestQuestion(
 
 export async function deleteLevelTestQuestion(id: string): Promise<void> {
   await apiFetch(`/level-tests/questions/${id}`, { method: 'DELETE' })
+}
+
+const UploadImageResultSchema = z.object({ url: z.string() })
+
+export async function uploadLevelTestQuestionImage(file: File): Promise<{ url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const raw = await apiFetch('/level-tests/question-images', {
+    method: 'POST',
+    body: formData,
+  })
+  return UploadImageResultSchema.parse(raw)
 }
 
 // 관리자: 나이별 출제 수 설정

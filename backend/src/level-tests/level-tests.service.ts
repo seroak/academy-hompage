@@ -10,12 +10,16 @@ import { CreateLevelTestQuestionDto } from './dto/create-level-test-question.dto
 import { UpdateLevelTestQuestionDto } from './dto/update-level-test-question.dto';
 import { UpsertLevelTestAgeConfigDto } from './dto/upsert-level-test-age-config.dto';
 import { CreateLevelTestResultDto } from './dto/create-level-test-result.dto';
+import { LevelTestImageStorageService } from './level-test-image-storage.service';
 
 const DEFAULT_DRAW_COUNT = 5;
 
 @Injectable()
 export class LevelTestsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly imageStorage: LevelTestImageStorageService,
+  ) {}
 
   // 문제 은행 (관리자)
   findAllQuestions(age?: number) {
@@ -42,8 +46,14 @@ export class LevelTestsService {
   }
 
   async updateQuestion(id: string, dto: UpdateLevelTestQuestionDto) {
+    const touchesImage = Object.prototype.hasOwnProperty.call(dto, 'promptImageUrl');
+    const previous = touchesImage
+      ? await this.prisma.levelTestQuestion.findUnique({ where: { id } })
+      : null;
+
+    let updated;
     try {
-      return await this.prisma.levelTestQuestion.update({
+      updated = await this.prisma.levelTestQuestion.update({
         where: { id },
         data: dto,
       });
@@ -53,9 +63,17 @@ export class LevelTestsService {
       }
       throw error;
     }
+
+    if (touchesImage && previous?.promptImageUrl && previous.promptImageUrl !== dto.promptImageUrl) {
+      await this.imageStorage.deleteUploadedImage(previous.promptImageUrl);
+    }
+
+    return updated;
   }
 
   async removeQuestion(id: string) {
+    const existing = await this.prisma.levelTestQuestion.findUnique({ where: { id } });
+
     try {
       await this.prisma.levelTestQuestion.delete({ where: { id } });
     } catch (error) {
@@ -63,6 +81,10 @@ export class LevelTestsService {
         throw new NotFoundException(`LevelTestQuestion ${id} not found`);
       }
       throw error;
+    }
+
+    if (existing?.promptImageUrl) {
+      await this.imageStorage.deleteUploadedImage(existing.promptImageUrl);
     }
   }
 
@@ -141,6 +163,7 @@ export class LevelTestsService {
           questionId: question.id,
           type: question.type,
           prompt: question.prompt,
+          promptImageUrl: question.promptImageUrl ?? null,
           choices: question.choices,
           correctChoiceIndex: question.correctChoiceIndex,
           selectedChoiceIndex: answer.selectedChoiceIndex ?? null,
@@ -152,6 +175,7 @@ export class LevelTestsService {
         questionId: question.id,
         type: question.type,
         prompt: question.prompt,
+        promptImageUrl: question.promptImageUrl ?? null,
         choices: question.choices,
         textAnswer: answer.textAnswer ?? null,
         correct: null,

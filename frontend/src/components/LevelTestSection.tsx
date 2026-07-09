@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useLevelTestQuizQuery } from '../screens/hooks/useLevelTestQuizQuery'
 import { useSubmitLevelTestResultMutation } from '../screens/hooks/useSubmitLevelTestResultMutation'
 import type { SubmitLevelTestAnswer } from '../api/schemas/levelTest.schema'
+import LevelTestQuestionList, { type AnswerDraft } from './LevelTestQuestionList'
 
 interface Props {
   childName: string
@@ -11,8 +12,6 @@ interface Props {
   completedResultId: string | null
   onCompleted: (resultId: string, summary: { score: number; scorableCount: number }) => void
 }
-
-type AnswerDraft = { selectedChoiceIndex?: number; textAnswer?: string }
 
 export default function LevelTestSection({ childName, childAge, completedResultId, onCompleted }: Props) {
   const { questions, isLoading, start } = useLevelTestQuizQuery(childAge)
@@ -102,35 +101,12 @@ export default function LevelTestSection({ childName, childAge, completedResultI
 
       {!isLoading && questions.length > 0 && (
         <div className="mt-3 flex flex-col gap-4">
-          {questions.map((question, index) => (
-            <div key={question.id}>
-              <p className="text-sm font-medium text-slate-800">
-                {index + 1}. {question.prompt}
-              </p>
-              {question.type === 'MULTIPLE_CHOICE' ? (
-                <div className="mt-2 flex flex-col gap-1.5">
-                  {question.choices.map((choice, choiceIndex) => (
-                    <label key={choiceIndex} className="flex items-center gap-2 text-sm text-slate-700">
-                      <input
-                        type="radio"
-                        name={question.id}
-                        checked={answers[question.id]?.selectedChoiceIndex === choiceIndex}
-                        onChange={() => setChoiceAnswer(question.id, choiceIndex)}
-                      />
-                      {choice}
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <textarea
-                  className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  rows={2}
-                  value={answers[question.id]?.textAnswer ?? ''}
-                  onChange={(e) => setTextAnswer(question.id, e.target.value)}
-                />
-              )}
-            </div>
-          ))}
+          <LevelTestQuestionList
+            questions={questions}
+            answers={answers}
+            onChoiceChange={setChoiceAnswer}
+            onTextChange={setTextAnswer}
+          />
 
           {submitError && <p className="text-sm text-red-600">{submitError}</p>}
 

@@ -6,6 +6,7 @@ export type QuestionFormState = {
   age: number
   type: LevelTestQuestionType
   prompt: string
+  promptImageUrl?: string
   choices: string[]
   correctChoiceIndex?: number
   active: boolean
@@ -15,6 +16,7 @@ export const emptyQuestionForm: QuestionFormState = {
   age: 4,
   type: 'MULTIPLE_CHOICE',
   prompt: '',
+  promptImageUrl: undefined,
   choices: ['', ''],
   correctChoiceIndex: 0,
   active: true,

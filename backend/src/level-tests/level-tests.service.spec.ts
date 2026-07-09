@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { LevelTestsService } from './level-tests.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { LevelTestImageStorageService } from './level-test-image-storage.service';
 
 describe('LevelTestsService', () => {
   let service: LevelTestsService;
+  let imageStorage: { deleteUploadedImage: jest.Mock };
   let prisma: {
     levelTestQuestion: {
       findMany: jest.Mock;
@@ -47,9 +49,14 @@ describe('LevelTestsService', () => {
       },
       parentUser: { findUnique: jest.fn() },
     };
+    imageStorage = { deleteUploadedImage: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [LevelTestsService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        LevelTestsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: LevelTestImageStorageService, useValue: imageStorage },
+      ],
     }).compile();
 
     service = module.get<LevelTestsService>(LevelTestsService);
@@ -131,12 +138,58 @@ describe('LevelTestsService', () => {
       );
     });
 
+    it('promptImageUrl이 변경되면 기존 이미지를 정리한다', async () => {
+      prisma.levelTestQuestion.findUnique.mockResolvedValue({
+        id: 'q1',
+        promptImageUrl: '/uploads/level-test-questions/old.png',
+      });
+      prisma.levelTestQuestion.update.mockResolvedValue({ id: 'q1' });
+
+      await service.updateQuestion('q1', {
+        promptImageUrl: '/uploads/level-test-questions/new.png',
+      } as any);
+
+      expect(imageStorage.deleteUploadedImage).toHaveBeenCalledWith(
+        '/uploads/level-test-questions/old.png',
+      );
+    });
+
+    it('promptImageUrl이 바뀌지 않으면 이미지를 정리하지 않는다', async () => {
+      prisma.levelTestQuestion.findUnique.mockResolvedValue({
+        id: 'q1',
+        promptImageUrl: '/uploads/level-test-questions/same.png',
+      });
+      prisma.levelTestQuestion.update.mockResolvedValue({ id: 'q1' });
+
+      await service.updateQuestion('q1', {
+        promptImageUrl: '/uploads/level-test-questions/same.png',
+      } as any);
+
+      expect(imageStorage.deleteUploadedImage).not.toHaveBeenCalled();
+    });
+
+    it('promptImageUrl을 건드리지 않는 수정은 기존 문항을 조회하지 않는다', async () => {
+      prisma.levelTestQuestion.update.mockResolvedValue({ id: 'q1', prompt: '수정됨' });
+
+      await service.updateQuestion('q1', { prompt: '수정됨' } as any);
+
+      expect(prisma.levelTestQuestion.findUnique).not.toHaveBeenCalled();
+      expect(imageStorage.deleteUploadedImage).not.toHaveBeenCalled();
+    });
+
     it('문항을 삭제한다', async () => {
+      prisma.levelTestQuestion.findUnique.mockResolvedValue({
+        id: 'q1',
+        promptImageUrl: '/uploads/level-test-questions/old.png',
+      });
       prisma.levelTestQuestion.delete.mockResolvedValue({ id: 'q1' });
 
       await service.removeQuestion('q1');
 
       expect(prisma.levelTestQuestion.delete).toHaveBeenCalledWith({ where: { id: 'q1' } });
+      expect(imageStorage.deleteUploadedImage).toHaveBeenCalledWith(
+        '/uploads/level-test-questions/old.png',
+      );
     });
 
     it('삭제 대상이 없으면 NotFoundException을 던진다', async () => {
@@ -220,16 +273,41 @@ describe('LevelTestsService', () => {
     } as any;
 
     const questions = [
-      { id: 'q1', type: 'MULTIPLE_CHOICE', prompt: 'p1', choices: ['a', 'b'], correctChoiceIndex: 0 },
+      {
+        id: 'q1',
+        type: 'MULTIPLE_CHOICE',
+        prompt: 'p1',
+        promptImageUrl: '/uploads/level-test-questions/p1.png',
+        choices: ['a', 'b'],
+        correctChoiceIndex: 0,
+      },
       { id: 'q2', type: 'MULTIPLE_CHOICE', prompt: 'p2', choices: ['a', 'b'], correctChoiceIndex: 0 },
       { id: 'q3', type: 'SHORT_ANSWER', prompt: 'p3', choices: [], correctChoiceIndex: null },
     ];
 
-    it('부모 계정이 없으면 NotFoundException을 던진다', async () => {
+    it('부모 계정 ID 자체가 없으면 NotFoundException을 던진다', async () => {
+      await expect(service.submitResult(dto, undefined)).rejects.toThrow(NotFoundException);
+      expect(prisma.levelTestResult.create).not.toHaveBeenCalled();
+    });
+
+    it('부모 계정을 찾을 수 없으면 UnauthorizedException을 던진다', async () => {
       prisma.parentUser.findUnique.mockResolvedValue(null);
 
       await expect(service.submitResult(dto, 'missing-parent')).rejects.toThrow(
-        NotFoundException,
+        UnauthorizedException,
+      );
+      expect(prisma.levelTestResult.create).not.toHaveBeenCalled();
+    });
+
+    it('중복된 문항 ID가 포함되면 BadRequestException을 던진다', async () => {
+      prisma.parentUser.findUnique.mockResolvedValue({ id: 'parent-1' });
+      const dtoWithDuplicate = {
+        ...dto,
+        answers: [...dto.answers, { questionId: 'q1', selectedChoiceIndex: 1 }],
+      };
+
+      await expect(service.submitResult(dtoWithDuplicate, 'parent-1')).rejects.toThrow(
+        BadRequestException,
       );
       expect(prisma.levelTestResult.create).not.toHaveBeenCalled();
     });
@@ -263,6 +341,7 @@ describe('LevelTestsService', () => {
               questionId: 'q1',
               type: 'MULTIPLE_CHOICE',
               prompt: 'p1',
+              promptImageUrl: '/uploads/level-test-questions/p1.png',
               choices: ['a', 'b'],
               correctChoiceIndex: 0,
               selectedChoiceIndex: 0,
@@ -272,6 +351,7 @@ describe('LevelTestsService', () => {
               questionId: 'q2',
               type: 'MULTIPLE_CHOICE',
               prompt: 'p2',
+              promptImageUrl: null,
               choices: ['a', 'b'],
               correctChoiceIndex: 0,
               selectedChoiceIndex: 1,
@@ -281,6 +361,7 @@ describe('LevelTestsService', () => {
               questionId: 'q3',
               type: 'SHORT_ANSWER',
               prompt: 'p3',
+              promptImageUrl: null,
               choices: [],
               textAnswer: '제 답변입니다',
               correct: null,
