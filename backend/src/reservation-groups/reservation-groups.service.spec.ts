@@ -3,6 +3,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ReservationGroupsService } from './reservation-groups.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notifications/notification.service';
+import { ReservationGroupsValidator } from './reservation-groups.validator';
 
 describe('ReservationGroupsService', () => {
   let service: ReservationGroupsService;
@@ -65,6 +66,7 @@ describe('ReservationGroupsService', () => {
         ReservationGroupsService,
         { provide: PrismaService, useValue: prisma },
         { provide: NotificationService, useValue: notification },
+        ReservationGroupsValidator,
       ],
     }).compile();
 

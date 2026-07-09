@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from '../notifications/notification.service';
+import { ReservationGroupsValidator } from './reservation-groups.validator';
 import {
   CreateReservationGroupDto,
   GroupSlotDto,
@@ -18,6 +19,7 @@ export class ReservationGroupsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notification: NotificationService,
+    private readonly validator: ReservationGroupsValidator,
   ) {}
 
   findAll() {
@@ -101,15 +103,10 @@ export class ReservationGroupsService {
       throw new ConflictException('일부 신청을 찾을 수 없습니다');
     }
 
-    if (reservations.some((reservation) => reservation.status !== 'WAITING')) {
-      throw new ConflictException(
-        '대기 중인 신청만 그룹으로 확정할 수 있습니다',
-      );
-    }
-
-    if (dto.capacity < reservationIds.length) {
-      throw new ConflictException('정원은 선택된 인원 수 이상이어야 합니다');
-    }
+    reservations.forEach((reservation) => 
+      this.validator.validateReservationStatus(reservation.status, 'WAITING', '대기 중인 신청만 그룹으로 확정할 수 있습니다')
+    );
+    this.validator.validateCapacity(dto.capacity, reservationIds.length);
 
     const ages = reservations.map((reservation) => reservation.childAge);
     const minAge = dto.minAge ?? Math.min(...ages);
@@ -119,23 +116,12 @@ export class ReservationGroupsService {
       reservations.map((reservation) => [reservation.id, reservation]),
     );
 
-    if (
-      dto.slots.some((slot) => {
-        const reservation = reservationById.get(slot.reservationId)!;
-        return !reservation.preferredSlots.some(
-          (preferred) =>
-            preferred.dayOfWeek === slot.dayOfWeek &&
-            preferred.startMinute <= slot.startMinute &&
-            preferred.endMinute >= slot.endMinute,
-        );
-      })
-    ) {
-      throw new ConflictException(
-        '확정 시간은 해당 신청의 후보 시간 범위 안에 포함되어야 합니다',
-      );
-    }
+    dto.slots.forEach((slot) => {
+      const reservation = reservationById.get(slot.reservationId)!;
+      this.validator.validateSlotsWithinPreferred([slot], reservation.preferredSlots);
+    });
 
-    this.assertNoGaps(dto.slots);
+    this.validator.assertNoGaps(dto.slots);
 
     const group = await this.prisma.$transaction(async (tx) => {
       const createdGroup = await tx.reservationGroup.create({
@@ -176,9 +162,7 @@ export class ReservationGroupsService {
       throw new NotFoundException(`ReservationGroup ${groupId} not found`);
     }
 
-    if (group.status !== 'CONFIRMED') {
-      throw new ConflictException('확정된 그룹에만 인원을 추가할 수 있습니다');
-    }
+    this.validator.validateGroupStatus(group.status, 'CONFIRMED', '확정된 그룹에만 인원을 추가할 수 있습니다');
 
     const reservation = await this.prisma.reservation.findUnique({
       where: { id: dto.reservationId },
@@ -189,61 +173,22 @@ export class ReservationGroupsService {
       throw new NotFoundException(`Reservation ${dto.reservationId} not found`);
     }
 
-    if (reservation.status !== 'WAITING') {
-      throw new ConflictException('대기 중인 신청만 그룹에 추가할 수 있습니다');
-    }
+    this.validator.validateReservationStatus(reservation.status, 'WAITING', '대기 중인 신청만 그룹에 추가할 수 있습니다');
 
     const currentCount = await this.prisma.reservation.count({
       where: { groupId },
     });
-    if (currentCount + 1 > group.capacity) {
-      throw new ConflictException('그룹 정원이 가득 찼습니다');
-    }
-
-    if (
-      reservation.childAge < group.minAge ||
-      reservation.childAge > group.maxAge
-    ) {
-      throw new ConflictException('그룹의 나이대와 맞지 않습니다');
-    }
-
-    if (
-      dto.slots.some(
-        (slot) =>
-          !reservation.preferredSlots.some(
-            (preferred) =>
-              preferred.dayOfWeek === slot.dayOfWeek &&
-              preferred.startMinute <= slot.startMinute &&
-              preferred.endMinute >= slot.endMinute,
-          ),
-      )
-    ) {
-      throw new ConflictException(
-        '확정 시간은 해당 신청의 후보 시간 범위 안에 포함되어야 합니다',
-      );
-    }
-
-    if (
-      dto.slots.some(
-        (slot) =>
-          !group.slots.some(
-            (existing) =>
-              existing.dayOfWeek === slot.dayOfWeek &&
-              slot.startMinute < existing.endMinute &&
-              slot.endMinute > existing.startMinute,
-          ),
-      )
-    ) {
-      throw new ConflictException(
-        '추가할 시간이 그룹의 기존 시간대와 겹치지 않습니다',
-      );
-    }
+    
+    this.validator.validateCapacity(group.capacity, currentCount + 1);
+    this.validator.validateAgeBounds(reservation.childAge, group.minAge, group.maxAge);
+    this.validator.validateSlotsWithinPreferred(dto.slots, reservation.preferredSlots);
+    this.validator.validateSlotsOverlap(dto.slots, group.slots);
 
     const newSlots = dto.slots.map((slot) => ({
       ...slot,
       reservationId: dto.reservationId,
     }));
-    this.assertNoGaps(newSlots);
+    this.validator.assertNoGaps(newSlots);
 
     const updatedGroup = await this.prisma.$transaction(async (tx) => {
       const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
@@ -277,27 +222,7 @@ export class ReservationGroupsService {
         where: { groupId: id },
       });
 
-      if (dto.capacity !== undefined && dto.capacity < members.length) {
-        throw new ConflictException('정원은 현재 인원 수 이상이어야 합니다');
-      }
-
-      if (
-        dto.minAge !== undefined &&
-        members.some((member) => member.childAge < dto.minAge!)
-      ) {
-        throw new ConflictException(
-          '최소 연령은 기존 멤버의 나이보다 클 수 없습니다',
-        );
-      }
-
-      if (
-        dto.maxAge !== undefined &&
-        members.some((member) => member.childAge > dto.maxAge!)
-      ) {
-        throw new ConflictException(
-          '최대 연령은 기존 멤버의 나이보다 작을 수 없습니다',
-        );
-      }
+      this.validator.validateUpdateBounds(members, dto.capacity, dto.minAge, dto.maxAge);
     }
 
     try {
@@ -364,9 +289,7 @@ export class ReservationGroupsService {
       throw new NotFoundException(`ReservationGroup ${groupId} not found`);
     }
 
-    if (group.status !== 'CONFIRMED') {
-      throw new ConflictException('확정된 그룹만 시간을 수정할 수 있습니다');
-    }
+    this.validator.validateGroupStatus(group.status, 'CONFIRMED', '확정된 그룹만 시간을 수정할 수 있습니다');
 
     const reservation = await this.prisma.reservation.findUnique({
       where: { id: reservationId },
@@ -381,24 +304,10 @@ export class ReservationGroupsService {
       throw new ConflictException('해당 신청은 이 그룹의 멤버가 아닙니다');
     }
 
-    if (
-      dto.slots.some(
-        (slot) =>
-          !reservation.preferredSlots.some(
-            (preferred) =>
-              preferred.dayOfWeek === slot.dayOfWeek &&
-              preferred.startMinute <= slot.startMinute &&
-              preferred.endMinute >= slot.endMinute,
-          ),
-      )
-    ) {
-      throw new ConflictException(
-        '확정 시간은 해당 신청의 후보 시간 범위 안에 포함되어야 합니다',
-      );
-    }
+    this.validator.validateSlotsWithinPreferred(dto.slots, reservation.preferredSlots);
 
     const newSlots = dto.slots.map((slot) => ({ ...slot, reservationId }));
-    this.assertNoGaps(newSlots);
+    this.validator.assertNoGaps(newSlots);
 
     return this.prisma.$transaction(async (tx) => {
       await tx.reservationGroupSlot.deleteMany({
@@ -440,26 +349,5 @@ export class ReservationGroupsService {
       error !== null &&
       (error as { code?: string }).code === 'P2025'
     );
-  }
-
-  private assertNoGaps(slots: GroupSlotDto[]): void {
-    const byReservationDay = new Map<string, GroupSlotDto[]>();
-    for (const slot of slots) {
-      const key = `${slot.reservationId}-${slot.dayOfWeek}`;
-      const list = byReservationDay.get(key) ?? [];
-      list.push(slot);
-      byReservationDay.set(key, list);
-    }
-
-    for (const list of byReservationDay.values()) {
-      const sorted = [...list].sort((a, b) => a.startMinute - b.startMinute);
-      for (let i = 1; i < sorted.length; i++) {
-        if (sorted[i].startMinute !== sorted[i - 1].endMinute) {
-          throw new ConflictException(
-            '선택한 슬롯 사이에 빈 시간이 있어 그룹으로 묶을 수 없습니다',
-          );
-        }
-      }
-    }
   }
 }
