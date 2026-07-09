@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronRight, Info } from "lucide-react";
 import { Reservation } from "../../../../api/schemas/reservation.schema";
 import { ReservationGroup } from "../../../../api/schemas/reservation-group.schema";
-import { cellBackground, reservationTitle, slotKey } from "../utils/reservationAdminUtils";
+import { cellBackground, childColor, reservationTitle, slotKey } from "../utils/reservationAdminUtils";
 import { DayOfWeek, SelectedSlot } from "../types";
 
 type Props = {
@@ -238,6 +238,7 @@ function WaitingReservationItem({
   isMuted,
 }: WaitingReservationItemProps) {
   const isSelected = selectedSlots.has(slotKey(reservation.id, day, rowStart));
+  const color = childColor(reservation);
 
   return (
     <div className="flex flex-col gap-1">
@@ -246,12 +247,13 @@ function WaitingReservationItem({
           type="button"
           title={reservationTitle(reservation)}
           onClick={() => onToggleSlot(reservation, day, rowStart)}
-          className={`flex-1 truncate rounded-full px-3 py-1.5 text-left text-xs font-black transition ${
+          style={isSelected || isMuted ? undefined : { backgroundColor: color.background, borderColor: color.border }}
+          className={`flex-1 truncate rounded-full border px-3 py-1.5 text-left text-xs font-black transition ${
             isSelected
-              ? "bg-[#ff8a1f] text-white shadow-[0_8px_18px_rgba(255,138,31,0.22)]"
+              ? "border-transparent bg-[#ff8a1f] text-white shadow-[0_8px_18px_rgba(255,138,31,0.22)]"
               : isMuted
-                ? "border border-[#e5ddcf] bg-[#faf7f0] text-[#9a8f7d] hover:border-[#ddd0ba] hover:text-[#7d735f]"
-                : "border border-[#f2dfb9] bg-white text-[#3f3a31] hover:border-[#ffd66b] hover:text-[#e86f00]"
+                ? "border-[#e5ddcf] bg-[#faf7f0] text-[#9a8f7d] hover:border-[#ddd0ba] hover:text-[#7d735f]"
+                : "text-[#3f3a31] hover:opacity-80"
           }`}
         >
           {reservation.childName}
@@ -321,7 +323,8 @@ function GroupedReservationsSection({
                 key={reservation.id}
                 type="button"
                 onClick={() => onOpenDetail(reservation)}
-                className="w-fit rounded bg-white px-2 py-0.5 text-left text-[11px] font-bold text-[#236c9c] shadow-sm transition hover:bg-[#f0f8ff]"
+                style={{ backgroundColor: childColor(reservation).background }}
+                className="w-fit rounded px-2 py-0.5 text-left text-[11px] font-bold text-[#236c9c] shadow-sm transition hover:opacity-80"
               >
                 {reservation.childName}
               </button>
