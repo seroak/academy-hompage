@@ -2,9 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createWalkInReservation, deleteReservation, updateReservation } from '../../../api/reservations.api'
 import { queryKeys } from '../../../queries/queryKeys'
 import type {
-  CreateReservationInput,
   CreateWalkInReservationInput,
-  Reservation,
+  UpdateReservationInput,
 } from '../../../api/schemas/reservation.schema'
 
 export function useReservationMutations() {
@@ -16,13 +15,7 @@ export function useReservationMutations() {
 
   const updateMutation = useMutation({
     mutationKey: ['reservations', 'update'],
-    mutationFn: ({
-      id,
-      input,
-    }: {
-      id: string
-      input: Partial<CreateReservationInput> & { status?: Reservation['status'] }
-    }) => updateReservation(id, input),
+    mutationFn: ({ id, input }: { id: string; input: UpdateReservationInput }) => updateReservation(id, input),
     onSuccess: invalidateReservations,
   })
 
@@ -39,10 +32,7 @@ export function useReservationMutations() {
   })
 
   return {
-    updateReservation: (
-      id: string,
-      input: Partial<CreateReservationInput> & { status?: Reservation['status'] },
-    ) => updateMutation.mutateAsync({ id, input }),
+    updateReservation: (id: string, input: UpdateReservationInput) => updateMutation.mutateAsync({ id, input }),
     deleteReservation: (id: string) => deleteMutation.mutateAsync(id),
     createWalkInReservation: (input: CreateWalkInReservationInput) => createWalkInMutation.mutateAsync(input),
     isUpdating: updateMutation.isPending,

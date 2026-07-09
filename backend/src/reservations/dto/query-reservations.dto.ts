@@ -14,6 +14,6 @@ export class QueryReservationsDto {
   age?: number;
 
   @IsOptional()
-  @IsIn(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'])
+  @IsIn(['MON', 'TUE', 'WED', 'THU', 'FRI'])
   dayOfWeek?: string;
 }

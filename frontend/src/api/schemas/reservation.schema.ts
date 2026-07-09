@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const DAY_OF_WEEK_OPTIONS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
+export const DAY_OF_WEEK_OPTIONS = ['MON', 'TUE', 'WED', 'THU', 'FRI'] as const
 export const RESERVATION_STATUS_OPTIONS = ['WAITING', 'GROUPED', 'CANCELLED'] as const
 
 export const DAY_OF_WEEK_LABELS: Record<(typeof DAY_OF_WEEK_OPTIONS)[number], string> = {
@@ -9,11 +9,10 @@ export const DAY_OF_WEEK_LABELS: Record<(typeof DAY_OF_WEEK_OPTIONS)[number], st
   WED: '수',
   THU: '목',
   FRI: '금',
-  SAT: '토',
 }
 
-export const OPERATING_START_MINUTE = 720
-export const OPERATING_END_MINUTE = 1080
+export const OPERATING_START_MINUTE = 780
+export const OPERATING_END_MINUTE = 1200
 export const SLOT_STEP_MINUTES = 10
 
 export function timeLabel(minute: number): string {
@@ -47,13 +46,13 @@ export const PreferredSlotSchema = z
     startMinute: z
       .number()
       .int('시작 시각은 10분 단위 정수로 입력해 주세요')
-      .min(OPERATING_START_MINUTE, '12:00~18:00 사이에서 선택해 주세요')
-      .max(OPERATING_END_MINUTE, '12:00~18:00 사이에서 선택해 주세요'),
+      .min(OPERATING_START_MINUTE, '13:00~20:00 사이에서 선택해 주세요')
+      .max(OPERATING_END_MINUTE, '13:00~20:00 사이에서 선택해 주세요'),
     endMinute: z
       .number()
       .int('종료 시각은 10분 단위 정수로 입력해 주세요')
-      .min(OPERATING_START_MINUTE, '12:00~18:00 사이에서 선택해 주세요')
-      .max(OPERATING_END_MINUTE, '12:00~18:00 사이에서 선택해 주세요'),
+      .min(OPERATING_START_MINUTE, '13:00~20:00 사이에서 선택해 주세요')
+      .max(OPERATING_END_MINUTE, '13:00~20:00 사이에서 선택해 주세요'),
   })
   .refine((slot) => slot.startMinute % SLOT_STEP_MINUTES === 0, {
     message: `${SLOT_STEP_MINUTES}분 단위로 선택해 주세요`,
@@ -107,6 +106,12 @@ export const CreateReservationInputSchema = z.object({
 })
 
 export type CreateReservationInput = z.infer<typeof CreateReservationInputSchema>
+
+export const UpdateReservationInputSchema = CreateReservationInputSchema.partial().extend({
+  status: z.enum(RESERVATION_STATUS_OPTIONS).optional(),
+})
+
+export type UpdateReservationInput = z.infer<typeof UpdateReservationInputSchema>
 
 export const CreateWalkInReservationInputSchema = z.object({
   childName: z.string().min(1, '아이 이름을 입력해 주세요'),

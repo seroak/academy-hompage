@@ -30,3 +30,11 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+cd backend
+docker compose down
+rm -rf postgres_data
+docker compose up -d
+sleep 3 # postgres 기동 대기
+npx prisma migrate dev # 스키마 적용
+npx prisma db seed # 시드 적용

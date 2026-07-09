@@ -102,6 +102,8 @@ export default function ReservationsAdminPage() {
       <ReservationDetailModal
         reservation={admin.detailReservation}
         onClose={() => admin.setDetailReservation(null)}
+        onSave={admin.handleUpdateReservation}
+        isSaving={admin.isUpdating}
       />
       <GroupDetailModal
         group={admin.detailGroup}

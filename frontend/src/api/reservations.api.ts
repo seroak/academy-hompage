@@ -6,6 +6,7 @@ import {
   type CreateWalkInReservationInput,
   type Reservation,
   type ReservationFilters,
+  type UpdateReservationInput,
 } from './schemas/reservation.schema'
 
 function toQueryString(filters: ReservationFilters): string {
@@ -45,7 +46,7 @@ export async function createWalkInReservation(input: CreateWalkInReservationInpu
 
 export async function updateReservation(
   id: string,
-  input: Partial<CreateReservationInput> & { status?: Reservation['status'] },
+  input: UpdateReservationInput,
 ): Promise<Reservation> {
   const raw = await apiFetch(`/reservations/${id}`, {
     method: 'PATCH',

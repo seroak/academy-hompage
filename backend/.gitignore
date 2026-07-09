@@ -7,3 +7,6 @@ dist
 
 # 사용자 업로드 파일(문항 이미지 등)은 커밋 대상이 아님
 /uploads
+
+# Postgres 데이터 파일(로컬 bind mount) — 커밋 대상 아님
+/postgres_data

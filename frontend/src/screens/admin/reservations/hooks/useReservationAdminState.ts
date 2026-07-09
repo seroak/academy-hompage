@@ -3,7 +3,7 @@ import { useReservationsQuery } from '../../hooks/useReservationsQuery'
 import { useReservationGroupsQuery } from '../../hooks/useReservationGroupsQuery'
 import { useReservationMutations } from '../../hooks/useReservationMutations'
 import { useReservationGroupMutations } from '../../hooks/useReservationGroupMutations'
-import { Reservation } from '../../../../api/schemas/reservation.schema'
+import { Reservation, UpdateReservationInput } from '../../../../api/schemas/reservation.schema'
 import {
   CreateReservationGroupInputSchema,
   ReservationGroup,
@@ -31,7 +31,7 @@ export function useReservationAdminState() {
     ageFilter !== undefined ? { age: ageFilter } : {},
   )
   const { groups } = useReservationGroupsQuery()
-  const { deleteReservation } = useReservationMutations()
+  const { deleteReservation, updateReservation, isUpdating } = useReservationMutations()
   const {
     createGroup,
     deleteGroup,
@@ -49,7 +49,7 @@ export function useReservationAdminState() {
   const [groupForm, setGroupForm] = useState<ReservationGroupFormState>(emptyGroupForm)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [detailReservation, setDetailReservation] = useState<Reservation | null>(null)
+  const [detailReservationId, setDetailReservationId] = useState<string | null>(null)
   const [detailGroupId, setDetailGroupId] = useState<string | null>(null)
 
   const { waiting, statCards } = useReservationStats(reservations, groups)
@@ -159,6 +159,10 @@ export function useReservationAdminState() {
     } catch {
       setSubmitError('그룹 확정에 실패했습니다.')
     }
+  }
+
+  async function handleUpdateReservation(id: string, input: UpdateReservationInput) {
+    await updateReservation(id, input)
   }
 
   async function handleCancelReservation(id: string) {
@@ -275,6 +279,11 @@ export function useReservationAdminState() {
   }
 
   const detailGroup = groups.find((group) => group.id === detailGroupId) ?? null
+  const detailReservation = reservations.find((r) => r.id === detailReservationId) ?? null
+
+  function setDetailReservation(reservation: Reservation | null) {
+    setDetailReservationId(reservation?.id ?? null)
+  }
 
   return {
     ageFilter,
@@ -291,6 +300,7 @@ export function useReservationAdminState() {
     detailReservation,
     setDetailReservation,
     detailGroup,
+    isUpdating,
     isCreating,
     createError,
     isAddingMember,
@@ -307,6 +317,7 @@ export function useReservationAdminState() {
     removeSlot,
     selectCell,
     handleConfirmGroup,
+    handleUpdateReservation,
     handleCancelReservation,
     handleCancelGroup,
     handleAddToGroup,

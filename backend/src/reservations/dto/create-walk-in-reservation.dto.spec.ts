@@ -9,7 +9,7 @@ describe('CreateWalkInReservationDto', () => {
       childName: '민준',
       childAge: 5,
       parentName: '김엄마',
-      preferredSlots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 790 }],
+      preferredSlots: [{ dayOfWeek: 'MON', startMinute: 780, endMinute: 850 }],
       ...overrides,
     });
   }

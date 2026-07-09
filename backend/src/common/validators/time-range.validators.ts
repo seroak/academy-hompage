@@ -6,8 +6,8 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 
-export const OPERATING_START_MINUTE = 720; // 12:00
-export const OPERATING_END_MINUTE = 1080; // 18:00
+export const OPERATING_START_MINUTE = 780; // 13:00
+export const OPERATING_END_MINUTE = 1200; // 20:00
 export const SLOT_STEP_MINUTES = 10;
 
 @ValidatorConstraint({ name: 'isMultipleOfSlotStep', async: false })

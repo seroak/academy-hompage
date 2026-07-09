@@ -183,7 +183,7 @@ export default function PreferredSlotsPicker({
       <div className="overflow-x-auto">
         <div
           ref={gridRef}
-          className="grid min-w-[720px] grid-cols-[64px_repeat(6,minmax(92px,1fr))] gap-1"
+          className="grid min-w-[720px] grid-cols-[64px_repeat(5,minmax(92px,1fr))] gap-1"
           onPointerMove={(event) => {
             if (isDragging) {
               updateFromPoint(event.clientX, event.clientY);

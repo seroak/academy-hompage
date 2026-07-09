@@ -16,7 +16,7 @@ import {
   OPERATING_START_MINUTE,
 } from '../../common/validators/time-range.validators';
 
-const DAYS_OF_WEEK = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const DAYS_OF_WEEK = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 
 export class PreferredSlotDto {
   @IsIn(DAYS_OF_WEEK)

@@ -43,13 +43,13 @@ const GroupSlotInputSchema = z
     startMinute: z
       .number()
       .int('시작 시각은 10분 단위 정수로 입력해 주세요')
-      .min(OPERATING_START_MINUTE, '12:00~18:00 사이에서 선택해 주세요')
-      .max(OPERATING_END_MINUTE, '12:00~18:00 사이에서 선택해 주세요'),
+      .min(OPERATING_START_MINUTE, '13:00~20:00 사이에서 선택해 주세요')
+      .max(OPERATING_END_MINUTE, '13:00~20:00 사이에서 선택해 주세요'),
     endMinute: z
       .number()
       .int('종료 시각은 10분 단위 정수로 입력해 주세요')
-      .min(OPERATING_START_MINUTE, '12:00~18:00 사이에서 선택해 주세요')
-      .max(OPERATING_END_MINUTE, '12:00~18:00 사이에서 선택해 주세요'),
+      .min(OPERATING_START_MINUTE, '13:00~20:00 사이에서 선택해 주세요')
+      .max(OPERATING_END_MINUTE, '13:00~20:00 사이에서 선택해 주세요'),
   })
   .refine((slot) => slot.startMinute % SLOT_STEP_MINUTES === 0, {
     message: `${SLOT_STEP_MINUTES}분 단위로 선택해 주세요`,

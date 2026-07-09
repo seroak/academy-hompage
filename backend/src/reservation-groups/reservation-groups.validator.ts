@@ -13,6 +13,12 @@ interface ExistingSlot {
   endMinute: number;
 }
 
+interface SlotRange {
+  dayOfWeek: string;
+  startMinute: number;
+  endMinute: number;
+}
+
 @Injectable()
 export class ReservationGroupsValidator {
   validateCapacity(capacity: number, reservationCount: number): void {
@@ -75,7 +81,7 @@ export class ReservationGroupsValidator {
   }
 
   validateSlotsWithinPreferred(
-    slots: GroupSlotDto[],
+    slots: SlotRange[],
     preferredSlots: PreferredSlot[],
   ): void {
     const isOutOfBound = slots.some(
@@ -96,7 +102,7 @@ export class ReservationGroupsValidator {
   }
 
   validateSlotsOverlap(
-    newSlots: GroupSlotDto[],
+    newSlots: SlotRange[],
     existingSlots: ExistingSlot[],
   ): void {
     const isNotOverlapping = newSlots.some(

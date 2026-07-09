@@ -10,7 +10,4 @@ services:
     ports:
       - '5433:5432'
     volumes:
-      - academy_postgres_data:/var/lib/postgresql/data
-
-volumes:
-  academy_postgres_data:
+      - ./postgres_data:/var/lib/postgresql/data
