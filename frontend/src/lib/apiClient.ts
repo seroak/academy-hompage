@@ -26,7 +26,10 @@ export async function apiFetch(
   const authMode = options.authMode ?? 'admin'
   const token = authMode === 'admin' ? useAuthStore.getState().accessToken : null
   const headers = new Headers(init.headers)
-  headers.set('Content-Type', 'application/json')
+  // FormData(파일 업로드 등)는 브라우저가 멀티파트 boundary를 포함해 Content-Type을 직접 설정해야 하므로 건드리지 않는다.
+  if (!(init.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json')
+  }
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
