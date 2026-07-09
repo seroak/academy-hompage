@@ -11,12 +11,13 @@ import {
 } from '../../../../api/schemas/reservation-group.schema'
 import { useReservationStats } from './useReservationStats'
 import { useReservationTimetable } from './useReservationTimetable'
-import { DayOfWeek, ReservationGroupFormState, SelectedSlot, WalkInMemberDraft } from '../types'
+import { DayOfWeek, ReservationGroupFormState, SelectedSlot } from '../types'
 import {
   ADMIN_ROW_MINUTES,
   findSlotGap,
   joinableSlotsForAllDays,
   joinableSlotsForDay,
+  mergeContiguousSlots,
   slotKey,
 } from '../utils/reservationAdminUtils'
 
@@ -30,7 +31,7 @@ export function useReservationAdminState() {
     ageFilter !== undefined ? { age: ageFilter } : {},
   )
   const { groups } = useReservationGroupsQuery()
-  const { deleteReservation, createWalkInReservation } = useReservationMutations()
+  const { deleteReservation } = useReservationMutations()
   const {
     createGroup,
     deleteGroup,
@@ -45,7 +46,6 @@ export function useReservationAdminState() {
   } = useReservationGroupMutations()
 
   const [selectedSlots, setSelectedSlots] = useState<Map<string, SelectedSlot>>(new Map())
-  const [walkInMembers, setWalkInMembers] = useState<WalkInMemberDraft[]>([])
   const [groupForm, setGroupForm] = useState<ReservationGroupFormState>(emptyGroupForm)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -58,13 +58,10 @@ export function useReservationAdminState() {
     useReservationTimetable(waiting, groups)
 
   const selectedReservationIds = [...new Set(Array.from(selectedSlots.values()).map((slot) => slot.reservationId))]
-  const selectedAges = [
-    ...selectedReservationIds
+  const selectedAges = selectedReservationIds
       .map((id) => reservations.find((r) => r.id === id)?.childAge)
-      .filter((age): age is number => age !== undefined),
-    ...walkInMembers.map((member) => member.childAge),
-  ]
-  const totalMemberCount = selectedReservationIds.length + walkInMembers.length
+      .filter((age): age is number => age !== undefined)
+  const totalMemberCount = selectedReservationIds.length
   const groupCapacity = groupForm.capacityOverride ?? Math.max(totalMemberCount, 1)
   const groupMinAge = groupForm.minAgeOverride ?? (selectedAges.length > 0 ? Math.min(...selectedAges) : undefined)
   const groupMaxAge = groupForm.maxAgeOverride ?? (selectedAges.length > 0 ? Math.max(...selectedAges) : undefined)
@@ -114,13 +111,7 @@ export function useReservationAdminState() {
     })
   }
 
-  function addWalkInMember(draft: Omit<WalkInMemberDraft, 'localId'>) {
-    setWalkInMembers((prev) => [...prev, { ...draft, localId: crypto.randomUUID() }])
-  }
 
-  function removeWalkInMember(localId: string) {
-    setWalkInMembers((prev) => prev.filter((member) => member.localId !== localId))
-  }
 
   async function handleConfirmGroup(event: FormEvent) {
     event.preventDefault()
@@ -133,69 +124,21 @@ export function useReservationAdminState() {
       return
     }
 
-    for (const member of walkInMembers) {
-      const memberGap = findSlotGap(
-        member.slots.map((slot) => ({ ...slot, reservationId: member.localId, childName: member.childName })),
-      )
-      if (memberGap) {
-        window.alert(
-          `${memberGap.childName}의 선택한 시간 사이에 빈 시간이 있습니다. 이어지는 시간만 그룹으로 묶을 수 있습니다.`,
-        )
-        return
-      }
-    }
 
-    // 워크인 멤버는 실제 Reservation으로 먼저 만든 뒤, 즉시 selectedSlots에 편입해 상태를 확정한다.
-    // 이렇게 해야 이후 라벨 검증 실패나 그룹 확정 API 실패로 재시도하더라도
-    // 이미 만든 워크인 예약을 중복 생성하지 않고 선택된 슬롯으로 그대로 재사용할 수 있다.
-    let workingSlots = selectedSlots
-
-    if (walkInMembers.length > 0) {
-      try {
-        const created = await Promise.all(
-          walkInMembers.map((member) =>
-            createWalkInReservation({
-              childName: member.childName,
-              childAge: member.childAge,
-              parentName: member.parentName,
-              parentEmail: member.parentEmail,
-              parentPhone: member.parentPhone,
-              preferredSlots: member.slots,
-            }).then((reservation) => ({ reservation, member })),
-          ),
-        )
-        const next = new Map(selectedSlots)
-        for (const { reservation, member } of created) {
-          member.slots.forEach((slot, index) => {
-            next.set(`walkin-${reservation.id}-${index}`, {
-              reservationId: reservation.id,
-              childName: member.childName,
-              dayOfWeek: slot.dayOfWeek,
-              startMinute: slot.startMinute,
-              endMinute: slot.endMinute,
-            })
-          })
-        }
-        workingSlots = next
-        setSelectedSlots(next)
-        setWalkInMembers([])
-      } catch {
-        setSubmitError('직접 추가한 멤버를 등록하지 못해 그룹을 만들지 못했습니다.')
-        return
-      }
-    }
 
     const input = {
       label: groupForm.label,
       capacity: groupCapacity,
       minAge: groupMinAge,
       maxAge: groupMaxAge,
-      slots: Array.from(workingSlots.values()).map(({ reservationId, dayOfWeek, startMinute, endMinute }) => ({
-        reservationId,
-        dayOfWeek,
-        startMinute,
-        endMinute,
-      })),
+      slots: mergeContiguousSlots(
+        Array.from(selectedSlots.values()).map(({ reservationId, dayOfWeek, startMinute, endMinute }) => ({
+          reservationId,
+          dayOfWeek,
+          startMinute,
+          endMinute,
+        })),
+      ),
     }
     const result = CreateReservationGroupInputSchema.safeParse(input)
     if (!result.success) {
@@ -341,7 +284,6 @@ export function useReservationAdminState() {
     reservations,
     groups,
     selectedSlots,
-    walkInMembers,
     groupForm,
     setGroupForm,
     fieldErrors,
@@ -364,8 +306,6 @@ export function useReservationAdminState() {
     toggleSlot,
     removeSlot,
     selectCell,
-    addWalkInMember,
-    removeWalkInMember,
     handleConfirmGroup,
     handleCancelReservation,
     handleCancelGroup,

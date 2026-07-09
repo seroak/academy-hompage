@@ -15,6 +15,8 @@ interface PreferredSlotCellProps {
   inPreview: boolean
   inCancelPreview: boolean
   joinableGroups: JoinableGroup[]
+  blocked: boolean
+  remainingSeats?: number
   isDragging: boolean
   hasAnchor: boolean
   onPointerDown: (anchor: Anchor) => void
@@ -29,6 +31,8 @@ export function PreferredSlotCell({
   inPreview,
   inCancelPreview,
   joinableGroups,
+  blocked,
+  remainingSeats,
   isDragging,
   hasAnchor,
   onPointerDown,
@@ -43,15 +47,18 @@ export function PreferredSlotCell({
       type="button"
       data-slot-day={day}
       data-slot-minute={minute}
+      disabled={blocked}
       title={
-        isJoinable
-          ? joinableGroups
-              .map((group) => `${group.label} 모집중 ${group.filledCount}/${group.capacity}`)
-              .join(', ')
-          : undefined
+        blocked
+          ? '이미 정원이 찬 확정 시간이라 신청할 수 없습니다'
+          : isJoinable
+            ? joinableGroups
+                .map((group) => `${group.label} 모집중 ${group.filledCount}/${group.capacity}`)
+                .join(', ')
+            : undefined
       }
       aria-label={`${DAY_OF_WEEK_LABELS[day]}요일 ${timeLabel(minute)} 선택${
-        isJoinable ? ' (모집중인 반 있음)' : ''
+        blocked ? ' (신청 불가)' : isJoinable ? ' (모집중인 반 있음)' : ''
       }`}
       onPointerDown={(event) => {
         event.currentTarget.setPointerCapture(event.pointerId)
@@ -69,22 +76,26 @@ export function PreferredSlotCell({
         }
       }}
       className={`relative h-8 rounded-md border text-[10px] font-semibold transition ${
-        inCancelPreview
-          ? 'border-red-400 bg-red-500 text-white'
-          : selected
-            ? 'border-brand-700 bg-brand-600 text-white hover:border-red-300 hover:bg-red-500'
-            : inPreview
-              ? 'border-brand-500 bg-brand-200 text-brand-900'
-              : isJoinable
-                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 hover:border-brand-300'
-                : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
+        blocked
+          ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300'
+          : inCancelPreview
+            ? 'border-red-400 bg-red-500 text-white'
+            : selected
+              ? 'border-brand-700 bg-brand-600 text-white hover:border-red-300 hover:bg-red-500'
+              : inPreview
+                ? 'border-brand-500 bg-brand-200 text-brand-900'
+                : isJoinable
+                  ? 'border-emerald-400 bg-emerald-50 text-emerald-700 hover:border-brand-300'
+                  : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
       }`}
     >
-      {isJoinable && !selected && (
+      {isJoinable && !selected && !blocked && (
         <span
           aria-hidden
-          className="absolute right-0.5 top-0.5 size-1.5 rounded-full bg-emerald-500"
-        />
+          className="absolute right-0.5 top-0.5 rounded-full bg-emerald-500 px-1 text-[8px] font-bold leading-tight text-white"
+        >
+          잔여{remainingSeats}
+        </span>
       )}
       {selectedSlot
         ? minute === selectedSlot.startMinute

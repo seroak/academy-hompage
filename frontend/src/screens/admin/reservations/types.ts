@@ -1,4 +1,4 @@
-import type { DAY_OF_WEEK_OPTIONS, PreferredSlot } from '../../../api/schemas/reservation.schema'
+import type { DAY_OF_WEEK_OPTIONS } from '../../../api/schemas/reservation.schema'
 
 export type DayOfWeek = (typeof DAY_OF_WEEK_OPTIONS)[number]
 
@@ -15,14 +15,4 @@ export type SelectedSlot = {
   dayOfWeek: DayOfWeek
   startMinute: number
   endMinute: number
-}
-
-export type WalkInMemberDraft = {
-  localId: string
-  parentName: string
-  childName: string
-  childAge: number
-  parentEmail?: string
-  parentPhone?: string
-  slots: PreferredSlot[]
 }

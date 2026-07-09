@@ -54,6 +54,38 @@ export function slotKey(reservationId: string, day: string, rowStart: number): s
 }
 
 /**
+ * 같은 신청·같은 요일로 개별 선택된 슬롯들 중 인접하거나 겹치는 것을 하나의 연속 구간으로 합친다.
+ * 관리자가 시간표에서 10분 단위 칸을 여러 개 클릭해 그룹을 확정할 때, 클릭한 칸 수만큼
+ * 조각난 슬롯이 그대로 저장되면(예: 730-740, 740-750, ...) 시간표에서 하나의 박스로 묶여 보이지 않는다.
+ */
+export function mergeContiguousSlots<
+  T extends { reservationId: string; dayOfWeek: string; startMinute: number; endMinute: number },
+>(slots: T[]): T[] {
+  const byKey = new Map<string, T[]>()
+  for (const slot of slots) {
+    const key = `${slot.reservationId}-${slot.dayOfWeek}`
+    const list = byKey.get(key) ?? []
+    list.push(slot)
+    byKey.set(key, list)
+  }
+
+  const merged: T[] = []
+  for (const list of byKey.values()) {
+    const sorted = [...list].sort((a, b) => a.startMinute - b.startMinute)
+    for (const slot of sorted) {
+      const last = merged[merged.length - 1]
+      if (last && last.reservationId === slot.reservationId && last.dayOfWeek === slot.dayOfWeek && slot.startMinute <= last.endMinute) {
+        last.endMinute = Math.max(last.endMinute, slot.endMinute)
+      } else {
+        merged.push({ ...slot })
+      }
+    }
+  }
+
+  return merged
+}
+
+/**
  * 같은 신청(학생)·같은 요일로 묶이는 슬롯들이 끊김 없이 이어지는지 확인한다.
  * 빈 시간이 있으면 그 갭 뒤에 오는 슬롯을 반환하고, 없으면 null을 반환한다.
  */

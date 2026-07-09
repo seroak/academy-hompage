@@ -1,16 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { DAY_OF_WEEK_LABELS, timeRangeLabel, type PreferredSlot } from '../../../../api/schemas/reservation.schema'
+import { type PreferredSlot } from '../../../../api/schemas/reservation.schema'
 import PreferredSlotsPicker from '../../../../components/PreferredSlotsPicker'
-import { WalkInMemberDraft } from '../types'
-import { fieldClass, labelClass, errorClass } from '../styles'
 
-type Props = {
-  members: WalkInMemberDraft[]
-  onAddMember: (draft: Omit<WalkInMemberDraft, 'localId'>) => void
-  onRemoveMember: (localId: string) => void
-}
+
+import { fieldClass, labelClass, errorClass } from '../styles'
+import { useReservationMutations } from '../../hooks/useReservationMutations'
 
 const emptyDraft = {
   parentName: '',
@@ -20,12 +16,14 @@ const emptyDraft = {
   parentPhone: '',
 }
 
-export default function WalkInMemberForm({ members, onAddMember, onRemoveMember }: Props) {
+export default function WalkInMemberForm() {
   const [draft, setDraft] = useState(emptyDraft)
   const [slots, setSlots] = useState<PreferredSlot[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  function handleAdd() {
+  const { createWalkInReservation, isCreatingWalkIn } = useReservationMutations()
+
+  async function handleAdd() {
     if (!draft.parentName.trim() || !draft.childName.trim() || draft.childAge === '') {
       setError('보호자 이름·자녀 이름·나이를 입력해 주세요.')
       return
@@ -39,17 +37,22 @@ export default function WalkInMemberForm({ members, onAddMember, onRemoveMember 
       return
     }
 
-    onAddMember({
-      parentName: draft.parentName.trim(),
-      childName: draft.childName.trim(),
-      childAge: Number(draft.childAge),
-      parentEmail: draft.parentEmail.trim() || undefined,
-      parentPhone: draft.parentPhone.trim() || undefined,
-      slots,
-    })
-    setDraft(emptyDraft)
-    setSlots([])
-    setError(null)
+    try {
+      await createWalkInReservation({
+        parentName: draft.parentName.trim(),
+        childName: draft.childName.trim(),
+        childAge: Number(draft.childAge),
+        parentEmail: draft.parentEmail.trim() || undefined,
+        parentPhone: draft.parentPhone.trim() || undefined,
+        preferredSlots: slots,
+      })
+      window.alert('학생이 성공적으로 등록되었습니다. 예약 관리 창에서 확인하세요.')
+      setDraft(emptyDraft)
+      setSlots([])
+      setError(null)
+    } catch {
+      setError('학생을 등록하지 못했습니다. 다시 시도해 주세요.')
+    }
   }
 
   return (
@@ -57,7 +60,7 @@ export default function WalkInMemberForm({ members, onAddMember, onRemoveMember 
       <div>
         <p className="text-sm font-black text-[#e86f00]">직접 추가</p>
         <p className="mt-1 text-xs font-semibold text-[#6f6253]">
-          아직 신청이 없는 학부모·자녀를 직접 입력해 그룹에 포함할 수 있습니다.
+          아직 신청이 없는 학부모·자녀를 직접 입력해 등록합니다. 등록 후 예약 관리 탭에서 시간표를 클릭해 그룹에 포함할 수 있습니다.
         </p>
       </div>
 
@@ -119,47 +122,12 @@ export default function WalkInMemberForm({ members, onAddMember, onRemoveMember 
         <button
           type="button"
           onClick={handleAdd}
-          className="inline-flex h-10 items-center justify-center rounded-full border border-[#ff8a1f] bg-white px-5 text-sm font-black text-[#e86f00] transition hover:bg-[#fff3c8]"
+          disabled={isCreatingWalkIn}
+          className="inline-flex h-10 items-center justify-center rounded-full bg-[#ff8a1f] px-6 text-sm font-black text-white shadow-[0_14px_28px_rgba(255,138,31,0.24)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#e86f00] disabled:translate-y-0 disabled:opacity-50"
         >
-          멤버 추가
+          {isCreatingWalkIn ? '등록 중...' : '학생 등록'}
         </button>
       </div>
-
-      {members.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {members.map((member) => (
-            <li
-              key={member.localId}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#f2dfb9] bg-white px-4 py-2.5"
-            >
-              <div>
-                <p className="text-sm font-black text-[#222222]">
-                  {member.childName} <span className="font-semibold text-[#6f6253]">(만 {member.childAge}세)</span> ·{' '}
-                  <span className="font-semibold text-[#6f6253]">{member.parentName}</span>
-                </p>
-                <ul className="mt-1 flex flex-wrap gap-1.5">
-                  {member.slots.map((slot, index) => (
-                    <li
-                      key={`${member.localId}-${index}`}
-                      className="rounded-full bg-[#fff3c8] px-2.5 py-0.5 text-xs font-bold text-[#9f4d00]"
-                    >
-                      {DAY_OF_WEEK_LABELS[slot.dayOfWeek]} {timeRangeLabel(slot.startMinute, slot.endMinute)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <button
-                type="button"
-                onClick={() => onRemoveMember(member.localId)}
-                aria-label="직접 추가한 멤버 삭제"
-                className="text-sm font-black text-[#d6452f] hover:text-[#b23a26]"
-              >
-                ×
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   )
 }

@@ -23,6 +23,9 @@ export const queryKeys = {
   joinableGroups: {
     all: ['joinableGroups'] as const,
   },
+  confirmedSlots: {
+    all: ['confirmedSlots'] as const,
+  },
   members: {
     all: ['members'] as const,
   },

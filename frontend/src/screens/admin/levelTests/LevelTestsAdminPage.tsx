@@ -12,10 +12,12 @@ import QuestionList from './components/QuestionList'
 import AgeConfigPanel from './components/AgeConfigPanel'
 import ResultsList from './components/ResultsList'
 import ResultDetailModal from './components/ResultDetailModal'
+import PreviewPanel from './components/PreviewPanel'
 
 const TABS = [
   { id: 'questions', label: '문제 관리' },
   { id: 'results', label: '결과 조회' },
+  { id: 'preview', label: '미리보기' },
 ] as const
 
 type Tab = (typeof TABS)[number]['id']
@@ -163,6 +165,8 @@ export default function LevelTestsAdminPage() {
           <ResultDetailModal result={selectedResult} onClose={() => setSelectedResult(null)} />
         </>
       )}
+
+      {tab === 'preview' && <PreviewPanel />}
     </div>
   )
 }

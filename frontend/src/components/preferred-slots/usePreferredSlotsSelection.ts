@@ -55,6 +55,7 @@ export function buildSlot(anchor: Anchor, target: Anchor, existingSlots: Preferr
 export function usePreferredSlotsSelection(
   value: PreferredSlot[],
   onChange: (slots: PreferredSlot[]) => void,
+  blockedSlots: PreferredSlot[] = [],
 ) {
   const didDragRef = useRef(false)
   const dragModeRef = useRef<DragMode>('select')
@@ -63,13 +64,24 @@ export function usePreferredSlotsSelection(
   const [isDragging, setIsDragging] = useState(false)
   const [dragMode, setDragMode] = useState<DragMode>('select')
 
+  // 이미 선택한 슬롯뿐 아니라 확정돼 신청 불가한 슬롯도 드래그 범위의 경계(장애물)로 취급한다.
+  const obstacles = useMemo(() => [...value, ...blockedSlots], [value, blockedSlots])
+
   const preview = useMemo(() => {
     if (!anchor || !hovered || dragMode !== 'select') {
       return null
     }
 
-    return buildSlot(anchor, hovered, value)
-  }, [anchor, dragMode, hovered, value])
+    return buildSlot(anchor, hovered, obstacles)
+  }, [anchor, dragMode, hovered, obstacles])
+
+  function buildSlotFromAnchor(target: Anchor): PreferredSlot | null {
+    if (!anchor) {
+      return null
+    }
+
+    return buildSlot(anchor, target, obstacles)
+  }
 
   function commitSlot(slot: PreferredSlot | null) {
     if (!slot) {
@@ -187,10 +199,20 @@ export function usePreferredSlotsSelection(
     setHovered({ dayOfWeek, minute })
   }
 
+  function isBlockedAt(dayOfWeek: Anchor['dayOfWeek'], minute: number): boolean {
+    return blockedSlots.some(
+      (slot) => slot.dayOfWeek === dayOfWeek && slot.startMinute <= minute && slot.endMinute > minute,
+    )
+  }
+
   function handleCellPointerDown(nextAnchor: Anchor) {
+    if (isBlockedAt(nextAnchor.dayOfWeek, nextAnchor.minute)) {
+      return
+    }
+
     const selectedSlot = slotAt(nextAnchor.dayOfWeek, nextAnchor.minute)
     if (anchor && !isDragging) {
-      commitSlot(buildSlot(anchor, nextAnchor, value))
+      commitSlot(buildSlot(anchor, nextAnchor, obstacles))
       return
     }
 
@@ -232,5 +254,7 @@ export function usePreferredSlotsSelection(
     clearSelectionDraft,
     setHovered,
     setIsDragging,
+    buildSlotFromAnchor,
+    isBlockedAt,
   }
 }

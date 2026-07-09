@@ -7,6 +7,7 @@ import type { ParentProfile } from "../api/schemas/auth.schema";
 import { logoutParent } from "../api/auth.api";
 import { useApplyReservationMutation } from "./hooks/useApplyReservationMutation";
 import { useJoinableGroupsQuery } from "./hooks/useJoinableGroupsQuery";
+import { useConfirmedSlotsQuery } from "./hooks/useConfirmedSlotsQuery";
 import PreferredSlotsPicker from "../components/PreferredSlotsPicker";
 import LevelTestSection from "../components/LevelTestSection";
 import {
@@ -50,6 +51,7 @@ export default function ApplyPage({
   const router = useRouter();
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation();
   const { joinableGroups } = useJoinableGroupsQuery();
+  const { confirmedSlots } = useConfirmedSlotsQuery();
   const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -291,6 +293,7 @@ export default function ApplyPage({
             value={form.preferredSlots}
             onChange={(slots) => setForm({ ...form, preferredSlots: slots, requestedGroupId: undefined })}
             joinableGroups={matchingGroups}
+            confirmedSlots={confirmedSlots}
             childAge={form.childAge}
           />
           {fieldErrors.preferredSlots && (

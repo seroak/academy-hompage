@@ -55,7 +55,7 @@ export default function ReservationsAdminPage() {
           onClick={() => setActiveTab('walkin')}
           className={tabButtonClass(activeTab === 'walkin')}
         >
-          학생 직접 등록 ({admin.walkInMembers.length})
+          학생 직접 등록
         </button>
       </nav>
 
@@ -89,20 +89,14 @@ export default function ReservationsAdminPage() {
           submitError={admin.submitError}
           createError={admin.createError}
           isCreating={admin.isCreating}
-          walkInMembers={admin.walkInMembers}
           onChangeGroupForm={admin.setGroupForm}
           onRemoveSlot={admin.removeSlot}
-          onRemoveWalkInMember={admin.removeWalkInMember}
           onSubmit={admin.handleConfirmGroup}
         />
       </div>
 
       <div className={activeTab === 'walkin' ? 'block' : 'hidden'}>
-        <WalkInMemberForm
-          members={admin.walkInMembers}
-          onAddMember={admin.addWalkInMember}
-          onRemoveMember={admin.removeWalkInMember}
-        />
+        <WalkInMemberForm />
       </div>
 
       <ReservationDetailModal

@@ -8,9 +8,17 @@ interface Props {
   answers: Record<string, AnswerDraft>
   onChoiceChange: (questionId: string, selectedChoiceIndex: number) => void
   onTextChange: (questionId: string, textAnswer: string) => void
+  /** 관리자 미리보기 전용: 넘기면 해당 문항의 정답 보기를 하이라이트한다. 응시 화면에서는 사용하지 않는다. */
+  correctChoiceIndexByQuestionId?: Record<string, number | null | undefined>
 }
 
-export default function LevelTestQuestionList({ questions, answers, onChoiceChange, onTextChange }: Props) {
+export default function LevelTestQuestionList({
+  questions,
+  answers,
+  onChoiceChange,
+  onTextChange,
+  correctChoiceIndexByQuestionId,
+}: Props) {
   return (
     <div className="flex flex-col gap-4">
       {questions.map((question, index) => (
@@ -28,17 +36,28 @@ export default function LevelTestQuestionList({ questions, answers, onChoiceChan
           )}
           {question.type === 'MULTIPLE_CHOICE' ? (
             <div className="mt-2 flex flex-col gap-1.5">
-              {question.choices.map((choice, choiceIndex) => (
-                <label key={choiceIndex} className="flex items-center gap-2 text-sm text-slate-700">
-                  <input
-                    type="radio"
-                    name={question.id}
-                    checked={answers[question.id]?.selectedChoiceIndex === choiceIndex}
-                    onChange={() => onChoiceChange(question.id, choiceIndex)}
-                  />
-                  {choice}
-                </label>
-              ))}
+              {question.choices.map((choice, choiceIndex) => {
+                const isCorrect = correctChoiceIndexByQuestionId?.[question.id] === choiceIndex
+                return (
+                  <label
+                    key={choiceIndex}
+                    className={`flex items-center gap-2 text-sm ${isCorrect ? 'font-bold text-emerald-700' : 'text-slate-700'}`}
+                  >
+                    <input
+                      type="radio"
+                      name={question.id}
+                      checked={answers[question.id]?.selectedChoiceIndex === choiceIndex}
+                      onChange={() => onChoiceChange(question.id, choiceIndex)}
+                    />
+                    {choice}
+                    {isCorrect && (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-black text-emerald-700">
+                        정답
+                      </span>
+                    )}
+                  </label>
+                )
+              })}
             </div>
           ) : (
             <textarea

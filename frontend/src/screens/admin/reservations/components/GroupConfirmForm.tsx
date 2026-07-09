@@ -1,6 +1,6 @@
 import type { SubmitEvent } from "react";
 import { DAY_OF_WEEK_LABELS, timeLabel } from "../../../../api/schemas/reservation.schema";
-import { ReservationGroupFormState, SelectedSlot, WalkInMemberDraft } from "../types";
+import { ReservationGroupFormState, SelectedSlot } from "../types";
 import { fieldClass, labelClass, errorClass } from "../styles";
 
 type Props = {
@@ -13,10 +13,8 @@ type Props = {
   submitError: string | null;
   createError: unknown;
   isCreating: boolean;
-  walkInMembers: WalkInMemberDraft[];
   onChangeGroupForm: (form: ReservationGroupFormState) => void;
   onRemoveSlot: (key: string) => void;
-  onRemoveWalkInMember: (localId: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
 };
 
@@ -34,14 +32,12 @@ export default function GroupConfirmForm({
   submitError,
   createError,
   isCreating,
-  walkInMembers,
   onChangeGroupForm,
   onRemoveSlot,
-  onRemoveWalkInMember,
   onSubmit,
 }: Props) {
   const slotEntries = Array.from(selectedSlots.entries());
-  const totalMemberCount = slotEntries.length + walkInMembers.length;
+  const totalMemberCount = slotEntries.length;
 
   const updateGroupForm = (patch: Partial<ReservationGroupFormState>) => {
     onChangeGroupForm({ ...groupForm, ...patch });
@@ -154,30 +150,7 @@ export default function GroupConfirmForm({
         )}
       </div>
 
-      {walkInMembers.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-black text-[#6f6253]">직접 추가된 학생 ("학생 직접 등록" 탭에서 관리)</p>
 
-          <ul className="flex flex-wrap gap-2">
-            {walkInMembers.map((member) => (
-              <li
-                key={member.localId}
-                className="flex items-center gap-2 rounded-full border border-[#ff8a1f] bg-[#fff5ea] px-3 py-1.5 text-xs font-black text-[#e86f00]"
-              >
-                {member.childName} · 만 {member.childAge}세
-                <button
-                  type="button"
-                  onClick={() => onRemoveWalkInMember(member.localId)}
-                  aria-label={`${member.childName} 직접 추가한 멤버 삭제`}
-                  className="text-[#e86f00] hover:text-[#d6452f]"
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {fieldErrors.slots && <p className={errorClass}>{fieldErrors.slots}</p>}
 

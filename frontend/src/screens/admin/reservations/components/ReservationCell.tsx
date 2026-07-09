@@ -242,13 +242,13 @@ function WaitingReservationItem({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1">
+      <div className="relative">
         <button
           type="button"
           title={reservationTitle(reservation)}
           onClick={() => onToggleSlot(reservation, day, rowStart)}
           style={isSelected || isMuted ? undefined : { backgroundColor: color.background, borderColor: color.border }}
-          className={`flex-1 truncate rounded-full border px-3 py-1.5 text-left text-xs font-black transition ${
+          className={`w-full rounded-lg border px-3 py-2 pr-14 text-left transition ${
             isSelected
               ? "border-transparent bg-[#ff8a1f] text-white shadow-[0_8px_18px_rgba(255,138,31,0.22)]"
               : isMuted
@@ -256,27 +256,40 @@ function WaitingReservationItem({
                 : "text-[#3f3a31] hover:opacity-80"
           }`}
         >
-          {reservation.childName}
-          <span className="ml-1 opacity-70">({reservation.childAge})</span>
+          <div className="truncate text-xs font-black">
+            {reservation.childName}
+            <span className="ml-1 opacity-70">({reservation.childAge})</span>
+          </div>
+          <div className="mt-0.5 truncate text-[10px] font-bold opacity-70">학부모 {reservation.parentName}</div>
         </button>
 
-        <button
-          type="button"
-          onClick={() => onOpenDetail(reservation)}
-          aria-label="예약 상세 보기"
-          className="grid size-7 shrink-0 place-items-center rounded-full text-[#8a7a61] transition hover:bg-[#fff0cf] hover:text-[#e86f00]"
-        >
-          <Info size={15} strokeWidth={2.5} />
-        </button>
+        <div className="absolute right-1 top-1 flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => onOpenDetail(reservation)}
+            aria-label="예약 상세 보기"
+            className={`grid size-7 shrink-0 place-items-center rounded-full transition ${
+              isSelected
+                ? "text-white/80 hover:bg-white/20 hover:text-white"
+                : "text-[#8a7a61] hover:bg-[#fff0cf] hover:text-[#e86f00]"
+            }`}
+          >
+            <Info size={15} strokeWidth={2.5} />
+          </button>
 
-        <button
-          type="button"
-          onClick={() => onCancelReservation(reservation.id)}
-          aria-label="신청 취소"
-          className="grid size-7 shrink-0 place-items-center rounded-full text-[#d8bfa0] transition hover:bg-[#fff5f1] hover:text-[#d6452f]"
-        >
-          ×
-        </button>
+          <button
+            type="button"
+            onClick={() => onCancelReservation(reservation.id)}
+            aria-label="신청 취소"
+            className={`grid size-7 shrink-0 place-items-center rounded-full transition ${
+              isSelected
+                ? "text-white/80 hover:bg-white/20 hover:text-white"
+                : "text-[#d8bfa0] hover:bg-[#fff5f1] hover:text-[#d6452f]"
+            }`}
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {joinableGroups.map((group) => (
@@ -323,10 +336,13 @@ function GroupedReservationsSection({
                 key={reservation.id}
                 type="button"
                 onClick={() => onOpenDetail(reservation)}
-                style={{ backgroundColor: childColor(reservation).background }}
-                className="w-fit rounded px-2 py-0.5 text-left text-[11px] font-bold text-[#236c9c] shadow-sm transition hover:opacity-80"
+                style={{ backgroundColor: childColor(reservation).background, borderColor: childColor(reservation).border }}
+                className="w-full rounded-lg border px-3 py-2 text-left shadow-sm transition hover:opacity-80"
               >
-                {reservation.childName}
+                <div className="truncate text-[11px] font-bold text-[#236c9c]">{reservation.childName}</div>
+                <div className="mt-0.5 truncate text-[10px] font-bold text-[#236c9c] opacity-70">
+                  학부모 {reservation.parentName}
+                </div>
               </button>
             ))}
           </div>
