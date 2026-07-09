@@ -11,6 +11,7 @@ const adminNavItems = [
   { to: '/admin/instructors', label: '강사 관리' },
   { to: '/admin/reservations', label: '예약 관리' },
   { to: '/admin/members', label: '회원 관리' },
+  { to: '/admin/level-tests', label: '레벨테스트 관리' },
 ]
 
 function navLinkClass(isActive: boolean) {

@@ -54,7 +54,7 @@ export function useReservationAdminState() {
 
   const { waiting, statCards } = useReservationStats(reservations, groups)
 
-  const { getCellReservations, groupLabelByReservationId, joinableGroupsForReservation } =
+  const { getCellReservations, groupByReservationId, joinableGroupsForReservation } =
     useReservationTimetable(waiting, groups)
 
   const selectedReservationIds = [...new Set(Array.from(selectedSlots.values()).map((slot) => slot.reservationId))]
@@ -358,7 +358,7 @@ export function useReservationAdminState() {
     selectedReservationCount: selectedReservationIds.length,
     statCards,
     getCellReservations,
-    groupLabelByReservationId,
+    groupByReservationId,
     joinableGroupsForReservation,
     requestedReservationsForGroup,
     toggleSlot,

@@ -19,24 +19,28 @@ type Props = {
   group: ReservationGroup | null
   allGroups: ReservationGroup[]
   waitingReservations: Reservation[]
+  requestedReservations: Reservation[]
   onClose: () => void
   onUpdateGroup: (groupId: string, patch: UpdateReservationGroupInput) => void
   onRemoveMember: (groupId: string, reservation: Reservation) => void
   onReplaceMemberSlots: (groupId: string, reservationId: string, slots: MemberSlotInput[]) => void
   onMoveMember: (reservation: Reservation, fromGroup: ReservationGroup, toGroup: ReservationGroup) => void
   onAddMember: (reservation: Reservation, group: ReservationGroup) => void
+  onCancelGroup: (groupId: string) => void
 }
 
 export default function GroupDetailModal({
   group,
   allGroups,
   waitingReservations,
+  requestedReservations,
   onClose,
   onUpdateGroup,
   onRemoveMember,
   onReplaceMemberSlots,
   onMoveMember,
   onAddMember,
+  onCancelGroup,
 }: Props) {
   const [infoDraft, setInfoDraft] = useState<GroupInfoDraft | null>(null)
   const [editingSlotsFor, setEditingSlotsFor] = useState<string | null>(null)
@@ -57,9 +61,18 @@ export default function GroupDetailModal({
   }
 
   const otherGroups = allGroups.filter((candidate) => candidate.id !== group.id && candidate.status === 'CONFIRMED')
+  const requestedIds = new Set(requestedReservations.map((r) => r.id))
   const eligibleWaiting = waitingReservations.filter(
-    (reservation) => reservation.childAge >= group.minAge && reservation.childAge <= group.maxAge,
+    (reservation) =>
+      reservation.childAge >= group.minAge &&
+      reservation.childAge <= group.maxAge &&
+      !requestedIds.has(reservation.id),
   )
+
+  function handleCancelGroup() {
+    onCancelGroup(activeGroup.id)
+    onClose()
+  }
 
   function startEditingSlots(reservationId: string) {
     const current: PreferredSlot[] = (slotsByMember.get(reservationId) ?? []).map((slot) => ({
@@ -101,14 +114,23 @@ export default function GroupDetailModal({
       >
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-xl font-black text-[#222222]">그룹 상세</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="닫기"
-            className="grid size-8 place-items-center rounded-full text-slate-400 hover:bg-slate-100"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCancelGroup}
+              className="rounded-full border border-[#ffd6cc] bg-[#fff5f1] px-3 py-1.5 text-xs font-black text-[#d6452f] transition hover:bg-[#ffe9e1]"
+            >
+              그룹 취소
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="닫기"
+              className="grid size-8 place-items-center rounded-full text-slate-400 hover:bg-slate-100"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-[#fff9ec] p-4">
@@ -269,6 +291,25 @@ export default function GroupDetailModal({
             })}
           </ul>
         </div>
+
+        {requestedReservations.length > 0 && (
+          <div className="mt-5">
+            <h3 className="text-sm font-black text-[#222222]">합류 희망</h3>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {requestedReservations.map((reservation) => (
+                <li key={reservation.id}>
+                  <button
+                    type="button"
+                    onClick={() => onAddMember(reservation, group)}
+                    className="rounded-full border border-[#9fd6a6] bg-[#eaf7ea] px-3 py-1 text-xs font-black text-[#2f7a3d] transition hover:bg-[#d9f0da]"
+                  >
+                    {reservation.childName} 합류 희망 · 승인
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {eligibleWaiting.length > 0 && (
           <div className="mt-5">

@@ -24,15 +24,16 @@ enum OAuthProvider {
 }
 
 model ParentUser {
-  id             String                @id @default(cuid())
-  email          String?               @unique
-  name           String?
-  passwordHash   String?
-  socialAccounts ParentSocialAccount[]
-  authSessions   ParentAuthSession[]
-  reservations   Reservation[]
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
+  id               String                @id @default(cuid())
+  email            String?               @unique
+  name             String?
+  passwordHash     String?
+  socialAccounts   ParentSocialAccount[]
+  authSessions     ParentAuthSession[]
+  reservations     Reservation[]
+  levelTestResults LevelTestResult[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 }
 
 model ParentSocialAccount {
@@ -105,24 +106,26 @@ enum ReservationGroupStatus {
 }
 
 model Reservation {
-  id               String                     @id @default(cuid())
-  childName        String
-  childAge         Int
-  parentName       String
-  parentEmail      String
-  parentPhone      String?
-  preferredSlots   ReservationPreferredSlot[]
-  note             String?
-  status           ReservationStatus          @default(WAITING)
-  group            ReservationGroup?          @relation(fields: [groupId], references: [id])
-  groupId          String?
-  groupSlots       ReservationGroupSlot[]
-  requestedGroup   ReservationGroup?          @relation("RequestedGroup", fields: [requestedGroupId], references: [id], onDelete: SetNull)
-  requestedGroupId String?
-  parentUser       ParentUser?                @relation(fields: [parentUserId], references: [id])
-  parentUserId     String?
-  createdAt        DateTime                   @default(now())
-  updatedAt        DateTime                   @updatedAt
+  id                String                     @id @default(cuid())
+  childName         String
+  childAge          Int
+  parentName        String
+  parentEmail       String
+  parentPhone       String?
+  preferredSlots    ReservationPreferredSlot[]
+  note              String?
+  status            ReservationStatus          @default(WAITING)
+  group             ReservationGroup?          @relation(fields: [groupId], references: [id])
+  groupId           String?
+  groupSlots        ReservationGroupSlot[]
+  requestedGroup    ReservationGroup?          @relation("RequestedGroup", fields: [requestedGroupId], references: [id], onDelete: SetNull)
+  requestedGroupId  String?
+  parentUser        ParentUser?                @relation(fields: [parentUserId], references: [id])
+  parentUserId      String?
+  levelTestResult   LevelTestResult?           @relation(fields: [levelTestResultId], references: [id])
+  levelTestResultId String?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
 }
 
 model ReservationPreferredSlot {
@@ -163,4 +166,44 @@ model ReservationGroupSlot {
 
   @@index([groupId])
   @@index([dayOfWeek, startMinute, endMinute])
+}
+
+enum LevelTestQuestionType {
+  MULTIPLE_CHOICE
+  SHORT_ANSWER
+}
+
+model LevelTestQuestion {
+  id                 String                @id @default(cuid())
+  age                Int
+  type               LevelTestQuestionType
+  prompt             String
+  choices            String[]              @default([])
+  correctChoiceIndex Int?
+  active             Boolean               @default(true)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([age, active])
+}
+
+model LevelTestAgeConfig {
+  age       Int      @id
+  drawCount Int      @default(5)
+  updatedAt DateTime @updatedAt
+}
+
+model LevelTestResult {
+  id            String        @id @default(cuid())
+  parentUser    ParentUser    @relation(fields: [parentUserId], references: [id], onDelete: Cascade)
+  parentUserId  String
+  childName     String
+  childAge      Int
+  answers       Json
+  score         Int?
+  scorableCount Int?
+  reservations  Reservation[]
+  createdAt     DateTime      @default(now())
+
+  @@index([parentUserId])
 }

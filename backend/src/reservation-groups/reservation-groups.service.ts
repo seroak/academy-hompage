@@ -304,6 +304,10 @@ export class ReservationGroupsService {
       return await this.prisma.reservationGroup.update({
         where: { id },
         data: dto,
+        include: {
+          slots: true,
+          reservations: { include: { preferredSlots: true } },
+        },
       });
     } catch (error) {
       if (this.isNotFoundError(error)) {

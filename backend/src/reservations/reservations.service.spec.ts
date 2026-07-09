@@ -176,6 +176,34 @@ describe('ReservationsService', () => {
       });
     });
 
+    it('levelTestResultId가 함께 전달되면 레벨테스트 결과와 연결해 저장한다', async () => {
+      const dtoWithLevelTest = { ...dto, levelTestResultId: 'lt-1' };
+      const created = { id: '1', ...dtoWithLevelTest, status: 'WAITING' };
+      prisma.parentUser.findUnique.mockResolvedValue({
+        id: 'parent-1',
+        name: '김엄마',
+        email: 'parent@example.com',
+      });
+      prisma.reservation.create.mockResolvedValue(created);
+
+      await service.create(dtoWithLevelTest, 'parent-1');
+
+      expect(prisma.reservation.create).toHaveBeenCalledWith({
+        data: {
+          childName: dto.childName,
+          childAge: dto.childAge,
+          parentName: dto.parentName,
+          parentEmail: dto.parentEmail,
+          parentUserId: 'parent-1',
+          levelTestResultId: 'lt-1',
+          preferredSlots: {
+            create: dto.preferredSlots,
+          },
+        },
+        include: { preferredSlots: true },
+      });
+    });
+
     it('후보 시간이 확정된 그룹과 겹쳐도 정상 생성한다', async () => {
       const created = { id: '1', ...dto, status: 'WAITING' };
       prisma.parentUser.findUnique.mockResolvedValue({

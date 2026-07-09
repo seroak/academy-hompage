@@ -11,6 +11,7 @@ import { NotificationModule } from './notifications/notification.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { ReservationGroupsModule } from './reservation-groups/reservation-groups.module';
 import { MembersModule } from './members/members.module';
+import { LevelTestsModule } from './level-tests/level-tests.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MembersModule } from './members/members.module';
     ReservationsModule,
     ReservationGroupsModule,
     MembersModule,
+    LevelTestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

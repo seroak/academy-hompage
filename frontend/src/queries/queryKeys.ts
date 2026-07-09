@@ -26,4 +26,18 @@ export const queryKeys = {
   members: {
     all: ['members'] as const,
   },
+  levelTests: {
+    questions: {
+      all: ['levelTests', 'questions'] as const,
+      list: (age?: number) => ['levelTests', 'questions', age ?? null] as const,
+    },
+    config: {
+      all: ['levelTests', 'config'] as const,
+    },
+    results: {
+      all: ['levelTests', 'results'] as const,
+      detail: (id: string) => ['levelTests', 'results', id] as const,
+    },
+    quiz: (age: number) => ['levelTests', 'quiz', age] as const,
+  },
 }

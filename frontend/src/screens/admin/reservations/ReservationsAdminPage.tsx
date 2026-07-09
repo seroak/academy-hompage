@@ -1,33 +1,28 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 import ReservationDetailModal from '../../../components/ReservationDetailModal'
 import { useReservationAdminState } from './hooks/useReservationAdminState'
 import ReservationStats from './components/ReservationStats'
 import ReservationAgeFilter from './components/ReservationAgeFilter'
 import ReservationTimetable from './components/ReservationTimetable'
 import GroupConfirmForm from './components/GroupConfirmForm'
-import ConfirmedGroupList from './components/ConfirmedGroupList'
 import GroupDetailModal from './components/GroupDetailModal'
-import ReservationTabNav, { ReservationTab } from './components/ReservationTabNav'
+import WalkInMemberForm from './components/WalkInMemberForm'
+
+type PageTab = 'reservations' | 'walkin'
+
+function tabButtonClass(isActive: boolean) {
+  return `rounded-full px-5 py-2.5 text-sm font-black transition duration-200 ${
+    isActive
+      ? 'bg-[#fff0cf] text-[#e86f00]'
+      : 'bg-white text-[#3f3a31] hover:bg-[#fff4dc] hover:text-[#e86f00]'
+  }`
+}
 
 export default function ReservationsAdminPage() {
   const admin = useReservationAdminState()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const activeTab: ReservationTab = searchParams.get('tab') === 'confirmed' ? 'confirmed' : 'requests'
-
-  function handleChangeTab(tab: ReservationTab) {
-    const params = new URLSearchParams(searchParams.toString())
-    if (tab === 'requests') {
-      params.delete('tab')
-    } else {
-      params.set('tab', tab)
-    }
-    const query = params.toString()
-    router.push(`/admin/reservations${query ? `?${query}` : ''}`)
-  }
+  const [activeTab, setActiveTab] = useState<PageTab>('reservations')
 
   return (
     <div className="space-y-8">
@@ -47,61 +42,68 @@ export default function ReservationsAdminPage() {
         </div>
       </section>
 
-      <ReservationTabNav
-        activeTab={activeTab}
-        confirmedGroupCount={admin.groups.length}
-        onChangeTab={handleChangeTab}
-      />
+      <nav className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('reservations')}
+          className={tabButtonClass(activeTab === 'reservations')}
+        >
+          예약 관리
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('walkin')}
+          className={tabButtonClass(activeTab === 'walkin')}
+        >
+          학생 직접 등록 ({admin.walkInMembers.length})
+        </button>
+      </nav>
 
-      {activeTab === 'requests' && (
-        <>
-          <ReservationStats statCards={admin.statCards} />
-          <ReservationAgeFilter
-            ageFilter={admin.ageFilter}
-            onChangeAgeFilter={admin.setAgeFilter}
-          />
-          <ReservationTimetable
-            isLoading={admin.isLoading}
-            error={admin.error}
-            selectedSlots={admin.selectedSlots}
-            getCellReservations={admin.getCellReservations}
-            groupLabelByReservationId={admin.groupLabelByReservationId}
-            joinableGroupsForReservation={admin.joinableGroupsForReservation}
-            onToggleSlot={admin.toggleSlot}
-            onSelectCell={admin.selectCell}
-            onOpenDetail={admin.setDetailReservation}
-            onCancelReservation={admin.handleCancelReservation}
-            onAddToGroup={admin.handleAddToGroup}
-          />
-          <GroupConfirmForm
-            selectedSlots={admin.selectedSlots}
-            groupForm={admin.groupForm}
-            groupCapacity={admin.groupCapacity}
-            groupMinAge={admin.groupMinAge}
-            groupMaxAge={admin.groupMaxAge}
-            fieldErrors={admin.fieldErrors}
-            submitError={admin.submitError}
-            createError={admin.createError}
-            isCreating={admin.isCreating}
-            walkInMembers={admin.walkInMembers}
-            onChangeGroupForm={admin.setGroupForm}
-            onRemoveSlot={admin.removeSlot}
-            onAddWalkInMember={admin.addWalkInMember}
-            onRemoveWalkInMember={admin.removeWalkInMember}
-            onSubmit={admin.handleConfirmGroup}
-          />
-        </>
-      )}
-
-      {activeTab === 'confirmed' && (
-        <ConfirmedGroupList
-          groups={admin.groups}
-          requestedReservationsForGroup={admin.requestedReservationsForGroup}
-          onCancelGroup={admin.handleCancelGroup}
-          onApproveRequest={admin.handleApproveRequest}
+      <div className={activeTab === 'reservations' ? 'flex flex-col gap-8' : 'hidden'}>
+        <ReservationStats statCards={admin.statCards} />
+        <ReservationAgeFilter
+          ageFilter={admin.ageFilter}
+          onChangeAgeFilter={admin.setAgeFilter}
+        />
+        <ReservationTimetable
+          isLoading={admin.isLoading}
+          error={admin.error}
+          selectedSlots={admin.selectedSlots}
+          getCellReservations={admin.getCellReservations}
+          groupByReservationId={admin.groupByReservationId}
+          joinableGroupsForReservation={admin.joinableGroupsForReservation}
+          onToggleSlot={admin.toggleSlot}
+          onSelectCell={admin.selectCell}
+          onOpenDetail={admin.setDetailReservation}
+          onCancelReservation={admin.handleCancelReservation}
+          onAddToGroup={admin.handleAddToGroup}
           onOpenGroupDetail={admin.openGroupDetail}
         />
-      )}
+        <GroupConfirmForm
+          selectedSlots={admin.selectedSlots}
+          groupForm={admin.groupForm}
+          groupCapacity={admin.groupCapacity}
+          groupMinAge={admin.groupMinAge}
+          groupMaxAge={admin.groupMaxAge}
+          fieldErrors={admin.fieldErrors}
+          submitError={admin.submitError}
+          createError={admin.createError}
+          isCreating={admin.isCreating}
+          walkInMembers={admin.walkInMembers}
+          onChangeGroupForm={admin.setGroupForm}
+          onRemoveSlot={admin.removeSlot}
+          onRemoveWalkInMember={admin.removeWalkInMember}
+          onSubmit={admin.handleConfirmGroup}
+        />
+      </div>
+
+      <div className={activeTab === 'walkin' ? 'block' : 'hidden'}>
+        <WalkInMemberForm
+          members={admin.walkInMembers}
+          onAddMember={admin.addWalkInMember}
+          onRemoveMember={admin.removeWalkInMember}
+        />
+      </div>
 
       <ReservationDetailModal
         reservation={admin.detailReservation}
@@ -111,12 +113,14 @@ export default function ReservationsAdminPage() {
         group={admin.detailGroup}
         allGroups={admin.groups}
         waitingReservations={admin.reservations.filter((r) => r.status === 'WAITING')}
+        requestedReservations={admin.detailGroup ? admin.requestedReservationsForGroup(admin.detailGroup.id) : []}
         onClose={admin.closeGroupDetail}
         onUpdateGroup={admin.handleUpdateGroupInfo}
         onRemoveMember={admin.handleRemoveMember}
         onReplaceMemberSlots={admin.handleReplaceMemberSlots}
         onMoveMember={admin.handleMoveMember}
         onAddMember={admin.handleApproveRequest}
+        onCancelGroup={admin.handleCancelGroup}
       />
     </div>
   )

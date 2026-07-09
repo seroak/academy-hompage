@@ -395,6 +395,22 @@ describe('ReservationGroupsService', () => {
       );
     });
 
+    it('응답에 slots·reservations를 포함해 프론트 스키마 파싱이 가능하게 한다', async () => {
+      const updated = { id: 'g1', label: '변경됨', slots: [], reservations: [] };
+      prisma.reservationGroup.update.mockResolvedValue(updated);
+
+      await service.update('g1', { label: '변경됨' });
+
+      expect(prisma.reservationGroup.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: {
+            slots: true,
+            reservations: { include: { preferredSlots: true } },
+          },
+        }),
+      );
+    });
+
     it('없으면 NotFoundException을 던진다', async () => {
       prisma.reservationGroup.update.mockRejectedValue({ code: 'P2025' });
 

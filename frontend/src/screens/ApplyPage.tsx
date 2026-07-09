@@ -8,6 +8,7 @@ import { logoutParent } from "../api/auth.api";
 import { useApplyReservationMutation } from "./hooks/useApplyReservationMutation";
 import { useJoinableGroupsQuery } from "./hooks/useJoinableGroupsQuery";
 import PreferredSlotsPicker from "../components/PreferredSlotsPicker";
+import LevelTestSection from "../components/LevelTestSection";
 import {
   CreateReservationInputSchema,
   DAY_OF_WEEK_LABELS,
@@ -24,6 +25,7 @@ const emptyForm: CreateReservationInput = {
   preferredSlots: [],
   note: "",
   requestedGroupId: undefined,
+  levelTestResultId: undefined,
 };
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
@@ -186,6 +188,7 @@ export default function ApplyPage({
                 childAge: Number(e.target.value),
                 requestedGroupId: undefined,
                 preferredSlots: [],
+                levelTestResultId: undefined,
               })
             }
           >
@@ -227,6 +230,16 @@ export default function ApplyPage({
             onChange={(e) => setForm({ ...form, parentPhone: e.target.value })}
           />
         </label>
+
+        {form.childName && (
+          <LevelTestSection
+            key={form.childAge}
+            childName={form.childName}
+            childAge={form.childAge}
+            completedResultId={form.levelTestResultId ?? null}
+            onCompleted={(resultId) => setForm((current) => ({ ...current, levelTestResultId: resultId }))}
+          />
+        )}
 
         {matchingGroups.length > 0 && (
           <div className="col-span-full rounded-lg border border-emerald-200 bg-emerald-50 p-4">
