@@ -5,7 +5,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OAuthProvider } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SocialAuthService } from './social-auth.service';
-
+import { OAuthProviderFactory } from './oauth-providers/oauth-provider.factory';
+import { GoogleOAuthProvider } from './oauth-providers/google.provider';
+import { KakaoOAuthProvider } from './oauth-providers/kakao.provider';
+import { NaverOAuthProvider } from './oauth-providers/naver.provider';
+import { OAuthStateService } from './oauth-state.service';
+import { ParentSocialAccountService } from './parent-social-account.service';
 describe('SocialAuthService', () => {
   let service: SocialAuthService;
   let prisma: {
@@ -62,6 +67,12 @@ describe('SocialAuthService', () => {
             get: jest.fn((key: string, defaultValue?: string) => configValues[key] ?? defaultValue),
           },
         },
+        OAuthProviderFactory,
+        GoogleOAuthProvider,
+        KakaoOAuthProvider,
+        NaverOAuthProvider,
+        OAuthStateService,
+        ParentSocialAccountService,
       ],
     }).compile();
 

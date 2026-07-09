@@ -9,6 +9,13 @@ import { ParentJwtStrategy } from './strategies/parent-jwt.strategy';
 import { SocialAuthController } from './social-auth.controller';
 import { SocialAuthService } from './social-auth.service';
 
+import { OAuthProviderFactory } from './oauth-providers/oauth-provider.factory';
+import { GoogleOAuthProvider } from './oauth-providers/google.provider';
+import { KakaoOAuthProvider } from './oauth-providers/kakao.provider';
+import { NaverOAuthProvider } from './oauth-providers/naver.provider';
+import { OAuthStateService } from './oauth-state.service';
+import { ParentSocialAccountService } from './parent-social-account.service';
+
 @Module({
   imports: [
     PassportModule,
@@ -24,6 +31,17 @@ import { SocialAuthService } from './social-auth.service';
     }),
   ],
   controllers: [AuthController, SocialAuthController],
-  providers: [AuthService, SocialAuthService, JwtStrategy, ParentJwtStrategy],
+  providers: [
+    AuthService, 
+    SocialAuthService, 
+    JwtStrategy, 
+    ParentJwtStrategy,
+    OAuthProviderFactory,
+    GoogleOAuthProvider,
+    KakaoOAuthProvider,
+    NaverOAuthProvider,
+    OAuthStateService,
+    ParentSocialAccountService,
+  ],
 })
 export class AuthModule {}
