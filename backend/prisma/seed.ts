@@ -23,6 +23,7 @@ async function main() {
     create: {
       username: adminUsername,
       passwordHash,
+      role: 'SUPER_ADMIN',
     },
   });
 
@@ -373,13 +374,15 @@ async function main() {
     };
     const label = `${dayLabels[slot.dayOfWeek]}요일 ${Math.floor(slot.startMinute / 60)}시 ${slot.startMinute % 60 === 0 ? '정각' : (slot.startMinute % 60) + '분'}반`;
 
+    const capacity = members.length === 2 ? 3 : 4;
+
     await prisma.reservationGroup.upsert({
       where: { id: groupId },
       update: {},
       create: {
         id: groupId,
         label,
-        capacity: 4,
+        capacity,
         minAge,
         maxAge,
       },

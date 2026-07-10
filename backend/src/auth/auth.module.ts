@@ -15,6 +15,9 @@ import { KakaoOAuthProvider } from './oauth-providers/kakao.provider';
 import { NaverOAuthProvider } from './oauth-providers/naver.provider';
 import { OAuthStateService } from './oauth-state.service';
 import { ParentSocialAccountService } from './parent-social-account.service';
+import { AdminAccountsController } from './admin-accounts.controller';
+import { AdminAccountsService } from './admin-accounts.service';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
@@ -30,7 +33,7 @@ import { ParentSocialAccountService } from './parent-social-account.service';
       }),
     }),
   ],
-  controllers: [AuthController, SocialAuthController],
+  controllers: [AuthController, SocialAuthController, AdminAccountsController],
   providers: [
     AuthService, 
     SocialAuthService, 
@@ -42,6 +45,8 @@ import { ParentSocialAccountService } from './parent-social-account.service';
     NaverOAuthProvider,
     OAuthStateService,
     ParentSocialAccountService,
+    AdminAccountsService,
+    RolesGuard,
   ],
 })
 export class AuthModule {}

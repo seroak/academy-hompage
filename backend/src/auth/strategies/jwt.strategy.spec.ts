@@ -11,10 +11,15 @@ describe('JwtStrategy', () => {
     const result = await strategy.validate({
       sub: 'admin-1',
       username: 'admin',
+      role: 'SUPER_ADMIN',
       tokenType: 'admin',
     });
 
-    expect(result).toEqual({ adminId: 'admin-1', username: 'admin' });
+    expect(result).toEqual({
+      adminId: 'admin-1',
+      username: 'admin',
+      role: 'SUPER_ADMIN',
+    });
   });
 
   it('rejects a parent JWT payload', async () => {
@@ -25,6 +30,19 @@ describe('JwtStrategy', () => {
         sub: 'parent-1',
         email: 'parent@example.com',
         tokenType: 'parent',
+      }),
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('rejects an admin JWT payload with an unknown role', async () => {
+    const strategy = new JwtStrategy(configService);
+
+    await expect(
+      strategy.validate({
+        sub: 'admin-1',
+        username: 'admin',
+        role: 'INSTRUCTOR' as never,
+        tokenType: 'admin',
       }),
     ).rejects.toThrow(UnauthorizedException);
   });
