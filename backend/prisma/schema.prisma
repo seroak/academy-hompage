@@ -32,8 +32,23 @@ model ParentUser {
   authSessions     ParentAuthSession[]
   reservations     Reservation[]
   levelTestResults LevelTestResult[]
+  children         Child[]
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+}
+
+model Child {
+  id               String            @id @default(cuid())
+  parentUser       ParentUser        @relation(fields: [parentUserId], references: [id], onDelete: Cascade)
+  parentUserId     String
+  name             String
+  age              Int
+  reservations     Reservation[]
+  levelTestResults LevelTestResult[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([parentUserId])
 }
 
 model ParentSocialAccount {
@@ -84,6 +99,8 @@ model Reservation {
   id                String                     @id @default(cuid())
   childName         String
   childAge          Int
+  child             Child?                    @relation(fields: [childId], references: [id], onDelete: SetNull)
+  childId           String?
   parentName        String
   parentEmail       String
   parentPhone       String?
@@ -136,8 +153,8 @@ model ReservationGroupSlot {
   id            String           @id @default(cuid())
   group         ReservationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId       String
-  reservation   Reservation      @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  reservationId String
+  reservation   Reservation?     @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  reservationId String?
   dayOfWeek     String
   startMinute   Int
   endMinute     Int
@@ -178,6 +195,8 @@ model LevelTestResult {
   parentUserId  String
   childName     String
   childAge      Int
+  child         Child?       @relation(fields: [childId], references: [id], onDelete: SetNull)
+  childId       String?
   answers       Json
   score         Int?
   scorableCount Int?
