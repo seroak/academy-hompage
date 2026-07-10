@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <AdminRoute>
+    <AdminRoute allowedRoles={['ASSESSMENT_MANAGER', 'SUPER_ADMIN']}>
       <LevelTestsAdminPage />
     </AdminRoute>
   )

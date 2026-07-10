@@ -1,7 +1,25 @@
 import { z } from 'zod'
 
+export const AdminRoleSchema = z.enum([
+  'CONTENT_MANAGER',
+  'RESERVATION_MANAGER',
+  'ASSESSMENT_MANAGER',
+  'SUPER_ADMIN',
+])
+
+export type AdminRole = z.infer<typeof AdminRoleSchema>
+
+export const AdminProfileSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  role: AdminRoleSchema,
+})
+
+export type AdminProfile = z.infer<typeof AdminProfileSchema>
+
 export const LoginResponseSchema = z.object({
   accessToken: z.string(),
+  admin: AdminProfileSchema,
 })
 
 export type LoginResponse = z.infer<typeof LoginResponseSchema>

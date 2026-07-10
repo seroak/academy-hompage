@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <AdminRoute>
+    <AdminRoute allowedRoles={['RESERVATION_MANAGER', 'SUPER_ADMIN']}>
       <Suspense fallback={null}>
         <ReservationsAdminPage />
       </Suspense>

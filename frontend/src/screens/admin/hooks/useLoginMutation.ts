@@ -10,7 +10,7 @@ export function useLoginMutation() {
     mutationFn: ({ username, password }: { username: string; password: string }) =>
       login(username, password),
     onSuccess: (data) => {
-      setAccessToken(data.accessToken)
+      setAccessToken(data.accessToken, data.admin)
     },
   })
 

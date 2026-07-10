@@ -1,16 +1,16 @@
 import type { Metadata } from 'next'
 import AdminRoute from '../AdminRoute'
-import MembersAdminPage from '../../../screens/admin/MembersAdminPage'
+import AdminAccountsPage from '../../../screens/admin/AdminAccountsPage'
 
 export const metadata: Metadata = {
-  title: '회원 관리',
+  title: '관리자 계정',
   robots: { index: false, follow: false },
 }
 
 export default function Page() {
   return (
-    <AdminRoute allowedRoles={['RESERVATION_MANAGER', 'SUPER_ADMIN']}>
-      <MembersAdminPage />
+    <AdminRoute allowedRoles={['SUPER_ADMIN']}>
+      <AdminAccountsPage />
     </AdminRoute>
   )
 }
