@@ -66,7 +66,7 @@ export default async function Page({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }}
       />
       <div>
-        <Link href="/courses" className="text-sm text-brand-600 hover:underline">
+        <Link href="/courses/list" className="text-sm text-brand-600 hover:underline">
           ← 강좌 목록으로
         </Link>
         <article className="mt-4 rounded-2xl border border-slate-200 bg-white p-8">

@@ -8,9 +8,14 @@ export default async function Layout({
   variant = 'default',
 }: {
   children: ReactNode
-  variant?: 'home' | 'default'
+  variant?: 'home' | 'default' | 'landing'
 }) {
-  const isHome = variant === 'home'
+  const mainClassName =
+    variant === 'home'
+      ? 'mx-auto w-full max-w-[1280px] flex-1 px-4 pb-0 pt-4 sm:px-6'
+      : variant === 'landing'
+        ? 'mx-auto w-full max-w-[1120px] flex-1 px-4 pb-0 pt-4 sm:px-6'
+        : 'mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-8'
   const auth = await getServerAuth()
 
   return (
@@ -19,15 +24,7 @@ export default async function Layout({
         <Header initialAuth={auth} />
       </Suspense>
 
-      <main
-        className={
-          isHome
-            ? 'mx-auto w-full max-w-[1280px] flex-1 px-4 pb-0 pt-4 sm:px-6'
-            : 'mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-8'
-        }
-      >
-        {children}
-      </main>
+      <main className={mainClassName}>{children}</main>
 
       <footer className="border-t border-[#f2dfb9] bg-[#fff4df] py-8">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-3 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">

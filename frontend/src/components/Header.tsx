@@ -199,7 +199,9 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
               <Link
                 key={item.to}
                 href={item.to}
-                className={navLinkClass(pathname === item.to)}
+                className={navLinkClass(
+                  item.to === '/courses' ? pathname?.startsWith('/courses') ?? false : pathname === item.to,
+                )}
               >
                 {item.label}
               </Link>
@@ -265,7 +267,9 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                 <Link
                   key={item.to}
                   href={item.to}
-                  className={navLinkClass(pathname === item.to)}
+                  className={navLinkClass(
+                    item.to === '/courses' ? pathname?.startsWith('/courses') ?? false : pathname === item.to,
+                  )}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
