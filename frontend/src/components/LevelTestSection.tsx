@@ -7,13 +7,14 @@ import type { SubmitLevelTestAnswer } from '../api/schemas/levelTest.schema'
 import LevelTestQuestionList, { type AnswerDraft } from './LevelTestQuestionList'
 
 interface Props {
+  childId: string
   childName: string
   childAge: number
   completedResultId: string | null
   onCompleted: (resultId: string, summary: { score: number; scorableCount: number }) => void
 }
 
-export default function LevelTestSection({ childName, childAge, completedResultId, onCompleted }: Props) {
+export default function LevelTestSection({ childId, childName, childAge, completedResultId, onCompleted }: Props) {
   const { questions, isLoading, start } = useLevelTestQuizQuery(childAge)
   const { submit, isSubmitting } = useSubmitLevelTestResultMutation()
   const [started, setStarted] = useState(false)
@@ -52,7 +53,7 @@ export default function LevelTestSection({ childName, childAge, completedResultI
 
     setSubmitError(null)
     try {
-      const result = await submit({ childName, childAge, answers: submittedAnswers })
+      const result = await submit({ childId, childName, childAge, answers: submittedAnswers })
       const resultSummary = { score: result.score ?? 0, scorableCount: result.scorableCount ?? 0 }
       setSummary(resultSummary)
       alert('제출이 완료되었습니다.')

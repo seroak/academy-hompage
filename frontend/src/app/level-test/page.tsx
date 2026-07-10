@@ -17,15 +17,17 @@ export const metadata: Metadata = {
 }
 
 export default async function Page() {
-  const { parent } = await getServerAuth()
+  const { admin, parent } = await getServerAuth()
 
-  if (!parent) {
+  if (!parent && !admin) {
     redirect('/?login=1')
   }
 
+  const isAdminPreview = !parent && admin
+
   return (
     <Layout>
-      <LevelTestPage />
+      <LevelTestPage isAdminPreview={isAdminPreview} />
     </Layout>
   )
 }

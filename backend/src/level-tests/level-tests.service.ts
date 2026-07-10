@@ -130,6 +130,19 @@ export class LevelTestsService {
       throw new UnauthorizedException('Login required');
     }
 
+    const child = await this.prisma.child.findFirst({
+      where: {
+        id: dto.childId,
+        parentUserId,
+        name: dto.childName,
+        age: dto.childAge,
+      },
+    });
+
+    if (!child) {
+      throw new NotFoundException(`Child ${dto.childId} not found`);
+    }
+
     const questionIds = dto.answers.map((a) => a.questionId);
 
     if (new Set(questionIds).size !== questionIds.length) {
@@ -185,6 +198,7 @@ export class LevelTestsService {
     return this.prisma.levelTestResult.create({
       data: {
         parentUserId,
+        childId: dto.childId,
         childName: dto.childName,
         childAge: dto.childAge,
         score,

@@ -7,6 +7,10 @@ export class LevelTestPagePO {
     await this.page.goto('/level-test')
   }
 
+  get childSelect() {
+    return this.page.getByLabel('응시할 자녀')
+  }
+
   get childNameInput() {
     return this.page.getByLabel('아이 이름')
   }

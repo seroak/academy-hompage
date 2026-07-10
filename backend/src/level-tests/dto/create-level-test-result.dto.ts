@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   Max,
@@ -23,6 +24,10 @@ export class SubmitLevelTestAnswerDto {
 }
 
 export class CreateLevelTestResultDto {
+  @IsString()
+  @IsNotEmpty()
+  childId: string;
+
   @IsString()
   childName: string;
 

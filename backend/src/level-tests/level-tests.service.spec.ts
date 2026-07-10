@@ -26,6 +26,7 @@ describe('LevelTestsService', () => {
       findUnique: jest.Mock;
     };
     parentUser: { findUnique: jest.Mock };
+    child: { findFirst: jest.Mock };
   };
 
   beforeEach(async () => {
@@ -48,6 +49,7 @@ describe('LevelTestsService', () => {
         findUnique: jest.fn(),
       },
       parentUser: { findUnique: jest.fn() },
+      child: { findFirst: jest.fn() },
     };
     imageStorage = { deleteUploadedImage: jest.fn().mockResolvedValue(undefined) };
 
@@ -263,6 +265,7 @@ describe('LevelTestsService', () => {
 
   describe('submitResult', () => {
     const dto = {
+      childId: 'child-1',
       childName: '민준',
       childAge: 5,
       answers: [
@@ -301,6 +304,7 @@ describe('LevelTestsService', () => {
 
     it('중복된 문항 ID가 포함되면 BadRequestException을 던진다', async () => {
       prisma.parentUser.findUnique.mockResolvedValue({ id: 'parent-1' });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
       const dtoWithDuplicate = {
         ...dto,
         answers: [...dto.answers, { questionId: 'q1', selectedChoiceIndex: 1 }],
@@ -314,6 +318,7 @@ describe('LevelTestsService', () => {
 
     it('존재하지 않는 문항이 포함되면 NotFoundException을 던진다', async () => {
       prisma.parentUser.findUnique.mockResolvedValue({ id: 'parent-1' });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
       prisma.levelTestQuestion.findMany.mockResolvedValue(questions.slice(0, 2));
 
       await expect(service.submitResult(dto, 'parent-1')).rejects.toThrow(NotFoundException);
@@ -322,6 +327,7 @@ describe('LevelTestsService', () => {
 
     it('객관식은 자동 채점하고 주관식은 채점하지 않은 채 결과를 생성한다', async () => {
       prisma.parentUser.findUnique.mockResolvedValue({ id: 'parent-1' });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
       prisma.levelTestQuestion.findMany.mockResolvedValue(questions);
       const created = { id: 'result-1' };
       prisma.levelTestResult.create.mockResolvedValue(created);
@@ -332,6 +338,7 @@ describe('LevelTestsService', () => {
       expect(prisma.levelTestResult.create).toHaveBeenCalledWith({
         data: {
           parentUserId: 'parent-1',
+          childId: 'child-1',
           childName: '민준',
           childAge: 5,
           score: 1,
@@ -369,6 +376,14 @@ describe('LevelTestsService', () => {
           ],
         },
       });
+    });
+
+    it('다른 보호자의 자녀거나 이름/나이가 다르면 결과를 생성하지 않는다', async () => {
+      prisma.parentUser.findUnique.mockResolvedValue({ id: 'parent-1' });
+      prisma.child.findFirst.mockResolvedValue(null);
+
+      await expect(service.submitResult(dto, 'parent-1')).rejects.toThrow(NotFoundException);
+      expect(prisma.levelTestResult.create).not.toHaveBeenCalled();
     });
   });
 

@@ -5,10 +5,14 @@ import { useLevelTestQuizQuery } from './hooks/useLevelTestQuizQuery'
 import { useSubmitLevelTestResultMutation } from './hooks/useSubmitLevelTestResultMutation'
 import LevelTestQuestionList, { type AnswerDraft } from '../components/LevelTestQuestionList'
 import { LEVEL_TEST_AGE_OPTIONS, type SubmitLevelTestAnswer } from '../api/schemas/levelTest.schema'
+import { useChildrenQuery } from '../queries/useChildrenQuery'
+import type { Child } from '../api/schemas/child.schema'
 
 const DEFAULT_AGE = LEVEL_TEST_AGE_OPTIONS[0]
 
-export default function LevelTestPage() {
+export default function LevelTestPage({ isAdminPreview = false }: { isAdminPreview?: boolean }) {
+  const { children, isLoading: isChildrenLoading } = useChildrenQuery()
+  const [selectedChild, setSelectedChild] = useState<Child | null>(null)
   const [childName, setChildName] = useState('')
   const [childAge, setChildAge] = useState<number>(DEFAULT_AGE)
   const [started, setStarted] = useState(false)
@@ -18,6 +22,15 @@ export default function LevelTestPage() {
 
   const { questions, isLoading, start } = useLevelTestQuizQuery(childAge)
   const { submit, isSubmitting } = useSubmitLevelTestResultMutation()
+
+  function selectChild(childId: string) {
+    const child = children.find((candidate) => candidate.id === childId) ?? null
+    setSelectedChild(child)
+    if (!child) return
+    setChildName(child.name)
+    setChildAge(child.age)
+    handleRetry()
+  }
 
   async function handleStart() {
     if (!childName.trim()) {
@@ -40,6 +53,11 @@ export default function LevelTestPage() {
   }
 
   async function handleSubmit() {
+    if (isAdminPreview) {
+      alert('관리자는 레벨테스트 결과를 제출할 수 없습니다.')
+      return
+    }
+
     const submittedAnswers: SubmitLevelTestAnswer[] = questions
       .filter((question) => answers[question.id] !== undefined)
       .map((question) => ({ questionId: question.id, ...answers[question.id] }))
@@ -51,7 +69,7 @@ export default function LevelTestPage() {
 
     setSubmitError(null)
     try {
-      const result = await submit({ childName, childAge, answers: submittedAnswers })
+      const result = await submit({ childId: selectedChild!.id, childName, childAge, answers: submittedAnswers })
       setSummary({ score: result.score ?? 0, scorableCount: result.scorableCount ?? 0 })
       alert('제출이 완료되었습니다.')
     } catch (error) {
@@ -75,9 +93,16 @@ export default function LevelTestPage() {
         <p className="mt-2 text-sm text-slate-600">
           아이의 나이에 맞는 문제를 무작위로 출제합니다. 예약 없이도 바로 응시할 수 있어요.
         </p>
+        {isAdminPreview && (
+          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            관리자 미리보기 화면입니다. 답안을 제출해도 결과는 저장되지 않습니다.
+          </p>
+        )}
       </div>
 
-      {summary ? (
+      {!isAdminPreview && !isChildrenLoading && children.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600">먼저 <a href="/children" className="font-semibold text-brand-700 underline">내 자녀</a>에서 자녀를 등록해 주세요.</div>
+      ) : summary ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           레벨테스트 응시를 완료했습니다. (객관식 채점: {summary.score} / {summary.scorableCount}점)
           <div>
@@ -92,35 +117,20 @@ export default function LevelTestPage() {
         </div>
       ) : !started ? (
         <div className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
-            아이 이름
-            <input
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              value={childName}
-              onChange={(e) => setChildName(e.target.value)}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm text-slate-700">
-            나이
-            <select
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              value={childAge}
-              onChange={(e) => setChildAge(Number(e.target.value))}
-            >
-              {LEVEL_TEST_AGE_OPTIONS.map((age) => (
-                <option key={age} value={age}>
-                  만 {age}세
-                </option>
-              ))}
-            </select>
-          </label>
+          {isAdminPreview ? <>
+            <label className="flex flex-col gap-1 text-sm text-slate-700">아이 이름<input className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={childName} onChange={(e) => setChildName(e.target.value)} /></label>
+            <label className="flex flex-col gap-1 text-sm text-slate-700">나이<select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={childAge} onChange={(e) => setChildAge(Number(e.target.value))}>{LEVEL_TEST_AGE_OPTIONS.map((age) => <option key={age} value={age}>만 {age}세</option>)}</select></label>
+          </> : <>
+            <label className="flex flex-col gap-1 text-sm text-slate-700">응시할 자녀<select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={selectedChild?.id ?? ''} onChange={(e) => selectChild(e.target.value)}><option value="">자녀를 선택해 주세요</option>{children.map((child) => <option key={child.id} value={child.id}>{child.name} · 만 {child.age}세</option>)}</select></label>
+            {selectedChild && <p className="text-sm text-slate-700">{selectedChild.name} · 만 {selectedChild.age}세</p>}
+          </>}
 
           {submitError && <p className="text-sm text-red-600">{submitError}</p>}
 
           <button
             type="button"
             onClick={handleStart}
+            disabled={!isAdminPreview && !selectedChild}
             className="self-start rounded-lg border border-brand-300 bg-white px-4 py-2 text-sm font-medium text-brand-700 hover:border-brand-500"
           >
             레벨테스트 시작

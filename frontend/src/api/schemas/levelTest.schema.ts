@@ -96,6 +96,7 @@ export const SubmitLevelTestAnswerSchema = z.object({
 export type SubmitLevelTestAnswer = z.infer<typeof SubmitLevelTestAnswerSchema>
 
 export const SubmitLevelTestResultInputSchema = z.object({
+  childId: z.string().min(1),
   childName: z.string().min(1, '아이 이름을 입력해 주세요'),
   childAge: z.number().int().min(4).max(10),
   answers: z.array(SubmitLevelTestAnswerSchema).min(1, '답변을 1개 이상 입력해 주세요'),

@@ -13,6 +13,7 @@ import AgeConfigPanel from './components/AgeConfigPanel'
 import ResultsList from './components/ResultsList'
 import ResultDetailModal from './components/ResultDetailModal'
 import PreviewPanel from './components/PreviewPanel'
+import { ApiError } from '../../../lib/apiClient'
 
 const TABS = [
   { id: 'questions', label: '문제 관리' },
@@ -90,8 +91,8 @@ export default function LevelTestsAdminPage() {
         await createQuestion(result.data)
       }
       cancelEdit()
-    } catch {
-      window.alert('문항 저장에 실패했습니다.')
+    } catch (cause) {
+      window.alert(cause instanceof ApiError ? cause.message : '문항 저장에 실패했습니다.')
     }
   }
 
@@ -99,16 +100,16 @@ export default function LevelTestsAdminPage() {
     if (!window.confirm('이 문항을 삭제하시겠습니까?')) return
     try {
       await deleteQuestion(id)
-    } catch {
-      window.alert('문항을 삭제하지 못했습니다.')
+    } catch (cause) {
+      window.alert(cause instanceof ApiError ? cause.message : '문항을 삭제하지 못했습니다.')
     }
   }
 
   async function handleSaveConfig(age: number, drawCount: number) {
     try {
       await upsertConfig(age, { drawCount })
-    } catch {
-      window.alert('출제 수 설정을 저장하지 못했습니다.')
+    } catch (cause) {
+      window.alert(cause instanceof ApiError ? cause.message : '출제 수 설정을 저장하지 못했습니다.')
     }
   }
 
