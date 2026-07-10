@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { ReservationsService } from './reservations.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { NotificationService } from '../notifications/notification.service';
+import { ReservationsService } from './reservations.service.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationService } from '../notifications/notification.service.js';
 
 describe('ReservationsService', () => {
   let service: ReservationsService;
@@ -271,7 +271,7 @@ describe('ReservationsService', () => {
     });
   });
 
-  describe('createWalkIn', () => {
+  describe('createWalkInReservation', () => {
     const dto = {
       childName: '지훈',
       childAge: 6,
@@ -283,7 +283,7 @@ describe('ReservationsService', () => {
       const created = { id: '1', ...dto, parentEmail: '', status: 'WAITING' };
       prisma.reservation.create.mockResolvedValue(created);
 
-      const result = await service.createWalkIn(dto);
+      const result = await service.createWalkInReservation(dto);
 
       expect(result).toBe(created);
       expect(prisma.reservation.create).toHaveBeenCalledWith({
@@ -305,7 +305,7 @@ describe('ReservationsService', () => {
       const created = { id: '2', ...dtoWithEmail, status: 'WAITING' };
       prisma.reservation.create.mockResolvedValue(created);
 
-      await service.createWalkIn(dtoWithEmail);
+      await service.createWalkInReservation(dtoWithEmail);
 
       expect(prisma.reservation.create).toHaveBeenCalledWith({
         data: {

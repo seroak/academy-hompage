@@ -9,7 +9,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { PreferredSlotDto } from './create-reservation.dto';
+import { PreferredSlotDto } from './create-reservation.dto.js';
 
 export class CreateWalkInReservationDto {
   @IsString()

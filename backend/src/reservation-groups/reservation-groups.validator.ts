@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { GroupSlotDto } from './dto/create-reservation-group.dto';
+import { GroupSlotDto } from './dto/create-reservation-group.dto.js';
 
 interface PreferredSlot {
   dayOfWeek: string;
@@ -118,6 +118,19 @@ export class ReservationGroupsValidator {
     if (isNotOverlapping) {
       throw new ConflictException(
         '추가할 시간이 그룹의 기존 시간대와 겹치지 않습니다',
+      );
+    }
+  }
+
+  validateScheduledMemberSlots(slots: SlotRange[], schedule: SlotRange): void {
+    if (
+      slots.length !== 1 ||
+      slots[0].dayOfWeek !== schedule.dayOfWeek ||
+      slots[0].startMinute !== schedule.startMinute ||
+      slots[0].endMinute !== schedule.endMinute
+    ) {
+      throw new ConflictException(
+        '일정이 지정된 수업에는 수업 일정 전체와 동일한 시간만 배정할 수 있습니다',
       );
     }
   }

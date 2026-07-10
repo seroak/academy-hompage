@@ -13,7 +13,7 @@ import {
   IsValidSlotEndMinute,
   OPERATING_END_MINUTE,
   OPERATING_START_MINUTE,
-} from '../../common/validators/time-range.validators';
+} from '../../common/validators/time-range.validators.js';
 
 const DAYS_OF_WEEK = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 

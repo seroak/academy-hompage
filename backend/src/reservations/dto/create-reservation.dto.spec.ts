@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { PreferredSlotDto } from './create-reservation.dto';
+import { PreferredSlotDto } from './create-reservation.dto.js';
 
 describe('PreferredSlotDto', () => {
   function makeSlot(overrides: Partial<{ dayOfWeek: string; startMinute: number; endMinute: number }> = {}) {

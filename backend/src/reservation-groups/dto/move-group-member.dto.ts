@@ -4,7 +4,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MemberSlotDto } from './add-group-member.dto';
+import { MemberSlotDto } from './add-group-member.dto.js';
 
 export class MoveGroupMemberDto {
   @IsString()

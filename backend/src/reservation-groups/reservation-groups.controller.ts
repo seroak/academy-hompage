@@ -10,58 +10,62 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ReservationGroupsService } from './reservation-groups.service';
-import { CreateReservationGroupDto } from './dto/create-reservation-group.dto';
-import { UpdateReservationGroupDto } from './dto/update-reservation-group.dto';
-import { AddGroupMemberDto } from './dto/add-group-member.dto';
-import { ReplaceMemberSlotsDto } from './dto/replace-member-slots.dto';
-import { MoveGroupMemberDto } from './dto/move-group-member.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ReservationGroupQueryService } from './reservation-group-query.service.js';
+import { ReservationGroupLifecycleService } from './reservation-group-lifecycle.service.js';
+import { ReservationGroupMembershipService } from './reservation-group-membership.service.js';
+import { CreateReservationGroupDto } from './dto/create-reservation-group.dto.js';
+import { UpdateReservationGroupDto } from './dto/update-reservation-group.dto.js';
+import { AddGroupMemberDto } from './dto/add-group-member.dto.js';
+import { ReplaceMemberSlotsDto } from './dto/replace-member-slots.dto.js';
+import { MoveGroupMemberDto } from './dto/move-group-member.dto.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('reservation-groups')
 export class ReservationGroupsController {
   constructor(
-    private readonly reservationGroupsService: ReservationGroupsService,
+    private readonly queryService: ReservationGroupQueryService,
+    private readonly lifecycleService: ReservationGroupLifecycleService,
+    private readonly membershipService: ReservationGroupMembershipService,
   ) {}
 
   @Get('confirmed-slots')
   findConfirmedSlots() {
-    return this.reservationGroupsService.findConfirmedSlots();
+    return this.queryService.findConfirmedSlots();
   }
 
   @Get('joinable')
   findJoinable() {
-    return this.reservationGroupsService.findJoinable();
+    return this.queryService.findJoinable();
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
-    return this.reservationGroupsService.findAll();
+    return this.queryService.findAll();
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.reservationGroupsService.findOne(id);
+    return this.queryService.findOne(id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreateReservationGroupDto) {
-    return this.reservationGroupsService.create(dto);
+    return this.lifecycleService.create(dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateReservationGroupDto) {
-    return this.reservationGroupsService.update(id, dto);
+    return this.lifecycleService.update(id, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/members')
   addMember(@Param('id') id: string, @Body() dto: AddGroupMemberDto) {
-    return this.reservationGroupsService.addMember(id, dto);
+    return this.membershipService.addMember(id, dto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -71,11 +75,7 @@ export class ReservationGroupsController {
     @Param('reservationId') reservationId: string,
     @Body() dto: ReplaceMemberSlotsDto,
   ) {
-    return this.reservationGroupsService.replaceMemberSlots(
-      id,
-      reservationId,
-      dto,
-    );
+    return this.membershipService.replaceMemberSlots(id, reservationId, dto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -85,7 +85,7 @@ export class ReservationGroupsController {
     @Param('reservationId') reservationId: string,
     @Body() dto: MoveGroupMemberDto,
   ) {
-    return this.reservationGroupsService.moveMember(id, reservationId, dto);
+    return this.membershipService.moveMember(id, reservationId, dto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -95,13 +95,13 @@ export class ReservationGroupsController {
     @Param('id') id: string,
     @Param('reservationId') reservationId: string,
   ) {
-    return this.reservationGroupsService.removeMember(id, reservationId);
+    return this.membershipService.removeMember(id, reservationId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
-    return this.reservationGroupsService.remove(id);
+    return this.lifecycleService.remove(id);
   }
 }

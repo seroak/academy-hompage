@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { CreateWalkInReservationDto } from './create-walk-in-reservation.dto';
+import { CreateWalkInReservationDto } from './create-walk-in-reservation.dto.js';
 
 describe('CreateWalkInReservationDto', () => {
   function makeDto(overrides: Record<string, unknown> = {}) {

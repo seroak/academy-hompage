@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { NotificationService } from '../notifications/notification.service';
-import { CreateReservationDto } from './dto/create-reservation.dto';
-import { CreateWalkInReservationDto } from './dto/create-walk-in-reservation.dto';
-import { UpdateReservationDto } from './dto/update-reservation.dto';
-import { QueryReservationsDto } from './dto/query-reservations.dto';
+import { Prisma } from '../generated/prisma/client.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationService } from '../notifications/notification.service.js';
+import { CreateReservationDto } from './dto/create-reservation.dto.js';
+import { CreateWalkInReservationDto } from './dto/create-walk-in-reservation.dto.js';
+import { UpdateReservationDto } from './dto/update-reservation.dto.js';
+import { QueryReservationsDto } from './dto/query-reservations.dto.js';
 
 @Injectable()
 export class ReservationsService {
@@ -68,7 +68,7 @@ export class ReservationsService {
     return reservation;
   }
 
-  async createWalkIn(dto: CreateWalkInReservationDto) {
+  async createWalkInReservation(dto: CreateWalkInReservationDto) {
     const { preferredSlots, parentEmail, ...reservationData } = dto;
 
     return this.prisma.reservation.create({

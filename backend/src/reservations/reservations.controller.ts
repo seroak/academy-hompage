@@ -12,14 +12,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ReservationsService } from './reservations.service';
-import { CreateReservationDto } from './dto/create-reservation.dto';
-import { CreateWalkInReservationDto } from './dto/create-walk-in-reservation.dto';
-import { UpdateReservationDto } from './dto/update-reservation.dto';
-import { QueryReservationsDto } from './dto/query-reservations.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ParentJwtGuard } from '../auth/guards/parent-jwt.guard';
-import { ParentPrincipal } from '../auth/strategies/parent-jwt.strategy';
+import { ReservationsService } from './reservations.service.js';
+import { CreateReservationDto } from './dto/create-reservation.dto.js';
+import { CreateWalkInReservationDto } from './dto/create-walk-in-reservation.dto.js';
+import { UpdateReservationDto } from './dto/update-reservation.dto.js';
+import { QueryReservationsDto } from './dto/query-reservations.dto.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { ParentJwtGuard } from '../auth/guards/parent-jwt.guard.js';
+import { ParentPrincipal } from '../auth/strategies/parent-jwt.strategy.js';
 
 interface ParentRequest {
   user: ParentPrincipal;
@@ -49,8 +49,8 @@ export class ReservationsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('walk-in')
-  createWalkIn(@Body() dto: CreateWalkInReservationDto) {
-    return this.reservationsService.createWalkIn(dto);
+  createWalkInReservation(@Body() dto: CreateWalkInReservationDto) {
+    return this.reservationsService.createWalkInReservation(dto);
   }
 
   @UseGuards(JwtAuthGuard)

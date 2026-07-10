@@ -5,6 +5,7 @@ import {
   IsString,
   Max,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -13,7 +14,7 @@ import {
   IsValidSlotEndMinute,
   OPERATING_END_MINUTE,
   OPERATING_START_MINUTE,
-} from '../../common/validators/time-range.validators';
+} from '../../common/validators/time-range.validators.js';
 
 const DAYS_OF_WEEK = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 
@@ -57,6 +58,40 @@ export class CreateReservationGroupDto {
   @Min(4)
   @Max(10)
   maxAge?: number;
+
+  @ValidateIf(
+    (dto: CreateReservationGroupDto) =>
+      dto.scheduleDayOfWeek !== undefined ||
+      dto.scheduleStartMinute !== undefined ||
+      dto.scheduleEndMinute !== undefined,
+  )
+  @IsIn(DAYS_OF_WEEK)
+  scheduleDayOfWeek?: string;
+
+  @ValidateIf(
+    (dto: CreateReservationGroupDto) =>
+      dto.scheduleDayOfWeek !== undefined ||
+      dto.scheduleStartMinute !== undefined ||
+      dto.scheduleEndMinute !== undefined,
+  )
+  @IsInt()
+  @Min(OPERATING_START_MINUTE)
+  @Max(OPERATING_END_MINUTE)
+  @IsMultipleOfSlotStep()
+  scheduleStartMinute?: number;
+
+  @ValidateIf(
+    (dto: CreateReservationGroupDto) =>
+      dto.scheduleDayOfWeek !== undefined ||
+      dto.scheduleStartMinute !== undefined ||
+      dto.scheduleEndMinute !== undefined,
+  )
+  @IsInt()
+  @Min(OPERATING_START_MINUTE)
+  @Max(OPERATING_END_MINUTE)
+  @IsMultipleOfSlotStep()
+  @IsValidSlotEndMinute()
+  scheduleEndMinute?: number;
 
   @ValidateNested({ each: true })
   @Type(() => GroupSlotDto)
