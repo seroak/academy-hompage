@@ -1,4 +1,7 @@
 export const queryKeys = {
+  children: {
+    all: ['children'] as const,
+  },
   notices: {
     all: ['notices'] as const,
     detail: (id: string) => ['notices', id] as const,

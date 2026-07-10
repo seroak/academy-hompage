@@ -88,6 +88,13 @@ function ParentProfileMenu({
               <p className="truncate text-xs font-bold text-[#8a8272]">{parent.email}</p>
             )}
           </div>
+          <Link
+            href="/children"
+            onClick={() => setIsOpen(false)}
+            className="mt-2 flex w-full rounded-xl px-2 py-2 text-sm font-black text-[#3f3a31] transition hover:bg-[#fff4dc] hover:text-[#e86f00]"
+          >
+            내 자녀
+          </Link>
           <button
             type="button"
             onClick={() => {
@@ -225,7 +232,15 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                 </button>
               </>
             ) : isParentAuthenticated && parent ? (
-              <ParentProfileMenu parent={parent} onLogout={handleParentLogout} />
+              <>
+                <Link
+                  href="/children"
+                  className="inline-flex h-12 items-center rounded-full border border-[#f2dfb9] bg-white px-5 text-sm font-black text-[#3f3a31] transition duration-250 hover:-translate-y-0.5 hover:border-[#ffd66b] hover:text-[#e86f00]"
+                >
+                  내 자녀
+                </Link>
+                <ParentProfileMenu parent={parent} onLogout={handleParentLogout} />
+              </>
             ) : (
               <button
                 type="button"
@@ -290,6 +305,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                   </button>
                 </div>
               ) : isParentAuthenticated && parent ? (
+                <>
                 <div className="mt-2 flex items-center justify-between gap-3 rounded-full border border-[#f2dfb9] bg-white px-4 py-2">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418]">
@@ -313,6 +329,10 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                     로그아웃
                   </button>
                 </div>
+                <Link href="/children" onClick={() => setIsOpen(false)} className="mt-2 inline-flex h-10 items-center justify-center rounded-full border border-[#f2dfb9] bg-white px-4 text-sm font-black text-[#3f3a31]">
+                  내 자녀
+                </Link>
+                </>
               ) : (
                 <button
                   type="button"

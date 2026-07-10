@@ -10,6 +10,7 @@ import { ReservationsModule } from './reservations/reservations.module.js';
 import { ReservationGroupsModule } from './reservation-groups/reservation-groups.module.js';
 import { MembersModule } from './members/members.module.js';
 import { LevelTestsModule } from './level-tests/level-tests.module.js';
+import { ChildrenModule } from './children/children.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { LevelTestsModule } from './level-tests/level-tests.module.js';
     ReservationGroupsModule,
     MembersModule,
     LevelTestsModule,
+    ChildrenModule,
   ],
   controllers: [AppController],
   providers: [AppService],
