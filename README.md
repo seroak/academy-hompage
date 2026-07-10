@@ -6,6 +6,7 @@
 ## 🛠 기술 스택
 
 ### Frontend
+
 - **Framework**: Next.js (App Router), React
 - **Language**: TypeScript
 - **State Management & Fetching**: Zustand, TanStack Query (React Query)
@@ -13,6 +14,7 @@
 - **Validation**: Zod
 
 ### Backend
+
 - **Framework**: NestJS
 - **Language**: TypeScript
 - **Database / ORM**: PostgreSQL (Docker Compose), Prisma (v6.x)
@@ -61,7 +63,12 @@ npx prisma db seed
 
 # 백엔드 서버 실행 (http://localhost:3000)
 npm run start:dev
+
+# 시드값으로 초기화
+cd backend
+npx prisma migrate reset
 ```
+
 > **주의**: Prisma 버전은 호환성 유지를 위해 `6.x`로 고정되어 있습니다. `7.x`로 강제 업그레이드하지 마세요.
 
 ### 2. 프론트엔드 (Frontend) 실행
@@ -81,13 +88,15 @@ npm run dev
 ## 🔑 초기 관리자 계정 (시드 데이터)
 
 최초 `npx prisma db seed` 실행 시 기본적으로 생성되는 관리자 계정 정보입니다.
+
 - **아이디**: `admin`
 - **비밀번호**: `admin1234`
-*(환경변수 `.env`의 `ADMIN_SEED_USERNAME`, `ADMIN_SEED_PASSWORD` 설정에 따라 다를 수 있습니다.)*
+  _(환경변수 `.env`의 `ADMIN_SEED_USERNAME`, `ADMIN_SEED_PASSWORD` 설정에 따라 다를 수 있습니다.)_
 
 ---
 
 ## 📌 주요 아키텍처 규칙
+
 - **API 응답 파싱**: 프론트엔드에서는 항상 `Zod`를 이용해 백엔드 API 응답을 검증하고 타입 안정성을 확보합니다.
 - **인증(Auth)**: 백엔드의 조회(`GET`)는 기본적으로 공개되어 있으며, 생성/수정/삭제(`POST`, `PATCH`, `DELETE`) 등 쓰기 작업에만 `JwtAuthGuard`가 적용되어 있습니다.
 - **SEO 최적화**: 검색 노출이 필요한 페이지는 `Next.js`의 App Router(`src/app/`) 기능을 활용하여 관리합니다.

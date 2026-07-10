@@ -67,6 +67,7 @@ npm run build                  # next build --webpack
 
 - **CRUD 패턴 통일**: courses/notices/instructors는 동일한 구조(controller/service/dto, `findAll`/`findOne`/`create`/`update`/`remove`)를 따른다. 새 도메인 추가 시 이 패턴을 복제한다.
 - **인증 가드는 쓰기 작업에만**: `GET`은 공개, `POST`/`PATCH`/`DELETE`에만 `@UseGuards(JwtAuthGuard)`. 새 엔드포인트 추가 시 동일하게 적용.
+- **관리자 역할 권한**: 관리자는 `CONTENT_MANAGER`(강좌·강사·공지), `RESERVATION_MANAGER`(예약·회원·그룹), `ASSESSMENT_MANAGER`(레벨테스트), `SUPER_ADMIN`으로 나눈다. 관리자 API에는 서버에서 `JwtAuthGuard`와 `RolesGuard`를 함께 적용하고, 프론트 메뉴·페이지 가드는 UX 보조로만 쓴다. 관리자 계정 생성(`POST /admins`)은 `SUPER_ADMIN`만 가능하다.
 - **단, GET이 개인정보를 반환하면 예외적으로 가드 유지**: 신청자 이름·이메일 등이 포함된 목록/상세 GET(`reservations`, `reservation-groups`의 `findAll`/`findOne` 등)은 클래스 레벨 대신 **메서드 레벨 `@UseGuards(JwtAuthGuard)`**로 개별 유지하고, 같은 컨트롤러에 공개해야 하는 집계/익명 GET(예: `GET /reservation-groups/confirmed-slots` — 요일·시간만 반환)이 있으면 가드 없이 별도 라우트로 추가한다. 공개 라우트는 반드시 `:id` 같은 파라미터 라우트보다 **먼저 선언**해 경로 충돌을 피한다.
 - **DELETE는 204 반환 필수**: `@HttpCode(HttpStatus.NO_CONTENT)`. Nest 기본값(200 + 빈 바디)은 프론트 `response.json()` 파싱 에러를 유발한다(실제로 겪은 버그, `src/lib/apiClient.ts` 참고).
 - **API 응답은 Zod로 파싱**: `frontend/src/api/*.ts`에서 `schema.parse(raw)` 필수, `as T` 단언 금지. 신규 API 함수 작성 시 `api-zod-boundary` 스킬 참고.
@@ -87,6 +88,24 @@ npm run build                  # next build --webpack
 - props, store 값, 쿼리 결과가 바뀌었다는 이유만으로 `useEffect` 안에서 같은 컴포넌트의 state 일부를 보정하지 않는다.
 - 외부 값 변화에 맞춰 state를 재설정해야 하면 `key`로 하위 컴포넌트를 재마운트하거나, 렌더링 중 `prevValue` 비교로 같은 컴포넌트 state를 조건부 갱신한다.
 - 이벤트, 네트워크 구독, DOM 조작, 타이머처럼 실제 사이드 이펙트가 있는 작업만 `useEffect`에 둔다.
+
+## 프론트엔드 E2E(Playwright)
+
+`frontend/e2e/`에 Playwright 스위트가 있다. 백엔드/DB 없이 완전히 목(mock)으로 동작한다 — 백엔드 계약 검증은 백엔드 Jest 스펙이 담당.
+
+```bash
+cd frontend
+npx playwright install chromium   # 최초 1회
+npx playwright test               # 전체 스위트 실행 (3410/4310 전용 포트, 실백엔드 3000/평소 dev 3001과 무관)
+```
+
+- **SSR과 클라이언트 요청은 목킹 방식이 다르다**: 공개 페이지(`app/**`)의 서버 컴포넌트 fetch는 브라우저 `page.route()`로 못 잡는다 — `e2e/mock-server/server.ts`(독립 Node 서버, `NEXT_PUBLIC_API_BASE_URL`로 연결)가 응답한다. `/apply`, `/level-test`, `/admin/*`처럼 클라이언트(TanStack Query)에서 나가는 요청은 각 spec의 `page.route()`로 시나리오별 제어한다.
+- **`page.route()` 패턴은 반드시 API origin에 앵커링**: 느슨한 정규식(`/\/courses$/` 등)은 `/admin/courses` 같은 페이지 자체 내비게이션까지 가로채 버린다(실제로 겪은 버그 — 브라우저가 JSON을 그대로 렌더링). `e2e/helpers/intercept.ts`의 `apiPattern()`으로 목 API origin까지 통째로 앵커링해서 쓴다.
+- **`next dev`는 프로젝트 디렉토리당 1개만 허용**(포트가 달라도 동시 실행 시 잠금 충돌). `next.config.ts`에 `NEXT_E2E=1`일 때 `distDir: '.next-e2e'`로 분리해 평소 dev 서버(3001, `.next`)와 공존시킨다.
+- **Next의 fetch 데이터 캐시(`next: {revalidate}`)는 디스크에 영구 저장**(`.next-e2e/dev/cache/fetch-cache`)돼 dev 서버를 껐다 켜도 살아남는다. `playwright.config.ts`의 webServer 커맨드가 기동 전 이 캐시를 지운다 — 목 서버 응답을 시나리오별로 바꾸는 테스트를 새로 추가할 때 이 점을 놓치면 항상 첫 실행 데이터만 보인다.
+- **인증은 실제 로그인 없이 위조 쿠키로 세팅**: `serverAuth.ts`는 JWT 서명 검증을 안 하므로 `e2e/helpers/auth.setup.ts`가 보호자(JWT payload)/관리자(zustand persist 쿠키, `admin.role: 'SUPER_ADMIN'` 포함) storageState를 미리 만들어 재사용한다. 관리자 역할(RBAC)이 추가되면 이 쿠키의 `admin` 필드도 함께 갱신해야 한다.
+- **`window.alert`/`confirm` 같은 네이티브 다이얼로그는 `page.once('dialog', ...)`를 액션 실행 **전에** 등록**한다 — `page.waitForEvent('dialog')` 뒤에 `await click()`을 두면 동기 `alert()`가 렌더러를 막아 클릭 자체가 영원히 안 끝나는 데드락이 난다.
+- **라벨 충돌은 `data-testid`로 해소**: 같은 화면에 동일 라벨(예: 예약 관리 페이지의 "그룹 이름"이 `GroupConfirmForm`/`GroupManagementCard` 양쪽에 존재)이 있으면 `getByLabel`이 strict-mode 위반을 낸다 — 모호한 컨테이너에만 `data-testid`를 붙여 스코프를 좁힌다.
 
 ## Prisma 버전 관련 주의
 
