@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { NotificationService } from './notification.service';
+import { NotificationService } from './notification.service.js';
 
 @Global()
 @Module({

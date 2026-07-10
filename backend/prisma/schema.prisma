@@ -2,12 +2,12 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Admin {
@@ -58,31 +58,6 @@ model ParentAuthSession {
   expiresAt    DateTime
   consumedAt   DateTime?
   createdAt    DateTime   @default(now())
-}
-
-model Instructor {
-  id        String   @id @default(cuid())
-  name      String
-  subject   String
-  bio       String
-  photoUrl  String?
-  courses   Course[]
-  createdAt DateTime @default(now())
-}
-
-model Course {
-  id            String     @id @default(cuid())
-  title         String
-  description   String
-  category      String
-  level         String
-  tuition       Int
-  schedule      String
-  thumbnailUrl  String?
-  instructor    Instructor @relation(fields: [instructorId], references: [id])
-  instructorId  String
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
 }
 
 model Notice {
@@ -141,17 +116,20 @@ model ReservationPreferredSlot {
 }
 
 model ReservationGroup {
-  id           String                 @id @default(cuid())
-  label        String
-  status       ReservationGroupStatus @default(CONFIRMED)
-  capacity     Int
-  minAge       Int
-  maxAge       Int
-  reservations Reservation[]
-  requestedBy  Reservation[]          @relation("RequestedGroup")
-  slots        ReservationGroupSlot[]
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
+  id                  String                 @id @default(cuid())
+  label               String
+  status              ReservationGroupStatus @default(CONFIRMED)
+  capacity            Int
+  minAge              Int
+  maxAge              Int
+  scheduleDayOfWeek   String?
+  scheduleStartMinute Int?
+  scheduleEndMinute   Int?
+  reservations        Reservation[]
+  requestedBy         Reservation[]          @relation("RequestedGroup")
+  slots               ReservationGroupSlot[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
 }
 
 model ReservationGroupSlot {

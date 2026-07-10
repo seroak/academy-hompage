@@ -10,8 +10,8 @@ import {
   Min,
   ValidateIf,
 } from 'class-validator';
-import { LevelTestQuestionType } from '@prisma/client';
-import { IsValidCorrectChoiceIndex } from './level-test-question.validators';
+import { LevelTestQuestionType } from '../../generated/prisma/client.js';
+import { IsValidCorrectChoiceIndex } from './level-test-question.validators.js';
 
 export class CreateLevelTestQuestionDto {
   @IsInt()

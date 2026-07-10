@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { OAuthProvider } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { ProviderProfile } from './oauth-providers/oauth-provider.interface';
+import { OAuthProvider } from '../generated/prisma/client.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { ProviderProfile } from './oauth-providers/oauth-provider.interface.js';
 
 @Injectable()
 export class ParentSocialAccountService {

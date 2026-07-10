@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { CreateLevelTestQuestionDto } from './create-level-test-question.dto';
+import { CreateLevelTestQuestionDto } from './create-level-test-question.dto.js';
 
 describe('CreateLevelTestQuestionDto', () => {
   function makeMultipleChoice(overrides: Record<string, unknown> = {}) {

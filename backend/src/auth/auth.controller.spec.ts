@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { PARENT_AUTH_COOKIE } from './auth-cookies';
+import { AuthController } from './auth.controller.js';
+import { AuthService } from './auth.service.js';
+import { PARENT_AUTH_COOKIE } from './auth-cookies.js';
 
 describe('AuthController', () => {
   let controller: AuthController;

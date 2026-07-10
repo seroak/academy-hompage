@@ -3,7 +3,7 @@ dist
 # Keep environment variables out of version control
 .env
 
-/generated/prisma
+/src/generated/prisma
 
 # 사용자 업로드 파일(문항 이미지 등)은 커밋 대상이 아님
 /uploads

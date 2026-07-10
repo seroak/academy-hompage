@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { OAuthProvider } from './oauth-provider.interface';
-import { GoogleOAuthProvider } from './google.provider';
-import { KakaoOAuthProvider } from './kakao.provider';
-import { NaverOAuthProvider } from './naver.provider';
+import { OAuthProvider } from './oauth-provider.interface.js';
+import { GoogleOAuthProvider } from './google.provider.js';
+import { KakaoOAuthProvider } from './kakao.provider.js';
+import { NaverOAuthProvider } from './naver.provider.js';
 
 @Injectable()
 export class OAuthProviderFactory {

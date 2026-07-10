@@ -2,15 +2,15 @@ import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import { OAuthProvider } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { SocialAuthService } from './social-auth.service';
-import { OAuthProviderFactory } from './oauth-providers/oauth-provider.factory';
-import { GoogleOAuthProvider } from './oauth-providers/google.provider';
-import { KakaoOAuthProvider } from './oauth-providers/kakao.provider';
-import { NaverOAuthProvider } from './oauth-providers/naver.provider';
-import { OAuthStateService } from './oauth-state.service';
-import { ParentSocialAccountService } from './parent-social-account.service';
+import { OAuthProvider } from '../generated/prisma/client.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { SocialAuthService } from './social-auth.service.js';
+import { OAuthProviderFactory } from './oauth-providers/oauth-provider.factory.js';
+import { GoogleOAuthProvider } from './oauth-providers/google.provider.js';
+import { KakaoOAuthProvider } from './oauth-providers/kakao.provider.js';
+import { NaverOAuthProvider } from './oauth-providers/naver.provider.js';
+import { OAuthStateService } from './oauth-state.service.js';
+import { ParentSocialAccountService } from './parent-social-account.service.js';
 describe('SocialAuthService', () => {
   let service: SocialAuthService;
   let prisma: {

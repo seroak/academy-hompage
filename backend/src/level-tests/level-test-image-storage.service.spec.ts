@@ -1,4 +1,4 @@
-import { LevelTestImageStorageService } from './level-test-image-storage.service';
+import { LevelTestImageStorageService } from './level-test-image-storage.service.js';
 
 describe('LevelTestImageStorageService', () => {
   let unlink: jest.Mock;

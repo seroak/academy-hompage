@@ -2,11 +2,11 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'node:crypto';
-import { PrismaService } from '../prisma/prisma.service';
-import { ParentPrincipal } from './strategies/parent-jwt.strategy';
-import { OAuthProviderFactory } from './oauth-providers/oauth-provider.factory';
-import { OAuthStateService } from './oauth-state.service';
-import { ParentSocialAccountService } from './parent-social-account.service';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { ParentPrincipal } from './strategies/parent-jwt.strategy.js';
+import { OAuthProviderFactory } from './oauth-providers/oauth-provider.factory.js';
+import { OAuthStateService } from './oauth-state.service.js';
+import { ParentSocialAccountService } from './parent-social-account.service.js';
 
 @Injectable()
 export class SocialAuthService {

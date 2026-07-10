@@ -4,13 +4,13 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { LevelTestQuestionType, Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateLevelTestQuestionDto } from './dto/create-level-test-question.dto';
-import { UpdateLevelTestQuestionDto } from './dto/update-level-test-question.dto';
-import { UpsertLevelTestAgeConfigDto } from './dto/upsert-level-test-age-config.dto';
-import { CreateLevelTestResultDto } from './dto/create-level-test-result.dto';
-import { LevelTestImageStorageService } from './level-test-image-storage.service';
+import { LevelTestQuestionType, Prisma } from '../generated/prisma/client.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { CreateLevelTestQuestionDto } from './dto/create-level-test-question.dto.js';
+import { UpdateLevelTestQuestionDto } from './dto/update-level-test-question.dto.js';
+import { UpsertLevelTestAgeConfigDto } from './dto/upsert-level-test-age-config.dto.js';
+import { CreateLevelTestResultDto } from './dto/create-level-test-result.dto.js';
+import { LevelTestImageStorageService } from './level-test-image-storage.service.js';
 
 const DEFAULT_DRAW_COUNT = 5;
 

@@ -1,7 +1,7 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateAdminDto } from './dto/create-admin.dto';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { CreateAdminDto } from './dto/create-admin.dto.js';
 
 @Injectable()
 export class AdminAccountsService {
@@ -20,5 +20,36 @@ export class AdminAccountsService {
       data: { username: dto.username, passwordHash },
       select: { id: true, username: true, createdAt: true },
     });
+  }
+
+  findAll() {
+    return this.prisma.admin.findMany({
+      select: { id: true, username: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async remove(id: string, currentAdminId: string) {
+    if (id === currentAdminId) {
+      throw new BadRequestException('본인 계정은 삭제할 수 없습니다.');
+    }
+
+    const total = await this.prisma.admin.count();
+    if (total <= 1) {
+      throw new BadRequestException('마지막 관리자 계정은 삭제할 수 없습니다.');
+    }
+
+    try {
+      await this.prisma.admin.delete({ where: { id } });
+    } catch (error) {
+      if (this.isNotFoundError(error)) {
+        throw new NotFoundException(`Admin ${id} not found`);
+      }
+      throw error;
+    }
+  }
+
+  private isNotFoundError(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && (error as { code?: string }).code === 'P2025';
   }
 }

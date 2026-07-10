@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { LevelTestsService } from './level-tests.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { LevelTestImageStorageService } from './level-test-image-storage.service';
+import { LevelTestsService } from './level-tests.service.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { LevelTestImageStorageService } from './level-test-image-storage.service.js';
 
 describe('LevelTestsService', () => {
   let service: LevelTestsService;

@@ -1,10 +1,10 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { ParentLoginDto } from './dto/parent-login.dto';
-import { ParentSignupDto } from './dto/parent-signup.dto';
-import { clearAuthCookie, setAuthCookie } from './auth-cookies';
-import type { ClearCookieResponse, CookieResponse } from './auth-cookies';
+import { AuthService } from './auth.service.js';
+import { LoginDto } from './dto/login.dto.js';
+import { ParentLoginDto } from './dto/parent-login.dto.js';
+import { ParentSignupDto } from './dto/parent-signup.dto.js';
+import { clearAuthCookie, setAuthCookie } from './auth-cookies.js';
+import type { ClearCookieResponse, CookieResponse } from './auth-cookies.js';
 
 @Controller('auth')
 export class AuthController {

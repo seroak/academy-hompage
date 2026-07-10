@@ -35,11 +35,15 @@ export function IsMultipleOfSlotStep(validationOptions?: ValidationOptions) {
 @ValidatorConstraint({ name: 'isValidSlotEndMinute', async: false })
 class IsValidSlotEndMinuteConstraint implements ValidatorConstraintInterface {
   validate(endMinute: unknown, args: ValidationArguments): boolean {
-    const object = args.object as { startMinute?: unknown };
-    if (typeof endMinute !== 'number' || typeof object.startMinute !== 'number') {
+    const object = args.object as {
+      startMinute?: unknown;
+      scheduleStartMinute?: unknown;
+    };
+    const startMinute = object.startMinute ?? object.scheduleStartMinute;
+    if (typeof endMinute !== 'number' || typeof startMinute !== 'number') {
       return false;
     }
-    return endMinute > object.startMinute;
+    return endMinute > startMinute;
   }
 
   defaultMessage(): string {

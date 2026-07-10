@@ -21,19 +21,19 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { LevelTestsService } from './level-tests.service';
-import { CreateLevelTestQuestionDto } from './dto/create-level-test-question.dto';
-import { UpdateLevelTestQuestionDto } from './dto/update-level-test-question.dto';
-import { UpsertLevelTestAgeConfigDto } from './dto/upsert-level-test-age-config.dto';
-import { CreateLevelTestResultDto } from './dto/create-level-test-result.dto';
+import { LevelTestsService } from './level-tests.service.js';
+import { CreateLevelTestQuestionDto } from './dto/create-level-test-question.dto.js';
+import { UpdateLevelTestQuestionDto } from './dto/update-level-test-question.dto.js';
+import { UpsertLevelTestAgeConfigDto } from './dto/upsert-level-test-age-config.dto.js';
+import { CreateLevelTestResultDto } from './dto/create-level-test-result.dto.js';
 import {
   MAX_IMAGE_SIZE_BYTES,
   buildUploadFilename,
   isAllowedImageMimeType,
-} from './level-test-image.utils';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ParentJwtGuard } from '../auth/guards/parent-jwt.guard';
-import { ParentPrincipal } from '../auth/strategies/parent-jwt.strategy';
+} from './level-test-image.utils.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { ParentJwtGuard } from '../auth/guards/parent-jwt.guard.js';
+import { ParentPrincipal } from '../auth/strategies/parent-jwt.strategy.js';
 
 interface ParentRequest {
   user: ParentPrincipal;

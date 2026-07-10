@@ -3,7 +3,7 @@ import {
   MAX_IMAGE_SIZE_BYTES,
   buildUploadFilename,
   isAllowedImageMimeType,
-} from './level-test-image.utils';
+} from './level-test-image.utils.js';
 
 describe('level-test-image.utils', () => {
   describe('isAllowedImageMimeType', () => {

@@ -4,7 +4,7 @@ import {
   authCookieExtractor,
   clearAuthCookie,
   setAuthCookie,
-} from './auth-cookies';
+} from './auth-cookies.js';
 
 describe('auth cookies', () => {
   it('sets httpOnly auth cookies with shared options', () => {

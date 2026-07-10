@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SocialAuthController } from './social-auth.controller';
-import { SocialAuthService } from './social-auth.service';
-import { PARENT_AUTH_COOKIE } from './auth-cookies';
+import { SocialAuthController } from './social-auth.controller.js';
+import { SocialAuthService } from './social-auth.service.js';
+import { PARENT_AUTH_COOKIE } from './auth-cookies.js';
 
 describe('SocialAuthController', () => {
   let controller: SocialAuthController;

@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PARENT_AUTH_COOKIE, authCookieExtractor } from '../auth-cookies';
+import { PARENT_AUTH_COOKIE, authCookieExtractor } from '../auth-cookies.js';
 
 export interface ParentJwtPayload {
   sub: string;

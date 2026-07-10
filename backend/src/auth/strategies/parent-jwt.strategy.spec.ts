@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ParentJwtStrategy } from './parent-jwt.strategy';
-import { PARENT_AUTH_COOKIE } from '../auth-cookies';
+import { ParentJwtStrategy } from './parent-jwt.strategy.js';
+import { PARENT_AUTH_COOKIE } from '../auth-cookies.js';
 
 interface ExtractableStrategy {
   _jwtFromRequest: (request: unknown) => string | null;

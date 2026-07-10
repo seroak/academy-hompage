@@ -1,9 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
-import { NotificationService } from './notification.service';
-
-jest.mock('nodemailer');
+import { NotificationService } from './notification.service.js';
 
 describe('NotificationService', () => {
   let sendMail: jest.Mock;
@@ -12,7 +8,7 @@ describe('NotificationService', () => {
 
   beforeEach(() => {
     sendMail = jest.fn().mockResolvedValue(undefined);
-    createTransport = nodemailer.createTransport as jest.Mock;
+    createTransport = jest.fn();
     createTransport.mockReturnValue({ sendMail });
     configValues = {};
   });
@@ -22,19 +18,15 @@ describe('NotificationService', () => {
   });
 
   async function createService(): Promise<NotificationService> {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        NotificationService,
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string, defaultValue?: string | number) => configValues[key] ?? defaultValue),
-          },
-        },
-      ],
-    }).compile();
-
-    return module.get<NotificationService>(NotificationService);
+    return new NotificationService(
+      {
+        get: jest.fn(
+          (key: string, defaultValue?: string | number) =>
+            configValues[key] ?? defaultValue,
+        ),
+      } as unknown as ConfigService,
+      createTransport,
+    );
   }
 
   describe('SMTP 미설정', () => {

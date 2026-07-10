@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
@@ -44,13 +44,17 @@ export class NotificationService {
   private readonly transporter: nodemailer.Transporter | null;
   private readonly from: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional()
+    private readonly createTransport: typeof nodemailer.createTransport = nodemailer.createTransport,
+  ) {
     const host = this.configService.get<string>('SMTP_HOST');
 
     if (!host) {
       this.transporter = null;
     } else {
-      this.transporter = nodemailer.createTransport({
+      this.transporter = this.createTransport({
         host,
         port: Number(this.configService.get<string | number>('SMTP_PORT', 587)),
         secure: this.configService.get<string>('SMTP_SECURE') === 'true',

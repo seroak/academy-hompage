@@ -1,4 +1,4 @@
-import { JwtStrategy } from './jwt.strategy';
+import { JwtStrategy } from './jwt.strategy.js';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 

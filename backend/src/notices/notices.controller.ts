@@ -10,10 +10,10 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { NoticesService } from './notices.service';
-import { CreateNoticeDto } from './dto/create-notice.dto';
-import { UpdateNoticeDto } from './dto/update-notice.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { NoticesService } from './notices.service.js';
+import { CreateNoticeDto } from './dto/create-notice.dto.js';
+import { UpdateNoticeDto } from './dto/update-notice.dto.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('notices')
 export class NoticesController {

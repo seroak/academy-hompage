@@ -1,6 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProvider, ProviderProfile, TokenResponse } from './oauth-provider.interface';
+import { OAuthProvider, ProviderProfile, TokenResponse } from './oauth-provider.interface.js';
 
 @Injectable()
 export class NaverOAuthProvider implements OAuthProvider {

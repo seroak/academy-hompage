@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ParentJwtGuard } from './guards/parent-jwt.guard';
-import { SocialAuthService } from './social-auth.service';
-import { ParentPrincipal } from './strategies/parent-jwt.strategy';
-import { setAuthCookie } from './auth-cookies';
-import type { CookieResponse } from './auth-cookies';
+import { ParentJwtGuard } from './guards/parent-jwt.guard.js';
+import { SocialAuthService } from './social-auth.service.js';
+import { ParentPrincipal } from './strategies/parent-jwt.strategy.js';
+import { setAuthCookie } from './auth-cookies.js';
+import type { CookieResponse } from './auth-cookies.js';
 
 interface RedirectResponse {
   redirect: (url: string) => void;

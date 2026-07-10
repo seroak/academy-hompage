@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { AppModule } from './../src/app.module.js';
 
 const TINY_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
