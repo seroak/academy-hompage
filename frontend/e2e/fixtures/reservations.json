@@ -1,0 +1,19 @@
+[
+  {
+    "id": "reservation-1",
+    "childName": "박아이",
+    "childAge": 5,
+    "parentName": "박부모",
+    "parentEmail": "parent3.e2e@example.com",
+    "parentPhone": null,
+    "preferredSlots": [
+      { "id": "slot-1", "reservationId": "reservation-1", "dayOfWeek": "MON", "startMinute": 900, "endMinute": 960 }
+    ],
+    "note": null,
+    "status": "WAITING",
+    "groupId": null,
+    "requestedGroupId": null,
+    "createdAt": "2026-01-15T00:00:00.000Z",
+    "updatedAt": "2026-01-15T00:00:00.000Z"
+  }
+]

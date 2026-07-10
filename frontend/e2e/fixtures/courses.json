@@ -1,0 +1,44 @@
+[
+  {
+    "id": "course-1",
+    "title": "초등 수학 기초반",
+    "description": "초등 1~2학년을 위한 수학 기초 다지기 과정입니다.",
+    "category": "수학",
+    "level": "초급",
+    "tuition": 150000,
+    "schedule": "월/수 16:00~17:00",
+    "thumbnailUrl": null,
+    "instructorId": "instructor-1",
+    "instructor": {
+      "id": "instructor-1",
+      "name": "김민수",
+      "subject": "수학",
+      "bio": "10년 경력의 초등 수학 전문 강사입니다.",
+      "photoUrl": null,
+      "createdAt": "2025-01-10T00:00:00.000Z"
+    },
+    "createdAt": "2025-02-01T00:00:00.000Z",
+    "updatedAt": "2025-02-01T00:00:00.000Z"
+  },
+  {
+    "id": "course-2",
+    "title": "사고력 수학 심화반",
+    "description": "창의적 문제 해결력을 기르는 사고력 수학 심화 과정입니다.",
+    "category": "사고력수학",
+    "level": "심화",
+    "tuition": 180000,
+    "schedule": "화/목 17:00~18:00",
+    "thumbnailUrl": null,
+    "instructorId": "instructor-2",
+    "instructor": {
+      "id": "instructor-2",
+      "name": "이서연",
+      "subject": "사고력수학",
+      "bio": "사고력 수학과 창의력 교육을 담당합니다.",
+      "photoUrl": null,
+      "createdAt": "2025-01-11T00:00:00.000Z"
+    },
+    "createdAt": "2025-02-02T00:00:00.000Z",
+    "updatedAt": "2025-02-02T00:00:00.000Z"
+  }
+]

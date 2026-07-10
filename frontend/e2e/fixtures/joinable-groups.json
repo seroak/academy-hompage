@@ -1,0 +1,11 @@
+[
+  {
+    "id": "group-joinable-1",
+    "label": "월요일 오후반",
+    "capacity": 4,
+    "filledCount": 2,
+    "minAge": 4,
+    "maxAge": 6,
+    "slots": [{ "dayOfWeek": "MON", "startMinute": 900, "endMinute": 960 }]
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "quiz-q1",
+    "age": 4,
+    "type": "MULTIPLE_CHOICE",
+    "prompt": "1 더하기 1은?",
+    "promptImageUrl": null,
+    "choices": ["1", "2", "3"]
+  },
+  {
+    "id": "quiz-q2",
+    "age": 4,
+    "type": "SHORT_ANSWER",
+    "prompt": "좋아하는 숫자를 적어보세요.",
+    "promptImageUrl": null,
+    "choices": []
+  }
+]

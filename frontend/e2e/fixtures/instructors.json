@@ -1,0 +1,18 @@
+[
+  {
+    "id": "instructor-1",
+    "name": "김민수",
+    "subject": "수학",
+    "bio": "10년 경력의 초등 수학 전문 강사입니다.",
+    "photoUrl": null,
+    "createdAt": "2025-01-10T00:00:00.000Z"
+  },
+  {
+    "id": "instructor-2",
+    "name": "이서연",
+    "subject": "사고력수학",
+    "bio": "사고력 수학과 창의력 교육을 담당합니다.",
+    "photoUrl": null,
+    "createdAt": "2025-01-11T00:00:00.000Z"
+  }
+]

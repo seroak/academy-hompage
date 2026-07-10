@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root,
   },
+  ...(process.env.NEXT_E2E ? { distDir: '.next-e2e' } : {}),
 }
 
 export default nextConfig
