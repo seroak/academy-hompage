@@ -17,9 +17,6 @@ import { AddGroupMemberDto } from './dto/add-group-member.dto';
 import { ReplaceMemberSlotsDto } from './dto/replace-member-slots.dto';
 import { MoveGroupMemberDto } from './dto/move-group-member.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { RESERVATION_ROLES } from '../auth/admin-role';
-import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('reservation-groups')
 export class ReservationGroupsController {
@@ -37,43 +34,37 @@ export class ReservationGroupsController {
     return this.reservationGroupsService.findJoinable();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
     return this.reservationGroupsService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.reservationGroupsService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreateReservationGroupDto) {
     return this.reservationGroupsService.create(dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateReservationGroupDto) {
     return this.reservationGroupsService.update(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Post(':id/members')
   addMember(@Param('id') id: string, @Body() dto: AddGroupMemberDto) {
     return this.reservationGroupsService.addMember(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/members/:reservationId')
   replaceMemberSlots(
     @Param('id') id: string,
@@ -87,8 +78,7 @@ export class ReservationGroupsController {
     );
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/members/:reservationId/move')
   moveMember(
     @Param('id') id: string,
@@ -98,8 +88,7 @@ export class ReservationGroupsController {
     return this.reservationGroupsService.moveMember(id, reservationId, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Delete(':id/members/:reservationId')
   @HttpCode(HttpStatus.NO_CONTENT)
   removeMember(
@@ -109,8 +98,7 @@ export class ReservationGroupsController {
     return this.reservationGroupsService.removeMember(id, reservationId);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...RESERVATION_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {

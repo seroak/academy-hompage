@@ -23,7 +23,6 @@ async function main() {
     create: {
       username: adminUsername,
       passwordHash,
-      role: 'SUPER_ADMIN',
     },
   });
 

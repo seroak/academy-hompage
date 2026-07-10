@@ -38,19 +38,17 @@ describe('AuthService', () => {
         id: 'admin-1',
         username: 'admin',
         passwordHash,
-        role: 'SUPER_ADMIN',
       });
 
       const result = await service.login('admin', 'correct-password');
 
       expect(result).toEqual({
         accessToken: 'signed-token',
-        admin: { id: 'admin-1', username: 'admin', role: 'SUPER_ADMIN' },
+        admin: { id: 'admin-1', username: 'admin' },
       });
       expect(jwtService.sign).toHaveBeenCalledWith({
         sub: 'admin-1',
         username: 'admin',
-        role: 'SUPER_ADMIN',
         tokenType: 'admin',
       });
     });

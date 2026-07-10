@@ -10,18 +10,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum AdminRole {
-  CONTENT_MANAGER
-  RESERVATION_MANAGER
-  ASSESSMENT_MANAGER
-  SUPER_ADMIN
-}
-
 model Admin {
   id           String   @id @default(cuid())
   username     String   @unique
   passwordHash String
-  role         AdminRole @default(SUPER_ADMIN)
   createdAt    DateTime @default(now())
 }
 

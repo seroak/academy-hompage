@@ -14,9 +14,6 @@ import { NoticesService } from './notices.service';
 import { CreateNoticeDto } from './dto/create-notice.dto';
 import { UpdateNoticeDto } from './dto/update-notice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { CONTENT_ROLES } from '../auth/admin-role';
-import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('notices')
 export class NoticesController {
@@ -32,22 +29,19 @@ export class NoticesController {
     return this.noticesService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...CONTENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreateNoticeDto) {
     return this.noticesService.create(dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...CONTENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateNoticeDto) {
     return this.noticesService.update(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...CONTENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {

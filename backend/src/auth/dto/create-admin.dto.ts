@@ -1,5 +1,4 @@
-import { AdminRole } from '@prisma/client';
-import { IsEnum, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateAdminDto {
   @IsString()
@@ -10,7 +9,4 @@ export class CreateAdminDto {
   @IsString()
   @MinLength(8)
   password: string;
-
-  @IsEnum(AdminRole)
-  role: AdminRole;
 }

@@ -32,9 +32,6 @@ import {
   isAllowedImageMimeType,
 } from './level-test-image.utils';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { ASSESSMENT_ROLES } from '../auth/admin-role';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { ParentJwtGuard } from '../auth/guards/parent-jwt.guard';
 import { ParentPrincipal } from '../auth/strategies/parent-jwt.strategy';
 
@@ -63,31 +60,27 @@ export class LevelTestsController {
   }
 
   // 관리자: 결과 조회 (개인정보 포함)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Get('results')
   findAllResults() {
     return this.levelTestsService.findAllResults();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Get('results/:id')
   findOneResult(@Param('id') id: string) {
     return this.levelTestsService.findOneResult(id);
   }
 
   // 관리자: 문제 은행 (정답 포함이므로 가드 유지)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Get('questions')
   findAllQuestions(@Query('age') age?: string) {
     return this.levelTestsService.findAllQuestions(age !== undefined ? Number(age) : undefined);
   }
 
   // 관리자: 문항 이미지 업로드
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Post('question-images')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -121,22 +114,19 @@ export class LevelTestsController {
     return { url: `${UPLOAD_URL_PREFIX}${file.filename}` };
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Post('questions')
   createQuestion(@Body() dto: CreateLevelTestQuestionDto) {
     return this.levelTestsService.createQuestion(dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Patch('questions/:id')
   updateQuestion(@Param('id') id: string, @Body() dto: UpdateLevelTestQuestionDto) {
     return this.levelTestsService.updateQuestion(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Delete('questions/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   removeQuestion(@Param('id') id: string) {
@@ -144,15 +134,13 @@ export class LevelTestsController {
   }
 
   // 관리자: 나이별 출제 수 설정
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Get('config')
   findAllConfigs() {
     return this.levelTestsService.findAllConfigs();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(...ASSESSMENT_ROLES)
+  @UseGuards(JwtAuthGuard)
   @Put('config/:age')
   upsertConfig(@Param('age', ParseIntPipe) age: number, @Body() dto: UpsertLevelTestAgeConfigDto) {
     return this.levelTestsService.upsertConfig(age, dto);

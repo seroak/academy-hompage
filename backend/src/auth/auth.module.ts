@@ -17,7 +17,6 @@ import { OAuthStateService } from './oauth-state.service';
 import { ParentSocialAccountService } from './parent-social-account.service';
 import { AdminAccountsController } from './admin-accounts.controller';
 import { AdminAccountsService } from './admin-accounts.service';
-import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
@@ -46,7 +45,6 @@ import { RolesGuard } from './guards/roles.guard';
     OAuthStateService,
     ParentSocialAccountService,
     AdminAccountsService,
-    RolesGuard,
   ],
 })
 export class AuthModule {}

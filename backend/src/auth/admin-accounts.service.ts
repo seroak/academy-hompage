@@ -17,8 +17,8 @@ export class AdminAccountsService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
     return this.prisma.admin.create({
-      data: { username: dto.username, passwordHash, role: dto.role },
-      select: { id: true, username: true, role: true, createdAt: true },
+      data: { username: dto.username, passwordHash },
+      select: { id: true, username: true, createdAt: true },
     });
   }
 }
