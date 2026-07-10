@@ -11,7 +11,7 @@ export const RESERVATION_GROUP_STATUS_OPTIONS = ['CONFIRMED', 'CANCELLED'] as co
 
 export const ReservationGroupSlotSchema = z.object({
   id: z.string(),
-  reservationId: z.string(),
+  reservationId: z.string().nullable(),
   dayOfWeek: z.string(),
   startMinute: z.number(),
   endMinute: z.number(),

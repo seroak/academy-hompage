@@ -7,6 +7,11 @@ export class AdminReservationsPagePO {
     await this.page.goto('/admin/reservations')
   }
 
+  // GroupManagementCard(빈 수업 만들기/전체 그룹 목록)는 별도 페이지(/admin/reservations/groups)로 분리돼 있다.
+  async navigateToGroups() {
+    await this.page.goto('/admin/reservations/groups')
+  }
+
   // GroupConfirmForm과 GroupManagementCard 둘 다 "그룹 이름"/"정원" 라벨을 쓰기 때문에
   // getByLabel만으로는 strict mode 위반이 난다. GroupManagementCard 쪽엔 data-testid를 붙여 구분한다.
   private get groupManagementCard() {

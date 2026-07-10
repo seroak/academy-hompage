@@ -54,6 +54,19 @@ export class ReservationsService {
       throw new NotFoundException(`ParentUser ${parentUserId} not found`);
     }
 
+    const child = await this.prisma.child.findFirst({
+      where: {
+        id: dto.childId,
+        parentUserId,
+        name: dto.childName,
+        age: dto.childAge,
+      },
+    });
+
+    if (!child) {
+      throw new NotFoundException(`Child ${dto.childId} not found`);
+    }
+
     const { preferredSlots, ...reservationData } = dto;
 
     const reservation = await this.prisma.reservation.create({

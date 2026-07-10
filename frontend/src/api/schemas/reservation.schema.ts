@@ -90,6 +90,7 @@ export const ReservationListSchema = z.array(ReservationSchema)
 export type Reservation = z.infer<typeof ReservationSchema>
 
 export const CreateReservationInputSchema = z.object({
+  childId: z.string().min(1),
   childName: z.string().min(1, '아이 이름을 입력해 주세요'),
   childAge: z
     .number()
@@ -98,7 +99,7 @@ export const CreateReservationInputSchema = z.object({
     .max(10, '만 10세 이하만 신청 가능합니다'),
   parentName: z.string().min(1, '보호자 이름을 입력해 주세요'),
   parentEmail: z.string().min(1, '이메일을 입력해 주세요').email('올바른 이메일 형식이 아닙니다'),
-  parentPhone: z.string().optional(),
+  parentPhone: z.string().min(1, '전화번호를 입력해 주세요'),
   preferredSlots: z.array(PreferredSlotSchema).min(1, '가능한 시간을 1개 이상 선택해 주세요'),
   note: z.string().optional(),
   requestedGroupId: z.string().optional(),

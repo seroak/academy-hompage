@@ -15,6 +15,7 @@ describe('ReservationsService', () => {
       delete: jest.Mock;
     };
     parentUser: { findUnique: jest.Mock };
+    child: { findFirst: jest.Mock };
   };
   let notification: { sendReservationReceived: jest.Mock };
 
@@ -28,6 +29,7 @@ describe('ReservationsService', () => {
         delete: jest.fn(),
       },
       parentUser: { findUnique: jest.fn() },
+      child: { findFirst: jest.fn() },
     };
     notification = {
       sendReservationReceived: jest.fn().mockResolvedValue(undefined),
@@ -99,6 +101,7 @@ describe('ReservationsService', () => {
 
   describe('create', () => {
     const dto = {
+      childId: 'child-1',
       childName: '민준',
       childAge: 5,
       parentName: '김엄마',
@@ -116,6 +119,7 @@ describe('ReservationsService', () => {
         name: '김엄마',
         email: 'parent@example.com',
       });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
       prisma.reservation.create.mockResolvedValue(created);
 
       const result = await service.create(dto, 'parent-1');
@@ -125,6 +129,7 @@ describe('ReservationsService', () => {
         data: {
           childName: dto.childName,
           childAge: dto.childAge,
+          childId: 'child-1',
           parentName: dto.parentName,
           parentEmail: dto.parentEmail,
           parentUserId: 'parent-1',
@@ -148,6 +153,14 @@ describe('ReservationsService', () => {
       expect(prisma.reservation.create).not.toHaveBeenCalled();
     });
 
+    it('다른 보호자의 자녀이거나 이름/나이가 일치하지 않으면 생성하지 않는다', async () => {
+      prisma.parentUser.findUnique.mockResolvedValue({ id: 'parent-1' });
+      prisma.child.findFirst.mockResolvedValue(null);
+
+      await expect(service.create(dto, 'parent-1')).rejects.toThrow(NotFoundException);
+      expect(prisma.reservation.create).not.toHaveBeenCalled();
+    });
+
     it('requestedGroupId가 함께 전달되면 합류 희망으로 저장한다', async () => {
       const dtoWithRequest = { ...dto, requestedGroupId: 'g1' };
       const created = { id: '1', ...dtoWithRequest, status: 'WAITING' };
@@ -156,6 +169,7 @@ describe('ReservationsService', () => {
         name: '김엄마',
         email: 'parent@example.com',
       });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
       prisma.reservation.create.mockResolvedValue(created);
 
       await service.create(dtoWithRequest, 'parent-1');
@@ -164,6 +178,7 @@ describe('ReservationsService', () => {
         data: {
           childName: dto.childName,
           childAge: dto.childAge,
+          childId: 'child-1',
           parentName: dto.parentName,
           parentEmail: dto.parentEmail,
           parentUserId: 'parent-1',
@@ -184,6 +199,7 @@ describe('ReservationsService', () => {
         name: '김엄마',
         email: 'parent@example.com',
       });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
       prisma.reservation.create.mockResolvedValue(created);
 
       await service.create(dtoWithLevelTest, 'parent-1');
@@ -192,6 +208,7 @@ describe('ReservationsService', () => {
         data: {
           childName: dto.childName,
           childAge: dto.childAge,
+          childId: 'child-1',
           parentName: dto.parentName,
           parentEmail: dto.parentEmail,
           parentUserId: 'parent-1',
@@ -211,6 +228,7 @@ describe('ReservationsService', () => {
         name: '김엄마',
         email: 'parent@example.com',
       });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
       prisma.reservation.create.mockResolvedValue(created);
 
       await expect(service.create(dto, 'parent-1')).resolves.toBe(created);

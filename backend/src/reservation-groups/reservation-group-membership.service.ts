@@ -65,6 +65,7 @@ export class ReservationGroupMembershipService {
           reservationId: dto.reservationId,
         }));
         this.validator.assertNoGaps(newSlots);
+        await this.clearAnchorSlots(tx, groupId);
         const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
           data: newSlots.map((slot) => ({ ...slot, groupId })),
         });
@@ -78,7 +79,13 @@ export class ReservationGroupMembershipService {
         );
         return {
           reservation,
-          updatedGroup: { ...group, slots: [...group.slots, ...createdSlots] },
+          updatedGroup: {
+            ...group,
+            slots: [
+              ...group.slots.filter((slot) => slot.reservationId !== null),
+              ...createdSlots,
+            ],
+          },
           newSlots,
         };
       },
@@ -250,9 +257,8 @@ export class ReservationGroupMembershipService {
       updatedReservations.count,
       '신청 상태가 변경되어 그룹을 이동할 수 없습니다',
     );
-    await tx.reservationGroupSlot.deleteMany({
-      where: { groupId: sourceGroupId, reservationId },
-    });
+    await this.vacateMemberSlots(tx, sourceGroupId, reservationId);
+    await this.clearAnchorSlots(tx, dto.targetGroupId);
     const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
       data: newSlots.map((slot) => ({
         ...slot,
@@ -282,7 +288,10 @@ export class ReservationGroupMembershipService {
       ...targetGroup,
       minAge: newMinAge,
       maxAge: newMaxAge,
-      slots: [...targetGroup.slots, ...createdSlots],
+      slots: [
+        ...targetGroup.slots.filter((slot) => slot.reservationId !== null),
+        ...createdSlots,
+      ],
     };
   }
 
@@ -309,12 +318,39 @@ export class ReservationGroupMembershipService {
         updatedReservations.count,
         '신청 상태가 변경되어 멤버를 제거할 수 없습니다',
       );
-      await tx.reservationGroupSlot.deleteMany({
-        where: { groupId, reservationId },
-      });
+      await this.vacateMemberSlots(tx, groupId, reservationId);
       return { reservation, group };
     });
     await this.notification.sendGroupMemberRemoved(reservation, group);
+  }
+
+  private async vacateMemberSlots(
+    tx: Prisma.TransactionClient,
+    groupId: string,
+    reservationId: string,
+  ) {
+    const remainingMembers = await tx.reservation.count({
+      where: { groupId },
+    });
+    if (remainingMembers === 0) {
+      await tx.reservationGroupSlot.updateMany({
+        where: { groupId, reservationId },
+        data: { reservationId: null },
+      });
+    } else {
+      await tx.reservationGroupSlot.deleteMany({
+        where: { groupId, reservationId },
+      });
+    }
+  }
+
+  private async clearAnchorSlots(
+    tx: Prisma.TransactionClient,
+    groupId: string,
+  ) {
+    await tx.reservationGroupSlot.deleteMany({
+      where: { groupId, reservationId: null },
+    });
   }
 
   private async loadConfirmedGroup<

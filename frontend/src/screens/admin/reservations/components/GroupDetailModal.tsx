@@ -55,6 +55,7 @@ export default function GroupDetailModal({
 
   const slotsByMember = new Map<string, ReservationGroup['slots']>()
   for (const slot of group.slots) {
+    if (slot.reservationId === null) continue
     const list = slotsByMember.get(slot.reservationId) ?? []
     list.push(slot)
     slotsByMember.set(slot.reservationId, list)

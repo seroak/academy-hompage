@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { PreferredSlotDto } from './create-reservation.dto.js';
+import { CreateReservationDto, PreferredSlotDto } from './create-reservation.dto.js';
 
 describe('PreferredSlotDto', () => {
   function makeSlot(overrides: Partial<{ dayOfWeek: string; startMinute: number; endMinute: number }> = {}) {
@@ -41,5 +41,36 @@ describe('PreferredSlotDto', () => {
   it('운영 시간(13:00~20:00)보다 늦은 종료 시각은 실패한다', async () => {
     const errors = await validate(makeSlot({ startMinute: 1100, endMinute: 1210 }));
     expect(errors.some((error) => error.property === 'endMinute')).toBe(true);
+  });
+});
+
+describe('CreateReservationDto', () => {
+  it('childId가 없으면 실패한다', async () => {
+    const dto = plainToInstance(CreateReservationDto, {
+      childName: '아이',
+      childAge: 5,
+      parentName: '보호자',
+      parentEmail: 'parent@example.com',
+      parentPhone: '010-1234-5678',
+      preferredSlots: [{ dayOfWeek: 'MON', startMinute: 780, endMinute: 850 }],
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors.some((error) => error.property === 'childId')).toBe(true);
+  });
+
+  it('전화번호가 없으면 실패한다', async () => {
+    const dto = plainToInstance(CreateReservationDto, {
+      childName: '아이',
+      childAge: 5,
+      parentName: '보호자',
+      parentEmail: 'parent@example.com',
+      preferredSlots: [{ dayOfWeek: 'MON', startMinute: 780, endMinute: 850 }],
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors.some((error) => error.property === 'parentPhone')).toBe(true);
   });
 });

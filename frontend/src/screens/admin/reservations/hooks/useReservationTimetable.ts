@@ -50,6 +50,12 @@ function addUniqueReservation(reservations: Reservation[], reservation: Reservat
   }
 }
 
+function addUniqueGroup(groups: ReservationGroup[], group: ReservationGroup) {
+  if (!groups.some((existing) => existing.id === group.id)) {
+    groups.push(group);
+  }
+}
+
 function findRenderableCell(map: Map<string, CellData>, day: string, rowStart: number): CellData {
   let targetRowStart = rowStart;
   let targetCell = getCell(map, day, targetRowStart);
@@ -77,8 +83,12 @@ function addConfirmedGroupsToCellMap(map: Map<string, CellData>, groups: Reserva
 
       firstCell.rowSpan = Math.max(firstCell.rowSpan, span);
 
-      for (const reservation of groupReservations) {
-        addUniqueReservation(firstCell.groupedInCell, reservation);
+      if (groupReservations.length === 0) {
+        addUniqueGroup(firstCell.emptyGroupsInCell, group);
+      } else {
+        for (const reservation of groupReservations) {
+          addUniqueReservation(firstCell.groupedInCell, reservation);
+        }
       }
 
       for (let i = 1; i < span; i++) {
@@ -91,6 +101,7 @@ function addConfirmedGroupsToCellMap(map: Map<string, CellData>, groups: Reserva
 
     if (
       groupReservations.length === 0 &&
+      group.slots.length === 0 &&
       group.scheduleDayOfWeek &&
       typeof group.scheduleStartMinute === "number" &&
       typeof group.scheduleEndMinute === "number"

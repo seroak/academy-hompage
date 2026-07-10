@@ -115,8 +115,50 @@ export function findSlotGap(slots: SelectedSlot[]): SelectedSlot | null {
 }
 
 /**
+ * 슬롯 배열이 정확히 하나의 (요일, 시작, 종료) 블록만으로 이뤄져 있으면 그 블록을,
+ * 아니면 null을 반환한다. 반 확정 시 단일 시간블록인지 판별해 그룹의 고정 일정
+ * (scheduleDayOfWeek 등)으로 함께 저장할지 결정하는 데 쓰인다.
+ */
+export function singleScheduleBlock<
+  T extends { dayOfWeek: string; startMinute: number; endMinute: number },
+>(slots: T[]): { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number } | null {
+  if (slots.length === 0) return null
+  const seen = new Set<string>()
+  for (const slot of slots) {
+    seen.add(`${slot.dayOfWeek}-${slot.startMinute}-${slot.endMinute}`)
+  }
+  if (seen.size !== 1) return null
+  const { dayOfWeek, startMinute, endMinute } = slots[0]
+  return { dayOfWeek: dayOfWeek as DayOfWeek, startMinute, endMinute }
+}
+
+function resolveGroupSchedule(
+  group: ReservationGroup,
+): { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number } | null {
+  if (
+    group.scheduleDayOfWeek &&
+    group.scheduleStartMinute !== null &&
+    group.scheduleStartMinute !== undefined &&
+    group.scheduleEndMinute !== null &&
+    group.scheduleEndMinute !== undefined
+  ) {
+    return {
+      dayOfWeek: group.scheduleDayOfWeek,
+      startMinute: group.scheduleStartMinute,
+      endMinute: group.scheduleEndMinute,
+    }
+  }
+  return null
+}
+
+/**
  * 대기 신청의 희망 시간(preferredSlots)과 그룹의 기존 확정 시간(slots)이 특정 요일에 겹치는 구간을
  * 계산해, 그대로 그룹 편입 API에 보낼 수 있는 연속된 슬롯 목록으로 합쳐 반환한다.
+ *
+ * 그룹에 고정 일정(schedule)이 있으면 "일정이 지정된 수업"으로 취급된다 — 백엔드가
+ * 이런 그룹에는 일정 전체와 정확히 같은 시간만 배정하도록 강제하므로(
+ * validateScheduledMemberSlots), 부분 겹침이 아니라 희망 시간이 일정 블록을
+ * 완전히 포함할 때만 그 블록 전체를 반환한다.
  */
 export function joinableSlotsForDay(
   reservation: Reservation,
@@ -125,14 +167,17 @@ export function joinableSlotsForDay(
 ): { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number }[] {
   const preferredRanges = reservation.preferredSlots.filter((slot) => slot.dayOfWeek === day)
 
-  const seen = new Set<string>()
-  const sourceRanges = group.slots.length > 0
-    ? group.slots
-    : group.scheduleDayOfWeek && group.scheduleStartMinute !== null && group.scheduleStartMinute !== undefined && group.scheduleEndMinute !== null && group.scheduleEndMinute !== undefined
-      ? [{ dayOfWeek: group.scheduleDayOfWeek, startMinute: group.scheduleStartMinute, endMinute: group.scheduleEndMinute }]
-      : []
+  const schedule = resolveGroupSchedule(group)
+  if (schedule) {
+    if (schedule.dayOfWeek !== day) return []
+    const fullyContained = preferredRanges.some(
+      (preferred) => preferred.startMinute <= schedule.startMinute && preferred.endMinute >= schedule.endMinute,
+    )
+    return fullyContained ? [schedule] : []
+  }
 
-  const groupRanges = sourceRanges.filter((slot) => {
+  const seen = new Set<string>()
+  const groupRanges = group.slots.filter((slot) => {
     if (slot.dayOfWeek !== day) return false
     const key = `${slot.startMinute}-${slot.endMinute}`
     if (seen.has(key)) return false
@@ -186,11 +231,8 @@ export function groupSlotsDeduped(
 ): { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number }[] {
   const seen = new Set<string>()
   const result: { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number }[] = []
-  const sourceSlots = group.slots.length > 0
-    ? group.slots
-    : group.scheduleDayOfWeek && group.scheduleStartMinute !== null && group.scheduleStartMinute !== undefined && group.scheduleEndMinute !== null && group.scheduleEndMinute !== undefined
-      ? [{ dayOfWeek: group.scheduleDayOfWeek, startMinute: group.scheduleStartMinute, endMinute: group.scheduleEndMinute }]
-      : []
+  const schedule = resolveGroupSchedule(group)
+  const sourceSlots = group.slots.length > 0 ? group.slots : schedule ? [schedule] : []
   for (const slot of sourceSlots) {
     const key = `${slot.dayOfWeek}-${slot.startMinute}-${slot.endMinute}`
     if (seen.has(key)) continue

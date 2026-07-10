@@ -3,6 +3,7 @@ import {
   ArrayMinSize,
   IsIn,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   Max,
@@ -38,6 +39,10 @@ export class PreferredSlotDto {
 
 export class CreateReservationDto {
   @IsString()
+  @IsNotEmpty()
+  childId: string;
+
+  @IsString()
   childName: string;
 
   @IsInt()
@@ -51,9 +56,8 @@ export class CreateReservationDto {
   @IsString()
   parentEmail: string;
 
-  @IsOptional()
   @IsString()
-  parentPhone?: string;
+  parentPhone: string;
 
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

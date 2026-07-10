@@ -77,6 +77,7 @@ export default function ReservationsAdminPage() {
           onAddToGroup={admin.handleAddToGroup}
           onOpenGroupDetail={admin.openGroupDetail}
           onMoveMember={admin.handleMoveMemberById}
+          onDeleteGroup={admin.handleCancelGroup}
         />
         <GroupConfirmForm
           selectedSlots={admin.selectedSlots}

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { CreateReservationGroupInputSchema, CreateReservationGroupInput } from '../../../../api/schemas/reservation-group.schema'
 import { DayOfWeek, ReservationGroupFormState, SelectedSlot } from '../types'
-import { findSlotGap, mergeContiguousSlots } from '../utils/reservationAdminUtils'
+import { findSlotGap, mergeContiguousSlots, singleScheduleBlock } from '../utils/reservationAdminUtils'
 
 const emptyGroupForm: ReservationGroupFormState = {
   label: '',
@@ -35,19 +35,31 @@ export function useGroupForm(
       return
     }
 
+    const slots = mergeContiguousSlots(
+      Array.from(selectedSlots.values()).map(({ reservationId, dayOfWeek, startMinute, endMinute }) => ({
+        reservationId,
+        dayOfWeek,
+        startMinute,
+        endMinute,
+      })),
+    )
+    // 반이 단일 시간블록으로만 이뤄지면 그 블록을 그룹의 고정 일정(schedule)으로도 저장한다.
+    // 이렇게 해야 마지막 학생이 빠져 나가도 그리드가 빈 수업 자리표시로 계속 표시한다(EmptyGroupsSection).
+    const scheduleBlock = singleScheduleBlock(slots)
+
     const input = {
       label: groupForm.label,
       capacity: groupCapacity,
       minAge: groupMinAge,
       maxAge: groupMaxAge,
-      slots: mergeContiguousSlots(
-        Array.from(selectedSlots.values()).map(({ reservationId, dayOfWeek, startMinute, endMinute }) => ({
-          reservationId,
-          dayOfWeek,
-          startMinute,
-          endMinute,
-        })),
-      ),
+      slots,
+      ...(scheduleBlock
+        ? {
+            scheduleDayOfWeek: scheduleBlock.dayOfWeek,
+            scheduleStartMinute: scheduleBlock.startMinute,
+            scheduleEndMinute: scheduleBlock.endMinute,
+          }
+        : {}),
     }
     const result = CreateReservationGroupInputSchema.safeParse(input)
     if (!result.success) {
