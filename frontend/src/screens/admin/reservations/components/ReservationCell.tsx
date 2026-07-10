@@ -2,7 +2,14 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronRight, Info } from "lucide-react";
 import { Reservation } from "../../../../api/schemas/reservation.schema";
 import { ReservationGroup } from "../../../../api/schemas/reservation-group.schema";
-import { cellBackground, childColor, reservationTitle, slotKey } from "../utils/reservationAdminUtils";
+import {
+  cellBackground,
+  childColor,
+  DRAG_PAYLOAD_TYPE,
+  DragPayload,
+  reservationTitle,
+  slotKey,
+} from "../utils/reservationAdminUtils";
 import { DayOfWeek, SelectedSlot } from "../types";
 
 type Props = {
@@ -58,11 +65,6 @@ type GroupedReservationsSectionProps = {
   onOpenGroupDetail: (groupId: string) => void;
   onMoveMember: (reservationId: string, fromGroupId: string, toGroupId: string) => void;
 };
-
-/** 학생 블록을 드래그할 때 dataTransfer에 실어 보내는 페이로드. */
-type DragPayload = { reservationId: string; fromGroupId: string };
-
-const DRAG_PAYLOAD_TYPE = "application/x-reservation-member";
 
 function groupReservationsByGroup(
   reservations: Reservation[],

@@ -5,6 +5,10 @@ import { DayOfWeek, SelectedSlot } from '../types'
 export const ADMIN_ROW_MINUTES = SLOT_STEP_MINUTES
 export const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10]
 
+/** 학생 블록을 드래그할 때 dataTransfer에 실어 보내는 페이로드. 그리드 셀과 미배정 영역 패널이 공유한다. */
+export type DragPayload = { reservationId: string; fromGroupId: string }
+export const DRAG_PAYLOAD_TYPE = 'application/x-reservation-member'
+
 export function cellBackground(count: number): string {
   if (count === 0) return 'bg-white'
   if (count === 1) return 'bg-[#fffaf0]'
