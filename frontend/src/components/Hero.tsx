@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { BookOpen, Cloud, Pencil, Rocket, Star } from "lucide-react";
@@ -86,16 +85,10 @@ export default function Hero() {
             transition={{ delay: 0.24, duration: 0.5, ease: "easeOut" }}
             className="mt-8 flex flex-wrap gap-3"
           >
-            <Link
-              href="/courses"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-[#ff8a1f] px-6 text-sm font-black text-white shadow-[0_16px_30px_rgba(255,138,31,0.28)] transition duration-250 hover:-translate-y-0.5 hover:bg-[#f07800]"
-            >
-              교육과정 보기
-            </Link>
             <button
               type="button"
               onClick={handleReservationClick}
-              className="inline-flex h-12 items-center justify-center rounded-full border-2 border-[#ff8a1f] bg-white px-6 text-sm font-black text-[#ff8a1f] transition duration-250 hover:-translate-y-0.5 hover:bg-[#fff4e8]"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-[#ff8a1f] px-6 text-sm font-black text-white shadow-[0_16px_30px_rgba(255,138,31,0.28)] transition duration-250 hover:-translate-y-0.5 hover:bg-[#f07800]"
             >
               상담 신청하기
             </button>

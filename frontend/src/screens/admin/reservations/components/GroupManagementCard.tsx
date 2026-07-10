@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { DAY_OF_WEEK_LABELS, DAY_OF_WEEK_OPTIONS, OPERATING_END_MINUTE, OPERATING_START_MINUTE, SLOT_STEP_MINUTES, timeLabel } from "../../../../api/schemas/reservation.schema";
 import { ReservationGroup } from "../../../../api/schemas/reservation-group.schema";
 import { fieldClass, labelClass, errorClass } from "../styles";
 
@@ -12,6 +13,9 @@ type Props = {
     capacity: number;
     minAge?: number;
     maxAge?: number;
+    scheduleDayOfWeek: (typeof DAY_OF_WEEK_OPTIONS)[number];
+    scheduleStartMinute: number;
+    scheduleEndMinute: number;
   }) => Promise<boolean>;
   onDeleteGroup: (id: string) => void;
 };
@@ -32,15 +36,34 @@ export default function GroupManagementCard({
   const [capacity, setCapacity] = useState(4);
   const [minAge, setMinAge] = useState<number | undefined>(undefined);
   const [maxAge, setMaxAge] = useState<number | undefined>(undefined);
+  const [scheduleDayOfWeek, setScheduleDayOfWeek] = useState<(typeof DAY_OF_WEEK_OPTIONS)[number]>("MON");
+  const [scheduleStartMinute, setScheduleStartMinute] = useState(OPERATING_START_MINUTE);
+  const [scheduleEndMinute, setScheduleEndMinute] = useState(OPERATING_START_MINUTE + SLOT_STEP_MINUTES);
+
+  const timeOptions = Array.from(
+    { length: (OPERATING_END_MINUTE - OPERATING_START_MINUTE) / SLOT_STEP_MINUTES + 1 },
+    (_, index) => OPERATING_START_MINUTE + index * SLOT_STEP_MINUTES,
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const success = await onCreateBlankGroup({ label, capacity, minAge, maxAge });
+    const success = await onCreateBlankGroup({
+      label,
+      capacity,
+      minAge,
+      maxAge,
+      scheduleDayOfWeek,
+      scheduleStartMinute,
+      scheduleEndMinute,
+    });
     if (success) {
       setLabel("");
       setCapacity(4);
       setMinAge(undefined);
       setMaxAge(undefined);
+      setScheduleDayOfWeek("MON");
+      setScheduleStartMinute(OPERATING_START_MINUTE);
+      setScheduleEndMinute(OPERATING_START_MINUTE + SLOT_STEP_MINUTES);
     }
   }
 
@@ -104,6 +127,34 @@ export default function GroupManagementCard({
           </label>
         </div>
 
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className={labelClass}>
+            요일
+            <select
+              className={fieldClass}
+              value={scheduleDayOfWeek}
+              onChange={(event) => setScheduleDayOfWeek(event.target.value as (typeof DAY_OF_WEEK_OPTIONS)[number])}
+            >
+              {DAY_OF_WEEK_OPTIONS.map((day) => <option key={day} value={day}>{DAY_OF_WEEK_LABELS[day]}</option>)}
+            </select>
+            {fieldErrors.scheduleDayOfWeek && <span className={errorClass}>{fieldErrors.scheduleDayOfWeek}</span>}
+          </label>
+          <label className={labelClass}>
+            시작 시각
+            <select className={fieldClass} value={scheduleStartMinute} onChange={(event) => setScheduleStartMinute(Number(event.target.value))}>
+              {timeOptions.slice(0, -1).map((minute) => <option key={minute} value={minute}>{timeLabel(minute)}</option>)}
+            </select>
+            {fieldErrors.scheduleStartMinute && <span className={errorClass}>{fieldErrors.scheduleStartMinute}</span>}
+          </label>
+          <label className={labelClass}>
+            종료 시각
+            <select className={fieldClass} value={scheduleEndMinute} onChange={(event) => setScheduleEndMinute(Number(event.target.value))}>
+              {timeOptions.slice(1).map((minute) => <option key={minute} value={minute}>{timeLabel(minute)}</option>)}
+            </select>
+            {fieldErrors.scheduleEndMinute && <span className={errorClass}>{fieldErrors.scheduleEndMinute}</span>}
+          </label>
+        </div>
+
         {submitError && <p className={errorClass}>{submitError}</p>}
 
         <div>
@@ -112,7 +163,7 @@ export default function GroupManagementCard({
             disabled={isCreating}
             className="inline-flex h-11 items-center justify-center rounded-full bg-[#ff8a1f] px-6 text-sm font-black text-white shadow-[0_14px_28px_rgba(255,138,31,0.24)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#e86f00] disabled:translate-y-0 disabled:opacity-50"
           >
-            빈 그룹 만들기
+            빈 수업 만들기
           </button>
         </div>
       </form>

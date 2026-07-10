@@ -10,7 +10,7 @@ function escapeRegExp(value: string): string {
 
 // 목 API 서버(예: http://localhost:4310)로 가는 요청만 정확히 매칭한다.
 // pathPattern은 origin 뒤에 그대로 이어붙는 정규식 소스라 [^/]+ 같은 패턴을 쓸 수 있다.
-// origin까지 통째로 앵커링해야 하는 이유: 앱 자신의 페이지 경로(예: /admin/courses,
+// origin까지 통째로 앵커링해야 하는 이유: 앱 자신의 페이지 경로(예: /admin/notices,
 // /admin/reservations)가 API 경로 문자열로 끝나는 경우 느슨한 정규식이 페이지 내비게이션
 // 자체를 가로채 버려(실제로 겪은 버그) 브라우저가 JSON 응답을 그대로 렌더링하게 된다.
 export function apiPattern(pathPattern: string): RegExp {

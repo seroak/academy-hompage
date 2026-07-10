@@ -14,3 +14,9 @@ export const CreatedAdminSchema = z.object({
 })
 
 export type CreatedAdmin = z.infer<typeof CreatedAdminSchema>
+
+export const AdminSchema = CreatedAdminSchema
+
+export type Admin = z.infer<typeof AdminSchema>
+
+export const AdminListSchema = z.array(AdminSchema)

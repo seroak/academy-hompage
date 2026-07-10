@@ -86,7 +86,7 @@ export default function ReservationTimetable({
                 ) : null}
               </td>
               {DAY_OF_WEEK_OPTIONS.map((day) => {
-                const { waitingInCell, groupedInCell, rowSpan, skipRender } = getCellReservations(day, rowStart)
+                const { waitingInCell, groupedInCell, emptyGroupsInCell, rowSpan, skipRender } = getCellReservations(day, rowStart)
                 
                 if (skipRender) return null
 
@@ -98,6 +98,7 @@ export default function ReservationTimetable({
                     rowSpan={rowSpan}
                     waitingInCell={waitingInCell}
                     groupedInCell={groupedInCell}
+                    emptyGroupsInCell={emptyGroupsInCell}
                     selectedSlots={selectedSlots}
                     groupByReservationId={groupByReservationId}
                     joinableGroupsForReservation={joinableGroupsForReservation}

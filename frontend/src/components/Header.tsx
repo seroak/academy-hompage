@@ -11,8 +11,6 @@ import { useLoginModalStore } from '../stores/loginModalStore'
 import AdminLoginModal from './AdminLoginModal'
 
 const navItems = [
-  { to: '/instructors', label: '학원소개' },
-  { to: '/courses', label: '교육과정' },
   { to: '/#programs', label: '프로그램' },
   { to: '/notices', label: '커뮤니티' },
   { to: '/level-test', label: '레벨테스트' },
@@ -199,9 +197,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
               <Link
                 key={item.to}
                 href={item.to}
-                className={navLinkClass(
-                  item.to === '/courses' ? pathname?.startsWith('/courses') ?? false : pathname === item.to,
-                )}
+                className={navLinkClass(pathname === item.to)}
               >
                 {item.label}
               </Link>
@@ -267,9 +263,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                 <Link
                   key={item.to}
                   href={item.to}
-                  className={navLinkClass(
-                    item.to === '/courses' ? pathname?.startsWith('/courses') ?? false : pathname === item.to,
-                  )}
+                  className={navLinkClass(pathname === item.to)}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}

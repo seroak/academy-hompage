@@ -7,6 +7,7 @@ import { ADMIN_ROW_MINUTES, isGroupJoinableForReservation } from "../utils/reser
 export type CellData = {
   waitingInCell: Reservation[];
   groupedInCell: Reservation[];
+  emptyGroupsInCell: ReservationGroup[];
   rowSpan: number;
   skipRender: boolean;
 };
@@ -15,6 +16,7 @@ function createEmptyCell(): CellData {
   return {
     waitingInCell: [],
     groupedInCell: [],
+    emptyGroupsInCell: [],
     rowSpan: 1,
     skipRender: false,
   };
@@ -84,6 +86,27 @@ function addConfirmedGroupsToCellMap(map: Map<string, CellData>, groups: Reserva
         const nextCell = getCell(map, slot.dayOfWeek, nextRowStart);
 
         nextCell.skipRender = true;
+      }
+    }
+
+    if (
+      groupReservations.length === 0 &&
+      group.scheduleDayOfWeek &&
+      group.scheduleStartMinute !== null &&
+      group.scheduleStartMinute !== undefined &&
+      group.scheduleEndMinute !== null &&
+      group.scheduleEndMinute !== undefined
+    ) {
+      const { startRow, span } = getRowRange(group.scheduleStartMinute, group.scheduleEndMinute);
+      if (span <= 0) continue;
+
+      const firstCell = getCell(map, group.scheduleDayOfWeek, startRow);
+      firstCell.rowSpan = Math.max(firstCell.rowSpan, span);
+      firstCell.emptyGroupsInCell.push(group);
+
+      for (let i = 1; i < span; i++) {
+        const nextRowStart = startRow + i * ADMIN_ROW_MINUTES;
+        getCell(map, group.scheduleDayOfWeek, nextRowStart).skipRender = true;
       }
     }
   }

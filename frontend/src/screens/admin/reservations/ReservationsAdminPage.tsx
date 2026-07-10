@@ -5,7 +5,6 @@ import ReservationDetailModal from '../../../components/ReservationDetailModal'
 import { useReservationAdminState } from './hooks/useReservationAdminState'
 import ReservationAgeFilter from './components/ReservationAgeFilter'
 import ReservationTimetable from './components/ReservationTimetable'
-import UnscheduledGroupsPanel from './components/UnscheduledGroupsPanel'
 import GroupConfirmForm from './components/GroupConfirmForm'
 import GroupManagementCard from './components/GroupManagementCard'
 import GroupDetailModal from './components/GroupDetailModal'
@@ -64,11 +63,6 @@ export default function ReservationsAdminPage() {
         <ReservationAgeFilter
           ageFilter={admin.ageFilter}
           onChangeAgeFilter={admin.setAgeFilter}
-        />
-        <UnscheduledGroupsPanel
-          groups={admin.unscheduledGroups}
-          onMoveMember={admin.handleMoveMemberById}
-          onDeleteGroup={admin.handleCancelGroup}
         />
         <ReservationTimetable
           isLoading={admin.isLoading}

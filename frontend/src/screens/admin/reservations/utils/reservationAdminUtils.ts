@@ -126,7 +126,13 @@ export function joinableSlotsForDay(
   const preferredRanges = reservation.preferredSlots.filter((slot) => slot.dayOfWeek === day)
 
   const seen = new Set<string>()
-  const groupRanges = group.slots.filter((slot) => {
+  const sourceRanges = group.slots.length > 0
+    ? group.slots
+    : group.scheduleDayOfWeek && group.scheduleStartMinute !== null && group.scheduleStartMinute !== undefined && group.scheduleEndMinute !== null && group.scheduleEndMinute !== undefined
+      ? [{ dayOfWeek: group.scheduleDayOfWeek, startMinute: group.scheduleStartMinute, endMinute: group.scheduleEndMinute }]
+      : []
+
+  const groupRanges = sourceRanges.filter((slot) => {
     if (slot.dayOfWeek !== day) return false
     const key = `${slot.startMinute}-${slot.endMinute}`
     if (seen.has(key)) return false
@@ -180,7 +186,12 @@ export function groupSlotsDeduped(
 ): { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number }[] {
   const seen = new Set<string>()
   const result: { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number }[] = []
-  for (const slot of group.slots) {
+  const sourceSlots = group.slots.length > 0
+    ? group.slots
+    : group.scheduleDayOfWeek && group.scheduleStartMinute !== null && group.scheduleStartMinute !== undefined && group.scheduleEndMinute !== null && group.scheduleEndMinute !== undefined
+      ? [{ dayOfWeek: group.scheduleDayOfWeek, startMinute: group.scheduleStartMinute, endMinute: group.scheduleEndMinute }]
+      : []
+  for (const slot of sourceSlots) {
     const key = `${slot.dayOfWeek}-${slot.startMinute}-${slot.endMinute}`
     if (seen.has(key)) continue
     seen.add(key)

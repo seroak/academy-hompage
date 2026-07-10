@@ -62,13 +62,6 @@ export function useReservationAdminState() {
   const { getCellReservations, groupByReservationId, joinableGroupsForReservation } =
     useReservationTimetable(waiting, groups)
 
-  // 확정됐지만 아직 확정 시간(slots)이 없는 그룹 — 상단 그리드는 slots 기준으로만 렌더되므로
-  // 이 그룹들은 별도의 "시간 미정" 영역에서 드롭 타겟으로 보여줘야 학생을 채워 넣을 수 있다.
-  const unscheduledGroups = useMemo(
-    () => groups.filter((group) => group.status === 'CONFIRMED' && group.slots.length === 0),
-    [groups],
-  )
-
   const selectedReservationIds = [...new Set(Array.from(selectedSlots.values()).map((slot) => slot.reservationId))]
   const selectedAges = selectedReservationIds
       .map((id) => reservations.find((r) => r.id === id)?.childAge)
@@ -178,6 +171,9 @@ export function useReservationAdminState() {
     capacity: number
     minAge?: number
     maxAge?: number
+    scheduleDayOfWeek: DayOfWeek
+    scheduleStartMinute: number
+    scheduleEndMinute: number
   }): Promise<boolean> {
     const result = CreateReservationGroupInputSchema.safeParse({ ...input, slots: [] })
     if (!result.success) {
@@ -354,7 +350,6 @@ export function useReservationAdminState() {
     error,
     reservations,
     groups,
-    unscheduledGroups,
     selectedSlots,
     groupForm,
     setGroupForm,

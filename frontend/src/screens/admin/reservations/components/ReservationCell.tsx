@@ -18,6 +18,7 @@ type Props = {
   rowSpan: number;
   waitingInCell: Reservation[];
   groupedInCell: Reservation[];
+  emptyGroupsInCell: ReservationGroup[];
   selectedSlots: Map<string, SelectedSlot>;
   groupByReservationId: Map<string, ReservationGroup>;
   joinableGroupsForReservation: (reservation: Reservation, day: DayOfWeek) => ReservationGroup[];
@@ -91,6 +92,7 @@ export default function ReservationCell({
   rowSpan,
   waitingInCell,
   groupedInCell,
+  emptyGroupsInCell,
   selectedSlots,
   groupByReservationId,
   joinableGroupsForReservation,
@@ -107,7 +109,8 @@ export default function ReservationCell({
     [groupedInCell, groupByReservationId],
   );
 
-  const isMixed = groupedInCell.length > 0 && waitingInCell.length > 0;
+  const hasGroupedContent = groupedInCell.length > 0 || emptyGroupsInCell.length > 0;
+  const isMixed = hasGroupedContent && waitingInCell.length > 0;
   const [waitingExpanded, setWaitingExpanded] = useState(false);
 
   const anyJoinable = useMemo(
@@ -118,12 +121,24 @@ export default function ReservationCell({
   );
 
   return (
-    <td rowSpan={rowSpan} className="h-[1px] border-b border-l border-[#f6ead0] bg-white p-0 align-top">
+    <td
+      rowSpan={rowSpan}
+      data-testid={`timetable-cell-${day}-${rowStart}`}
+      className="h-[1px] border-b border-l border-[#f6ead0] bg-white p-0 align-top"
+    >
       <div className="flex h-full min-h-[48px] flex-col">
         {groupedInCell.length > 0 && (
           <GroupedReservationsSection
             groupedByGroupId={groupedByGroupId}
             onOpenDetail={onOpenDetail}
+            onOpenGroupDetail={onOpenGroupDetail}
+            onMoveMember={onMoveMember}
+          />
+        )}
+
+        {emptyGroupsInCell.length > 0 && (
+          <EmptyGroupsSection
+            groups={emptyGroupsInCell}
             onOpenGroupDetail={onOpenGroupDetail}
             onMoveMember={onMoveMember}
           />
@@ -186,6 +201,56 @@ export default function ReservationCell({
         )}
       </div>
     </td>
+  );
+}
+
+type EmptyGroupsSectionProps = {
+  groups: ReservationGroup[];
+  onOpenGroupDetail: (groupId: string) => void;
+  onMoveMember: (reservationId: string, fromGroupId: string, toGroupId: string) => void;
+};
+
+function EmptyGroupsSection({ groups, onOpenGroupDetail, onMoveMember }: EmptyGroupsSectionProps) {
+  const [dragOverGroupId, setDragOverGroupId] = useState<string | null>(null);
+
+  return (
+    <div className="flex w-full flex-1 flex-col gap-1 p-1">
+      {groups.map((group) => (
+        <div
+          key={group.id}
+          data-testid={`empty-group-${group.id}`}
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+          }}
+          onDragEnter={() => setDragOverGroupId(group.id)}
+          onDragLeave={() => setDragOverGroupId((previous) => (previous === group.id ? null : previous))}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragOverGroupId(null);
+            const raw = event.dataTransfer.getData(DRAG_PAYLOAD_TYPE);
+            if (!raw) return;
+            const payload = JSON.parse(raw) as DragPayload;
+            if (payload.fromGroupId === group.id) return;
+            onMoveMember(payload.reservationId, payload.fromGroupId, group.id);
+          }}
+          className={`flex min-h-[48px] flex-1 flex-col justify-center rounded-lg border border-dashed border-[#9ac5df] bg-[#f0f8fc] px-3 py-2 transition ${
+            dragOverGroupId === group.id ? "ring-2 ring-[#236c9c] ring-offset-1" : ""
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => onOpenGroupDetail(group.id)}
+            className="w-fit text-left text-xs font-black text-[#236c9c] hover:underline"
+          >
+            {group.label}
+          </button>
+          <p className="mt-0.5 text-[10px] font-bold text-[#4f7890]">
+            빈 수업 · {group.reservations?.length ?? 0}/{group.capacity}
+          </p>
+        </div>
+      ))}
+    </div>
   );
 }
 

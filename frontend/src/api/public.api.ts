@@ -1,5 +1,3 @@
-import { CourseListSchema, CourseSchema, type Course } from './schemas/course.schema'
-import { InstructorListSchema, type Instructor } from './schemas/instructor.schema'
 import { NoticeListSchema, NoticeSchema, type Notice } from './schemas/notice.schema'
 import {
   ConfirmedSlotListSchema,
@@ -38,25 +36,6 @@ async function publicApiFetchFresh(path: string): Promise<unknown> {
   }
 
   return response.json()
-}
-
-export async function fetchPublicCourses(): Promise<Course[]> {
-  const raw = await publicApiFetch('/courses')
-  return CourseListSchema.parse(raw)
-}
-
-export async function fetchPublicCourse(id: string): Promise<Course | null> {
-  try {
-    const raw = await publicApiFetch(`/courses/${id}`)
-    return CourseSchema.parse(raw)
-  } catch {
-    return null
-  }
-}
-
-export async function fetchPublicInstructors(): Promise<Instructor[]> {
-  const raw = await publicApiFetch('/instructors')
-  return InstructorListSchema.parse(raw)
 }
 
 export async function fetchPublicNotices(): Promise<Notice[]> {

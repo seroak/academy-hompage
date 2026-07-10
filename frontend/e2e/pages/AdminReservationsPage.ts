@@ -21,8 +21,20 @@ export class AdminReservationsPagePO {
     return this.groupManagementCard.getByLabel('정원')
   }
 
+  get blankGroupDayInput() {
+    return this.groupManagementCard.getByLabel('요일')
+  }
+
+  get blankGroupStartTimeInput() {
+    return this.groupManagementCard.getByLabel('시작 시각')
+  }
+
+  get blankGroupEndTimeInput() {
+    return this.groupManagementCard.getByLabel('종료 시각')
+  }
+
   get createBlankGroupButton() {
-    return this.groupManagementCard.getByRole('button', { name: '빈 그룹 만들기' })
+    return this.groupManagementCard.getByRole('button', { name: '빈 수업 만들기' })
   }
 
   groupListItem(label: string) {

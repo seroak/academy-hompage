@@ -1,19 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useCoursesQuery } from '../../queries/useCoursesQuery'
 import { useNoticesQuery } from '../../queries/useNoticesQuery'
-import { useInstructorsQuery } from '../../queries/useInstructorsQuery'
 
 export default function DashboardPage() {
-  const { courses } = useCoursesQuery()
   const { notices } = useNoticesQuery()
-  const { instructors } = useInstructorsQuery()
 
   const cards = [
-    { label: '강좌', count: courses.length, to: '/admin/courses' },
     { label: '공지', count: notices.length, to: '/admin/notices' },
-    { label: '강사', count: instructors.length, to: '/admin/instructors' },
   ]
 
   return (

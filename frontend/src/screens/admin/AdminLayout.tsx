@@ -5,9 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { useAuthStore } from '../../stores/authStore'
 const adminNavItems = [
-  { to: '/admin/courses', label: '강좌 관리' },
   { to: '/admin/notices', label: '공지 관리' },
-  { to: '/admin/instructors', label: '강사 관리' },
   { to: '/admin/reservations', label: '예약 관리' },
   { to: '/admin/members', label: '회원 관리' },
   { to: '/admin/level-tests', label: '레벨테스트 관리' },

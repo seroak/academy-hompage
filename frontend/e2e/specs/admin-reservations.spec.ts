@@ -52,6 +52,9 @@ test.describe('관리자 - 예약 관리', () => {
           capacity: input.capacity,
           minAge: input.minAge ?? 4,
           maxAge: input.maxAge ?? 10,
+          scheduleDayOfWeek: input.scheduleDayOfWeek ?? null,
+          scheduleStartMinute: input.scheduleStartMinute ?? null,
+          scheduleEndMinute: input.scheduleEndMinute ?? null,
           slots: input.slots ?? [],
           reservations: [],
           createdAt: new Date().toISOString(),
@@ -79,20 +82,21 @@ test.describe('관리자 - 예약 관리', () => {
     await expect(page.getByText('총 예약').locator('..')).toContainText(String(reservationsFixture.length))
   })
 
-  test('빈 그룹을 만들면 목록에 나타나고, 삭제하면 사라진다', async ({ page }) => {
+  test('빈 수업을 만들면 지정한 시간표 칸에 바로 표시된다', async ({ page }) => {
     const admin = new AdminReservationsPagePO(page)
     await admin.navigate()
 
     await admin.blankGroupNameInput.fill('E2E 신규 그룹')
     await admin.blankGroupCapacityInput.fill('4')
+    await admin.blankGroupDayInput.selectOption('WED')
+    await admin.blankGroupStartTimeInput.selectOption('900')
+    await admin.blankGroupEndTimeInput.selectOption('920')
     await admin.createBlankGroupButton.click()
 
     await expect(admin.groupListItem('E2E 신규 그룹')).toBeVisible()
-
-    page.once('dialog', (dialog) => dialog.accept())
-    await admin.deleteGroupButtonFor('E2E 신규 그룹').click()
-
-    await expect(admin.groupListItem('E2E 신규 그룹')).toHaveCount(0)
+    const scheduledCell = page.getByTestId('timetable-cell-WED-900')
+    await expect(scheduledCell.getByTestId('empty-group-group-e2e-100')).toContainText('E2E 신규 그룹')
+    await expect(scheduledCell.getByTestId('empty-group-group-e2e-100')).toContainText('0/4')
   })
 
   test('학생 직접 등록으로 워크인 예약을 추가할 수 있다', async ({ page }) => {

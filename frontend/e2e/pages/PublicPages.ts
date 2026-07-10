@@ -9,20 +9,6 @@ export class PublicPages {
     await this.page.goto('/')
   }
 
-  async gotoCourseList() {
-    await this.page.goto('/courses/list')
-    await this.page.waitForSelector('h1:has-text("개설 강좌")')
-  }
-
-  async gotoCourseDetail(id: string) {
-    return this.page.goto(`/courses/${id}`)
-  }
-
-  async gotoInstructors() {
-    await this.page.goto('/instructors')
-    await this.page.waitForSelector('h1:has-text("강사진 소개")')
-  }
-
   async gotoNotices() {
     await this.page.goto('/notices')
     await this.page.waitForSelector('h1:has-text("공지사항")')
