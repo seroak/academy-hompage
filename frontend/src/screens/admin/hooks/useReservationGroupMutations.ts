@@ -6,6 +6,7 @@ import {
   updateReservationGroup,
   removeGroupMember,
   replaceGroupMemberSlots,
+  moveGroupMember,
 } from '../../../api/reservationGroups.api'
 import { queryKeys } from '../../../queries/queryKeys'
 import type {
@@ -74,7 +75,7 @@ export function useReservationGroupMutations() {
 
   const moveMemberMutation = useMutation({
     mutationKey: ['reservationGroups', 'moveMember'],
-    mutationFn: async ({
+    mutationFn: ({
       reservationId,
       fromGroupId,
       toGroupId,
@@ -84,10 +85,7 @@ export function useReservationGroupMutations() {
       fromGroupId: string
       toGroupId: string
       slots: AddGroupMemberInput['slots']
-    }) => {
-      await removeGroupMember(fromGroupId, reservationId)
-      return addGroupMember(toGroupId, { reservationId, slots })
-    },
+    }) => moveGroupMember(fromGroupId, reservationId, { targetGroupId: toGroupId, slots }),
     onSuccess: invalidateAll,
   })
 

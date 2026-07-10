@@ -15,6 +15,7 @@ describe('ReservationGroupsController', () => {
     addMember: jest.Mock;
     removeMember: jest.Mock;
     replaceMemberSlots: jest.Mock;
+    moveMember: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -29,6 +30,7 @@ describe('ReservationGroupsController', () => {
       addMember: jest.fn(),
       removeMember: jest.fn(),
       replaceMemberSlots: jest.fn(),
+      moveMember: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -147,5 +149,18 @@ describe('ReservationGroupsController', () => {
       controller.replaceMemberSlots('g1', 'r1', dto),
     ).resolves.toBe('updated');
     expect(service.replaceMemberSlots).toHaveBeenCalledWith('g1', 'r1', dto);
+  });
+
+  it('delegates moveMember to the service', async () => {
+    const dto = {
+      targetGroupId: 'g2',
+      slots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 730 }],
+    };
+    service.moveMember.mockResolvedValue('moved');
+
+    await expect(controller.moveMember('g1', 'r1', dto)).resolves.toBe(
+      'moved',
+    );
+    expect(service.moveMember).toHaveBeenCalledWith('g1', 'r1', dto);
   });
 });

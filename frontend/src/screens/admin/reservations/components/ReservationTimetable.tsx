@@ -29,6 +29,7 @@ type Props = {
   onCancelReservation: (id: string) => void
   onAddToGroup: (reservation: Reservation, group: ReservationGroup, day: DayOfWeek) => void
   onOpenGroupDetail: (groupId: string) => void
+  onMoveMember: (reservationId: string, fromGroupId: string, toGroupId: string) => void
 }
 
 export default function ReservationTimetable({
@@ -44,6 +45,7 @@ export default function ReservationTimetable({
   onCancelReservation,
   onAddToGroup,
   onOpenGroupDetail,
+  onMoveMember,
 }: Props) {
   if (isLoading) {
     return <div className="py-20 text-center text-sm font-semibold text-[#6f6253]">시간표를 불러오는 중입니다...</div>
@@ -105,6 +107,7 @@ export default function ReservationTimetable({
                     onCancelReservation={onCancelReservation}
                     onAddToGroup={onAddToGroup}
                     onOpenGroupDetail={onOpenGroupDetail}
+                    onMoveMember={onMoveMember}
                   />
                 )
               })}

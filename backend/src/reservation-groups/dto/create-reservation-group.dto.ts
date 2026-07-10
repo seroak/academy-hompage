@@ -1,5 +1,4 @@
 import {
-  ArrayNotEmpty,
   IsIn,
   IsInt,
   IsOptional,
@@ -59,7 +58,6 @@ export class CreateReservationGroupDto {
   @Max(10)
   maxAge?: number;
 
-  @ArrayNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => GroupSlotDto)
   slots: GroupSlotDto[];

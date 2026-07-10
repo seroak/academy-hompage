@@ -13,6 +13,7 @@ import {
 import { UpdateReservationGroupDto } from './dto/update-reservation-group.dto';
 import { AddGroupMemberDto } from './dto/add-group-member.dto';
 import { ReplaceMemberSlotsDto } from './dto/replace-member-slots.dto';
+import { MoveGroupMemberDto } from './dto/move-group-member.dto';
 
 @Injectable()
 export class ReservationGroupsService {
@@ -109,8 +110,8 @@ export class ReservationGroupsService {
     this.validator.validateCapacity(dto.capacity, reservationIds.length);
 
     const ages = reservations.map((reservation) => reservation.childAge);
-    const minAge = dto.minAge ?? Math.min(...ages);
-    const maxAge = dto.maxAge ?? Math.max(...ages);
+    const minAge = dto.minAge ?? (ages.length > 0 ? Math.min(...ages) : 4);
+    const maxAge = dto.maxAge ?? (ages.length > 0 ? Math.max(...ages) : 10);
 
     const reservationById = new Map(
       reservations.map((reservation) => [reservation.id, reservation]),
@@ -325,6 +326,122 @@ export class ReservationGroupsService {
         ],
       };
     });
+  }
+
+  async moveMember(
+    sourceGroupId: string,
+    reservationId: string,
+    dto: MoveGroupMemberDto,
+  ) {
+    if (dto.targetGroupId === sourceGroupId) {
+      throw new ConflictException('같은 그룹으로는 이동할 수 없습니다');
+    }
+
+    const sourceGroup = await this.prisma.reservationGroup.findUnique({
+      where: { id: sourceGroupId },
+    });
+
+    if (!sourceGroup) {
+      throw new NotFoundException(
+        `ReservationGroup ${sourceGroupId} not found`,
+      );
+    }
+
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { preferredSlots: true },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException(`Reservation ${reservationId} not found`);
+    }
+
+    if (reservation.groupId !== sourceGroupId) {
+      throw new ConflictException('해당 신청은 이 그룹의 멤버가 아닙니다');
+    }
+
+    const targetGroup = await this.prisma.reservationGroup.findUnique({
+      where: { id: dto.targetGroupId },
+      include: { slots: true },
+    });
+
+    if (!targetGroup) {
+      throw new NotFoundException(
+        `ReservationGroup ${dto.targetGroupId} not found`,
+      );
+    }
+
+    this.validator.validateGroupStatus(
+      targetGroup.status,
+      'CONFIRMED',
+      '확정된 그룹으로만 이동할 수 있습니다',
+    );
+
+    const currentCount = await this.prisma.reservation.count({
+      where: { groupId: dto.targetGroupId },
+    });
+
+    this.validator.validateCapacity(targetGroup.capacity, currentCount + 1);
+    if (targetGroup.slots.length > 0) {
+      this.validator.validateSlotsOverlap(dto.slots, targetGroup.slots);
+    }
+
+    const newSlots = dto.slots.map((slot) => ({ ...slot, reservationId }));
+    this.validator.assertNoGaps(newSlots);
+
+    // 이동하는 학생의 나이가 대상 그룹의 나이대 밖이어도 막지 않고, 그 학생을 포함하도록
+    // 그룹의 나이대를 넓힌다(막 만든 소수 인원 그룹일수록 나이대가 좁게 고정되어 있기 쉬움).
+    const newMinAge = Math.min(targetGroup.minAge, reservation.childAge);
+    const newMaxAge = Math.max(targetGroup.maxAge, reservation.childAge);
+
+    const updatedGroup = await this.prisma.$transaction(async (tx) => {
+      await tx.reservationGroupSlot.deleteMany({
+        where: { groupId: sourceGroupId, reservationId },
+      });
+
+      const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
+        data: newSlots.map((slot) => ({ ...slot, groupId: dto.targetGroupId })),
+      });
+
+      await tx.reservation.update({
+        where: { id: reservationId },
+        data: {
+          status: 'GROUPED',
+          groupId: dto.targetGroupId,
+          requestedGroupId: null,
+          preferredSlots: {
+            deleteMany: {},
+            create: dto.slots.map((slot) => ({
+              dayOfWeek: slot.dayOfWeek,
+              startMinute: slot.startMinute,
+              endMinute: slot.endMinute,
+            })),
+          },
+        },
+      });
+
+      if (newMinAge !== targetGroup.minAge || newMaxAge !== targetGroup.maxAge) {
+        await tx.reservationGroup.update({
+          where: { id: dto.targetGroupId },
+          data: { minAge: newMinAge, maxAge: newMaxAge },
+        });
+      }
+
+      return {
+        ...targetGroup,
+        minAge: newMinAge,
+        maxAge: newMaxAge,
+        slots: [...targetGroup.slots, ...createdSlots],
+      };
+    });
+
+    await this.notification.sendGroupConfirmed(
+      reservation,
+      updatedGroup,
+      newSlots,
+    );
+
+    return updatedGroup;
   }
 
   async remove(id: string) {

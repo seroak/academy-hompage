@@ -350,6 +350,32 @@ describe('ReservationGroupsService', () => {
       });
       expect(prisma.reservationGroup.create).toHaveBeenCalled();
     });
+
+    it('슬롯 없이(빈 그룹) 생성하면 minAge/maxAge를 지정하지 않은 경우 4~10 전체 범위로 생성한다', async () => {
+      prisma.reservation.findMany.mockResolvedValue([]);
+      const createdGroup = {
+        id: 'g-blank',
+        label: '빈 그룹',
+        status: 'CONFIRMED',
+        capacity: 4,
+        minAge: 4,
+        maxAge: 10,
+      };
+      prisma.reservationGroup.create.mockResolvedValue(createdGroup);
+      prisma.reservationGroupSlot.createManyAndReturn.mockResolvedValue([]);
+      prisma.reservation.updateMany.mockResolvedValue({ count: 0 });
+
+      const result = await service.create({
+        label: '빈 그룹',
+        capacity: 4,
+        slots: [],
+      });
+
+      expect(result).toEqual({ ...createdGroup, slots: [] });
+      expect(prisma.reservationGroup.create).toHaveBeenCalledWith({
+        data: { label: '빈 그룹', capacity: 4, minAge: 4, maxAge: 10 },
+      });
+    });
   });
 
   describe('findAll', () => {
@@ -970,6 +996,362 @@ describe('ReservationGroupsService', () => {
           ],
         }),
       ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('moveMember', () => {
+    const sourceGroup = {
+      id: 'g1',
+      label: '월요일반',
+      status: 'CONFIRMED',
+      capacity: 4,
+      minAge: 5,
+      maxAge: 6,
+    };
+    const targetGroup = {
+      id: 'g2',
+      label: '화요일반',
+      status: 'CONFIRMED',
+      capacity: 4,
+      minAge: 5,
+      maxAge: 6,
+      slots: [
+        {
+          id: 's1',
+          groupId: 'g2',
+          reservationId: 'other',
+          dayOfWeek: 'TUE',
+          startMinute: 720,
+          endMinute: 730,
+        },
+      ],
+    };
+    const member = {
+      id: 'r1',
+      groupId: 'g1',
+      childName: '민준',
+      childAge: 5,
+      parentName: '김엄마',
+      parentEmail: 'a@example.com',
+      preferredSlots: [{ dayOfWeek: 'TUE', startMinute: 700, endMinute: 800 }],
+    };
+    const dto = {
+      targetGroupId: 'g2',
+      slots: [{ dayOfWeek: 'TUE', startMinute: 720, endMinute: 730 }],
+    };
+
+    it('멤버를 원래 그룹에서 빼고 대상 그룹으로 이동한 뒤 확정 알림을 보낸다', async () => {
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce(targetGroup);
+      prisma.reservation.findUnique.mockResolvedValue(member);
+      prisma.reservation.count.mockResolvedValue(1);
+      prisma.reservationGroupSlot.deleteMany.mockResolvedValue({ count: 1 });
+      const createdSlots = [
+        {
+          id: 's2',
+          groupId: 'g2',
+          reservationId: 'r1',
+          dayOfWeek: 'TUE',
+          startMinute: 720,
+          endMinute: 730,
+        },
+      ];
+      prisma.reservationGroupSlot.createManyAndReturn.mockResolvedValue(
+        createdSlots,
+      );
+      prisma.reservation.update.mockResolvedValue({
+        ...member,
+        groupId: 'g2',
+        status: 'GROUPED',
+      });
+
+      const result = await service.moveMember('g1', 'r1', dto);
+
+      const expectedGroup = {
+        ...targetGroup,
+        slots: [...targetGroup.slots, ...createdSlots],
+      };
+      expect(result).toEqual(expectedGroup);
+      expect(prisma.reservationGroupSlot.deleteMany).toHaveBeenCalledWith({
+        where: { groupId: 'g1', reservationId: 'r1' },
+      });
+      expect(
+        prisma.reservationGroupSlot.createManyAndReturn,
+      ).toHaveBeenCalledWith({
+        data: [
+          {
+            dayOfWeek: 'TUE',
+            startMinute: 720,
+            endMinute: 730,
+            reservationId: 'r1',
+            groupId: 'g2',
+          },
+        ],
+      });
+      expect(prisma.reservation.update).toHaveBeenCalledWith({
+        where: { id: 'r1' },
+        data: {
+          status: 'GROUPED',
+          groupId: 'g2',
+          requestedGroupId: null,
+          preferredSlots: {
+            deleteMany: {},
+            create: [{ dayOfWeek: 'TUE', startMinute: 720, endMinute: 730 }],
+          },
+        },
+      });
+      expect(notification.sendGroupConfirmed).toHaveBeenCalledWith(
+        member,
+        expectedGroup,
+        [
+          {
+            dayOfWeek: 'TUE',
+            startMinute: 720,
+            endMinute: 730,
+            reservationId: 'r1',
+          },
+        ],
+      );
+    });
+
+    it('같은 그룹으로 이동하려 하면 ConflictException을 던진다', async () => {
+      await expect(
+        service.moveMember('g1', 'r1', { ...dto, targetGroupId: 'g1' }),
+      ).rejects.toThrow(ConflictException);
+      expect(prisma.reservationGroup.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('원래 그룹이 없으면 NotFoundException을 던진다', async () => {
+      prisma.reservationGroup.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.moveMember('missing', 'r1', dto)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('신청이 없으면 NotFoundException을 던진다', async () => {
+      prisma.reservationGroup.findUnique.mockResolvedValueOnce(sourceGroup);
+      prisma.reservation.findUnique.mockResolvedValue(null);
+
+      await expect(service.moveMember('g1', 'r1', dto)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('신청이 원래 그룹의 멤버가 아니면 ConflictException을 던진다', async () => {
+      prisma.reservationGroup.findUnique.mockResolvedValueOnce(sourceGroup);
+      prisma.reservation.findUnique.mockResolvedValue({
+        ...member,
+        groupId: 'other-group',
+      });
+
+      await expect(service.moveMember('g1', 'r1', dto)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('대상 그룹이 없으면 NotFoundException을 던진다', async () => {
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce(null);
+      prisma.reservation.findUnique.mockResolvedValue(member);
+
+      await expect(service.moveMember('g1', 'r1', dto)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('대상 그룹이 CONFIRMED가 아니면 ConflictException을 던진다', async () => {
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce({ ...targetGroup, status: 'CANCELLED' });
+      prisma.reservation.findUnique.mockResolvedValue(member);
+
+      await expect(service.moveMember('g1', 'r1', dto)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('대상 그룹의 정원이 가득 찼으면 ConflictException을 던진다', async () => {
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce(targetGroup);
+      prisma.reservation.findUnique.mockResolvedValue(member);
+      prisma.reservation.count.mockResolvedValue(4);
+
+      await expect(service.moveMember('g1', 'r1', dto)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('신청의 나이가 대상 그룹 나이대 밖이어도 막지 않고 그룹의 나이대를 그 학생 나이만큼 넓힌다', async () => {
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce(targetGroup);
+      prisma.reservation.findUnique.mockResolvedValue({
+        ...member,
+        childAge: 9,
+      });
+      prisma.reservation.count.mockResolvedValue(1);
+      prisma.reservationGroupSlot.deleteMany.mockResolvedValue({ count: 1 });
+      prisma.reservationGroupSlot.createManyAndReturn.mockResolvedValue([
+        {
+          id: 's5',
+          groupId: 'g2',
+          reservationId: 'r1',
+          dayOfWeek: 'TUE',
+          startMinute: 720,
+          endMinute: 730,
+        },
+      ]);
+      prisma.reservation.update.mockResolvedValue({
+        groupId: 'g2',
+        status: 'GROUPED',
+      });
+      prisma.reservationGroup.update.mockResolvedValue({
+        ...targetGroup,
+        minAge: 5,
+        maxAge: 9,
+      });
+
+      const result = await service.moveMember('g1', 'r1', dto);
+
+      expect(prisma.reservationGroup.update).toHaveBeenCalledWith({
+        where: { id: 'g2' },
+        data: { minAge: 5, maxAge: 9 },
+      });
+      expect(result).toMatchObject({ minAge: 5, maxAge: 9 });
+    });
+
+    it('슬롯이 신청의 후보 시간 범위 밖이어도 이동을 막지 않고 희망 시간을 대상 시간으로 동기화한다', async () => {
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce(targetGroup);
+      prisma.reservation.findUnique.mockResolvedValue({
+        ...member,
+        preferredSlots: [
+          { dayOfWeek: 'WED', startMinute: 900, endMinute: 970 },
+        ],
+      });
+      prisma.reservation.count.mockResolvedValue(1);
+      prisma.reservationGroupSlot.deleteMany.mockResolvedValue({ count: 1 });
+      prisma.reservationGroupSlot.createManyAndReturn.mockResolvedValue([
+        {
+          id: 's3',
+          groupId: 'g2',
+          reservationId: 'r1',
+          dayOfWeek: 'TUE',
+          startMinute: 720,
+          endMinute: 730,
+        },
+      ]);
+      prisma.reservation.update.mockResolvedValue({
+        groupId: 'g2',
+        status: 'GROUPED',
+      });
+
+      await expect(service.moveMember('g1', 'r1', dto)).resolves.toBeDefined();
+
+      expect(prisma.reservation.update).toHaveBeenCalledWith({
+        where: { id: 'r1' },
+        data: {
+          status: 'GROUPED',
+          groupId: 'g2',
+          requestedGroupId: null,
+          preferredSlots: {
+            deleteMany: {},
+            create: [{ dayOfWeek: 'TUE', startMinute: 720, endMinute: 730 }],
+          },
+        },
+      });
+    });
+
+    it('슬롯이 대상 그룹의 기존 시간대와 겹치지 않으면 ConflictException을 던진다', async () => {
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce(targetGroup);
+      prisma.reservation.findUnique.mockResolvedValue({
+        ...member,
+        preferredSlots: [
+          { dayOfWeek: 'THU', startMinute: 720, endMinute: 800 },
+        ],
+      });
+      prisma.reservation.count.mockResolvedValue(1);
+
+      await expect(
+        service.moveMember('g1', 'r1', {
+          targetGroupId: 'g2',
+          slots: [{ dayOfWeek: 'THU', startMinute: 720, endMinute: 730 }],
+        }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('이동할 슬롯 사이에 빈 시간이 있으면 ConflictException을 던진다', async () => {
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce({
+          ...targetGroup,
+          slots: [
+            {
+              id: 's1',
+              groupId: 'g2',
+              reservationId: 'other',
+              dayOfWeek: 'TUE',
+              startMinute: 720,
+              endMinute: 800,
+            },
+          ],
+        });
+      prisma.reservation.findUnique.mockResolvedValue({
+        ...member,
+        preferredSlots: [
+          { dayOfWeek: 'TUE', startMinute: 700, endMinute: 800 },
+        ],
+      });
+      prisma.reservation.count.mockResolvedValue(1);
+
+      await expect(
+        service.moveMember('g1', 'r1', {
+          targetGroupId: 'g2',
+          slots: [
+            { dayOfWeek: 'TUE', startMinute: 720, endMinute: 730 },
+            { dayOfWeek: 'TUE', startMinute: 750, endMinute: 760 },
+          ],
+        }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('대상 그룹에 확정된 시간이 하나도 없으면 겹침 검사 없이 이동을 허용한다', async () => {
+      const emptyTargetGroup = { ...targetGroup, slots: [] };
+      prisma.reservationGroup.findUnique
+        .mockResolvedValueOnce(sourceGroup)
+        .mockResolvedValueOnce(emptyTargetGroup);
+      prisma.reservation.findUnique.mockResolvedValue(member);
+      prisma.reservation.count.mockResolvedValue(0);
+      prisma.reservationGroupSlot.deleteMany.mockResolvedValue({ count: 1 });
+      const createdSlots = [
+        {
+          id: 's4',
+          groupId: 'g2',
+          reservationId: 'r1',
+          dayOfWeek: 'TUE',
+          startMinute: 720,
+          endMinute: 730,
+        },
+      ];
+      prisma.reservationGroupSlot.createManyAndReturn.mockResolvedValue(
+        createdSlots,
+      );
+      prisma.reservation.update.mockResolvedValue({
+        ...member,
+        groupId: 'g2',
+        status: 'GROUPED',
+      });
+
+      const result = await service.moveMember('g1', 'r1', dto);
+
+      expect(result).toEqual({ ...emptyTargetGroup, slots: createdSlots });
     });
   });
 

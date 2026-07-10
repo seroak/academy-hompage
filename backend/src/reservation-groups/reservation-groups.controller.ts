@@ -15,6 +15,7 @@ import { CreateReservationGroupDto } from './dto/create-reservation-group.dto';
 import { UpdateReservationGroupDto } from './dto/update-reservation-group.dto';
 import { AddGroupMemberDto } from './dto/add-group-member.dto';
 import { ReplaceMemberSlotsDto } from './dto/replace-member-slots.dto';
+import { MoveGroupMemberDto } from './dto/move-group-member.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { RESERVATION_ROLES } from '../auth/admin-role';
@@ -84,6 +85,17 @@ export class ReservationGroupsController {
       reservationId,
       dto,
     );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...RESERVATION_ROLES)
+  @Patch(':id/members/:reservationId/move')
+  moveMember(
+    @Param('id') id: string,
+    @Param('reservationId') reservationId: string,
+    @Body() dto: MoveGroupMemberDto,
+  ) {
+    return this.reservationGroupsService.moveMember(id, reservationId, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

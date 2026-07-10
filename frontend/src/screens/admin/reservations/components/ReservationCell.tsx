@@ -20,6 +20,7 @@ type Props = {
   onCancelReservation: (id: string) => void;
   onAddToGroup: (reservation: Reservation, group: ReservationGroup, day: DayOfWeek) => void;
   onOpenGroupDetail: (groupId: string) => void;
+  onMoveMember: (reservationId: string, fromGroupId: string, toGroupId: string) => void;
 };
 
 type WaitingReservationsSectionProps = {
@@ -55,7 +56,13 @@ type GroupedReservationsSectionProps = {
   groupedByGroupId: Map<string, { group: ReservationGroup | null; reservations: Reservation[] }>;
   onOpenDetail: (reservation: Reservation) => void;
   onOpenGroupDetail: (groupId: string) => void;
+  onMoveMember: (reservationId: string, fromGroupId: string, toGroupId: string) => void;
 };
+
+/** 학생 블록을 드래그할 때 dataTransfer에 실어 보내는 페이로드. */
+type DragPayload = { reservationId: string; fromGroupId: string };
+
+const DRAG_PAYLOAD_TYPE = "application/x-reservation-member";
 
 function groupReservationsByGroup(
   reservations: Reservation[],
@@ -91,6 +98,7 @@ export default function ReservationCell({
   onCancelReservation,
   onAddToGroup,
   onOpenGroupDetail,
+  onMoveMember,
 }: Props) {
   const groupedByGroupId = useMemo(
     () => groupReservationsByGroup(groupedInCell, groupByReservationId),
@@ -115,6 +123,7 @@ export default function ReservationCell({
             groupedByGroupId={groupedByGroupId}
             onOpenDetail={onOpenDetail}
             onOpenGroupDetail={onOpenGroupDetail}
+            onMoveMember={onMoveMember}
           />
         )}
 
@@ -310,13 +319,41 @@ function GroupedReservationsSection({
   groupedByGroupId,
   onOpenDetail,
   onOpenGroupDetail,
+  onMoveMember,
 }: GroupedReservationsSectionProps) {
+  const [dragOverGroupId, setDragOverGroupId] = useState<string | null>(null);
+
   return (
     <div className="flex w-full flex-1 flex-col p-1">
       {Array.from(groupedByGroupId.entries()).map(([key, { group, reservations }], index) => (
         <div
           key={key}
-          className={`flex w-full flex-1 flex-col gap-1 rounded-lg bg-[#e7f4ff] p-2 ${index > 0 ? "mt-1" : ""}`}
+          onDragOver={
+            group
+              ? (event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                }
+              : undefined
+          }
+          onDragEnter={group ? () => setDragOverGroupId(group.id) : undefined}
+          onDragLeave={group ? () => setDragOverGroupId((prev) => (prev === group.id ? null : prev)) : undefined}
+          onDrop={
+            group
+              ? (event) => {
+                  event.preventDefault();
+                  setDragOverGroupId(null);
+                  const raw = event.dataTransfer.getData(DRAG_PAYLOAD_TYPE);
+                  if (!raw) return;
+                  const payload = JSON.parse(raw) as DragPayload;
+                  if (payload.fromGroupId === group.id) return;
+                  onMoveMember(payload.reservationId, payload.fromGroupId, group.id);
+                }
+              : undefined
+          }
+          className={`flex w-full flex-1 flex-col gap-1 rounded-lg bg-[#e7f4ff] p-2 transition ${index > 0 ? "mt-1" : ""} ${
+            group && dragOverGroupId === group.id ? "ring-2 ring-[#236c9c] ring-offset-1" : ""
+          }`}
         >
           {group ? (
             <button
@@ -335,9 +372,21 @@ function GroupedReservationsSection({
               <button
                 key={reservation.id}
                 type="button"
+                draggable={Boolean(group)}
+                onDragStart={
+                  group
+                    ? (event) => {
+                        const payload: DragPayload = { reservationId: reservation.id, fromGroupId: group.id };
+                        event.dataTransfer.setData(DRAG_PAYLOAD_TYPE, JSON.stringify(payload));
+                        event.dataTransfer.effectAllowed = "move";
+                      }
+                    : undefined
+                }
                 onClick={() => onOpenDetail(reservation)}
                 style={{ backgroundColor: childColor(reservation).background, borderColor: childColor(reservation).border }}
-                className="w-full rounded-lg border px-3 py-2 text-left shadow-sm transition hover:opacity-80"
+                className={`w-full rounded-lg border px-3 py-2 text-left shadow-sm transition hover:opacity-80 ${
+                  group ? "cursor-grab active:cursor-grabbing" : ""
+                }`}
               >
                 <div className="truncate text-[11px] font-bold text-[#236c9c]">{reservation.childName}</div>
                 <div className="mt-0.5 truncate text-[10px] font-bold text-[#236c9c] opacity-70">

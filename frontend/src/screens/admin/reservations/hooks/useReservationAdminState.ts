@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useReservationsQuery } from '../../hooks/useReservationsQuery'
 import { useReservationGroupsQuery } from '../../hooks/useReservationGroupsQuery'
 import { useReservationMutations } from '../../hooks/useReservationMutations'
@@ -9,12 +9,12 @@ import {
   ReservationGroup,
   UpdateReservationGroupInput,
 } from '../../../../api/schemas/reservation-group.schema'
-import { useReservationStats } from './useReservationStats'
 import { useReservationTimetable } from './useReservationTimetable'
 import { DayOfWeek, ReservationGroupFormState, SelectedSlot } from '../types'
 import {
   ADMIN_ROW_MINUTES,
   findSlotGap,
+  groupSlotsDeduped,
   joinableSlotsForAllDays,
   joinableSlotsForDay,
   mergeContiguousSlots,
@@ -49,10 +49,15 @@ export function useReservationAdminState() {
   const [groupForm, setGroupForm] = useState<ReservationGroupFormState>(emptyGroupForm)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [blankGroupFieldErrors, setBlankGroupFieldErrors] = useState<Record<string, string>>({})
+  const [blankGroupSubmitError, setBlankGroupSubmitError] = useState<string | null>(null)
   const [detailReservationId, setDetailReservationId] = useState<string | null>(null)
   const [detailGroupId, setDetailGroupId] = useState<string | null>(null)
 
-  const { waiting, statCards } = useReservationStats(reservations, groups)
+  const waiting = useMemo(
+    () => reservations.filter((reservation) => reservation.status === 'WAITING'),
+    [reservations],
+  )
 
   const { getCellReservations, groupByReservationId, joinableGroupsForReservation } =
     useReservationTimetable(waiting, groups)
@@ -161,6 +166,33 @@ export function useReservationAdminState() {
     }
   }
 
+  async function handleCreateBlankGroup(input: {
+    label: string
+    capacity: number
+    minAge?: number
+    maxAge?: number
+  }): Promise<boolean> {
+    const result = CreateReservationGroupInputSchema.safeParse({ ...input, slots: [] })
+    if (!result.success) {
+      const errors: Record<string, string> = {}
+      for (const issue of result.error.issues) {
+        errors[String(issue.path[0])] = issue.message
+      }
+      setBlankGroupFieldErrors(errors)
+      return false
+    }
+    setBlankGroupFieldErrors({})
+    setBlankGroupSubmitError(null)
+
+    try {
+      await createGroup(result.data)
+      return true
+    } catch {
+      setBlankGroupSubmitError('그룹 생성에 실패했습니다.')
+      return false
+    }
+  }
+
   async function handleUpdateReservation(id: string, input: UpdateReservationInput) {
     await updateReservation(id, input)
   }
@@ -264,18 +296,41 @@ export function useReservationAdminState() {
   }
 
   async function handleMoveMember(reservation: Reservation, fromGroup: ReservationGroup, toGroup: ReservationGroup) {
-    const slots = joinableSlotsForAllDays(reservation, toGroup)
+    const existingSlots = groupSlotsDeduped(toGroup)
+    // 대상 그룹에 아직 확정된 시간이 없으면(막 만든 빈 그룹), 겹침을 따질 필요 없이
+    // 이동하는 학생의 희망 시간을 그대로 그 그룹의 첫 확정 시간으로 채택한다.
+    const slots =
+      existingSlots.length > 0
+        ? existingSlots
+        : reservation.preferredSlots.map(({ dayOfWeek, startMinute, endMinute }) => ({
+            dayOfWeek,
+            startMinute,
+            endMinute,
+          }))
     if (slots.length === 0) {
-      window.alert('희망 시간이 대상 그룹의 확정 시간과 겹치지 않아 이동할 수 없습니다.')
+      window.alert('이동할 시간 정보가 없어 이동할 수 없습니다.')
       return
     }
-    if (!window.confirm(`${reservation.childName} 학생을 "${toGroup.label}" 그룹으로 이동하시겠습니까?`)) return
 
     try {
       await moveMember(reservation.id, fromGroup.id, toGroup.id, slots)
     } catch {
       window.alert('그룹 이동에 실패했습니다.')
     }
+  }
+
+  async function handleMoveMemberById(reservationId: string, fromGroupId: string, toGroupId: string) {
+    if (fromGroupId === toGroupId) return
+
+    const fromGroup = groups.find((g) => g.id === fromGroupId)
+    const toGroup = groups.find((g) => g.id === toGroupId)
+    const reservation =
+      fromGroup?.reservations?.find((r) => r.id === reservationId) ??
+      reservations.find((r) => r.id === reservationId)
+
+    if (!reservation || !fromGroup || !toGroup) return
+
+    await handleMoveMember(reservation, fromGroup, toGroup)
   }
 
   const detailGroup = groups.find((group) => group.id === detailGroupId) ?? null
@@ -297,6 +352,8 @@ export function useReservationAdminState() {
     setGroupForm,
     fieldErrors,
     submitError,
+    blankGroupFieldErrors,
+    blankGroupSubmitError,
     detailReservation,
     setDetailReservation,
     detailGroup,
@@ -308,7 +365,6 @@ export function useReservationAdminState() {
     groupMinAge,
     groupMaxAge,
     selectedReservationCount: selectedReservationIds.length,
-    statCards,
     getCellReservations,
     groupByReservationId,
     joinableGroupsForReservation,
@@ -317,6 +373,7 @@ export function useReservationAdminState() {
     removeSlot,
     selectCell,
     handleConfirmGroup,
+    handleCreateBlankGroup,
     handleUpdateReservation,
     handleCancelReservation,
     handleCancelGroup,
@@ -328,5 +385,6 @@ export function useReservationAdminState() {
     handleRemoveMember,
     handleReplaceMemberSlots,
     handleMoveMember,
+    handleMoveMemberById,
   }
 }

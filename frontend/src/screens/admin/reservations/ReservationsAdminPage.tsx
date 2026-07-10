@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import ReservationDetailModal from '../../../components/ReservationDetailModal'
 import { useReservationAdminState } from './hooks/useReservationAdminState'
-import ReservationStats from './components/ReservationStats'
 import ReservationAgeFilter from './components/ReservationAgeFilter'
 import ReservationTimetable from './components/ReservationTimetable'
 import GroupConfirmForm from './components/GroupConfirmForm'
+import GroupManagementCard from './components/GroupManagementCard'
 import GroupDetailModal from './components/GroupDetailModal'
 import WalkInMemberForm from './components/WalkInMemberForm'
 
@@ -60,7 +60,6 @@ export default function ReservationsAdminPage() {
       </nav>
 
       <div className={activeTab === 'reservations' ? 'flex flex-col gap-8' : 'hidden'}>
-        <ReservationStats statCards={admin.statCards} />
         <ReservationAgeFilter
           ageFilter={admin.ageFilter}
           onChangeAgeFilter={admin.setAgeFilter}
@@ -78,6 +77,7 @@ export default function ReservationsAdminPage() {
           onCancelReservation={admin.handleCancelReservation}
           onAddToGroup={admin.handleAddToGroup}
           onOpenGroupDetail={admin.openGroupDetail}
+          onMoveMember={admin.handleMoveMemberById}
         />
         <GroupConfirmForm
           selectedSlots={admin.selectedSlots}
@@ -92,6 +92,14 @@ export default function ReservationsAdminPage() {
           onChangeGroupForm={admin.setGroupForm}
           onRemoveSlot={admin.removeSlot}
           onSubmit={admin.handleConfirmGroup}
+        />
+        <GroupManagementCard
+          groups={admin.groups}
+          fieldErrors={admin.blankGroupFieldErrors}
+          submitError={admin.blankGroupSubmitError}
+          isCreating={admin.isCreating}
+          onCreateBlankGroup={admin.handleCreateBlankGroup}
+          onDeleteGroup={admin.handleCancelGroup}
         />
       </div>
 

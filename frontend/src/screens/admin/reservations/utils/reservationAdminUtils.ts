@@ -167,6 +167,25 @@ export function joinableSlotsForAllDays(
 }
 
 /**
+ * 그룹에 이미 확정된 시간 전체를 요일·시간 기준으로 중복 제거해 반환한다.
+ * 반 이동(드래그앤드롭) 시, 학생의 희망 시간과 겹치는지 여부와 무관하게 대상 반의 시간을
+ * 그대로 새 스케줄로 채택할 때 사용한다.
+ */
+export function groupSlotsDeduped(
+  group: ReservationGroup,
+): { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number }[] {
+  const seen = new Set<string>()
+  const result: { dayOfWeek: DayOfWeek; startMinute: number; endMinute: number }[] = []
+  for (const slot of group.slots) {
+    const key = `${slot.dayOfWeek}-${slot.startMinute}-${slot.endMinute}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push({ dayOfWeek: slot.dayOfWeek as DayOfWeek, startMinute: slot.startMinute, endMinute: slot.endMinute })
+  }
+  return result
+}
+
+/**
  * 학생이 그룹에 합류 가능한지: 확정 그룹 + 여석 + 나이대 + 희망 시간 겹침을 모두 만족하는지 확인한다.
  */
 export function isGroupJoinableForReservation(

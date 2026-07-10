@@ -70,3 +70,15 @@ export async function replaceGroupMemberSlots(
   })
   return ReservationGroupSchema.parse(raw)
 }
+
+export async function moveGroupMember(
+  sourceGroupId: string,
+  reservationId: string,
+  input: { targetGroupId: string; slots: AddGroupMemberInput['slots'] },
+): Promise<ReservationGroup> {
+  const raw = await apiFetch(`/reservation-groups/${sourceGroupId}/members/${reservationId}/move`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+  return ReservationGroupSchema.parse(raw)
+}

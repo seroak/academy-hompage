@@ -69,7 +69,7 @@ export const CreateReservationGroupInputSchema = z.object({
   capacity: z.number().int('정원은 정수로 입력해 주세요').min(1, '정원은 1명 이상이어야 합니다'),
   minAge: z.number().int().min(4).max(10).optional(),
   maxAge: z.number().int().min(4).max(10).optional(),
-  slots: z.array(GroupSlotInputSchema).min(1, '슬롯을 1개 이상 선택해 주세요'),
+  slots: z.array(GroupSlotInputSchema),
 })
 
 export type CreateReservationGroupInput = z.infer<typeof CreateReservationGroupInputSchema>
