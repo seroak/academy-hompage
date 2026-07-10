@@ -92,10 +92,8 @@ function addConfirmedGroupsToCellMap(map: Map<string, CellData>, groups: Reserva
     if (
       groupReservations.length === 0 &&
       group.scheduleDayOfWeek &&
-      group.scheduleStartMinute !== null &&
-      group.scheduleStartMinute !== undefined &&
-      group.scheduleEndMinute !== null &&
-      group.scheduleEndMinute !== undefined
+      typeof group.scheduleStartMinute === "number" &&
+      typeof group.scheduleEndMinute === "number"
     ) {
       const { startRow, span } = getRowRange(group.scheduleStartMinute, group.scheduleEndMinute);
       if (span <= 0) continue;

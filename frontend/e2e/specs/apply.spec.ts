@@ -72,6 +72,17 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
 
     await expect(apply.successHeading).toBeVisible()
   })
+
+  test('모집 중인 시간은 잔여석을 채운 배경으로 명확히 표시한다', async ({ page }) => {
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+
+    const cell = apply.slotCell('MON', 900)
+    const remainingSeats = cell.getByText('잔여 2석')
+    await expect(remainingSeats).toBeVisible()
+    await expect(remainingSeats).toHaveCSS('font-size', '10px')
+    await expect(cell).toHaveClass(/bg-emerald-500/)
+  })
 })
 
 test.describe('보호자 수업 신청 (접근 제어)', () => {

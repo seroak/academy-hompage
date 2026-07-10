@@ -14,6 +14,10 @@ export class PublicPages {
     await this.page.waitForSelector('h1:has-text("공지사항")')
   }
 
+  async gotoCourses() {
+    await this.page.goto('/courses')
+  }
+
   async gotoNoticeDetail(id: string) {
     return this.page.goto(`/notices/${id}`)
   }

@@ -3,12 +3,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '../generated/prisma/client.js';
 import { NotificationService } from '../notifications/notification.service.js';
 import { ReservationGroupsValidator } from './reservation-groups.validator.js';
 import { ReservationGroupTransactionService } from './reservation-group-transaction.service.js';
 import { AddGroupMemberDto } from './dto/add-group-member.dto.js';
 import { ReplaceMemberSlotsDto } from './dto/replace-member-slots.dto.js';
 import { MoveGroupMemberDto } from './dto/move-group-member.dto.js';
+import { GroupSlotDto } from './dto/create-reservation-group.dto.js';
+
+type ConfirmedGroupWithSlots = Prisma.ReservationGroupGetPayload<{
+  include: { slots: true };
+}>;
 
 @Injectable()
 export class ReservationGroupMembershipService {
@@ -21,25 +27,13 @@ export class ReservationGroupMembershipService {
   async addMember(groupId: string, dto: AddGroupMemberDto) {
     const { reservation, updatedGroup, newSlots } = await this.transaction.run(
       async (tx) => {
-        const group = await tx.reservationGroup.findUnique({
-          where: { id: groupId },
-          include: { slots: true },
-        });
-        if (!group)
-          throw new NotFoundException(`ReservationGroup ${groupId} not found`);
-        this.validator.validateGroupStatus(
-          group.status,
-          'CONFIRMED',
+        const group = await this.loadConfirmedGroup(
+          tx,
+          groupId,
+          { slots: true },
           '확정된 그룹에만 인원을 추가할 수 있습니다',
         );
-        const reservation = await tx.reservation.findUnique({
-          where: { id: dto.reservationId },
-          include: { preferredSlots: true },
-        });
-        if (!reservation)
-          throw new NotFoundException(
-            `Reservation ${dto.reservationId} not found`,
-          );
+        const reservation = await this.loadReservation(tx, dto.reservationId);
         this.validator.validateReservationStatus(
           reservation.status,
           'WAITING',
@@ -52,7 +46,7 @@ export class ReservationGroupMembershipService {
           group.minAge,
           group.maxAge,
         );
-        const schedule = this.getSchedule(group);
+        const schedule = this.validator.resolveSchedule(group);
         if (schedule) {
           this.validator.validateSlotsWithinPreferred(
             [schedule],
@@ -78,11 +72,10 @@ export class ReservationGroupMembershipService {
           where: { id: dto.reservationId, status: 'WAITING', groupId: null },
           data: { status: 'GROUPED', groupId, requestedGroupId: null },
         });
-        if (updatedReservations.count !== 1) {
-          throw new ConflictException(
-            '신청 상태가 변경되어 그룹에 추가할 수 없습니다',
-          );
-        }
+        this.assertSingleUpdate(
+          updatedReservations.count,
+          '신청 상태가 변경되어 그룹에 추가할 수 없습니다',
+        );
         return {
           reservation,
           updatedGroup: { ...group, slots: [...group.slots, ...createdSlots] },
@@ -104,26 +97,15 @@ export class ReservationGroupMembershipService {
     dto: ReplaceMemberSlotsDto,
   ) {
     return this.transaction.run(async (tx) => {
-      const group = await tx.reservationGroup.findUnique({
-        where: { id: groupId },
-        include: { slots: true },
-      });
-      if (!group)
-        throw new NotFoundException(`ReservationGroup ${groupId} not found`);
-      this.validator.validateGroupStatus(
-        group.status,
-        'CONFIRMED',
+      const group = await this.loadConfirmedGroup(
+        tx,
+        groupId,
+        { slots: true },
         '확정된 그룹만 시간을 수정할 수 있습니다',
       );
-      const reservation = await tx.reservation.findUnique({
-        where: { id: reservationId },
-        include: { preferredSlots: true },
-      });
-      if (!reservation)
-        throw new NotFoundException(`Reservation ${reservationId} not found`);
-      if (reservation.groupId !== groupId)
-        throw new ConflictException('해당 신청은 이 그룹의 멤버가 아닙니다');
-      const schedule = this.getSchedule(group);
+      const reservation = await this.loadReservation(tx, reservationId);
+      this.assertMemberOf(reservation, groupId);
+      const schedule = this.validator.resolveSchedule(group);
       if (schedule) {
         this.validator.validateSlotsWithinPreferred(
           [schedule],
@@ -142,10 +124,10 @@ export class ReservationGroupMembershipService {
         where: { id: reservationId, groupId, status: 'GROUPED' },
         data: { status: 'GROUPED' },
       });
-      if (confirmed.count !== 1)
-        throw new ConflictException(
-          '신청 상태가 변경되어 시간을 수정할 수 없습니다',
-        );
+      this.assertSingleUpdate(
+        confirmed.count,
+        '신청 상태가 변경되어 시간을 수정할 수 없습니다',
+      );
       await tx.reservationGroupSlot.deleteMany({
         where: { groupId, reservationId },
       });
@@ -171,110 +153,23 @@ export class ReservationGroupMembershipService {
       throw new ConflictException('같은 그룹으로는 이동할 수 없습니다');
     const { reservation, updatedGroup, newSlots } = await this.transaction.run(
       async (tx) => {
-        const sourceGroup = await tx.reservationGroup.findUnique({
-          where: { id: sourceGroupId },
-        });
-        if (!sourceGroup)
-          throw new NotFoundException(
-            `ReservationGroup ${sourceGroupId} not found`,
-          );
-        this.validator.validateGroupStatus(
-          sourceGroup.status,
-          'CONFIRMED',
-          '확정된 그룹에서만 멤버를 이동할 수 있습니다',
+        const prepared = await this.prepareMove(
+          tx,
+          sourceGroupId,
+          reservationId,
+          dto,
         );
-        const reservation = await tx.reservation.findUnique({
-          where: { id: reservationId },
-          include: { preferredSlots: true },
-        });
-        if (!reservation)
-          throw new NotFoundException(`Reservation ${reservationId} not found`);
-        if (reservation.groupId !== sourceGroupId)
-          throw new ConflictException('해당 신청은 이 그룹의 멤버가 아닙니다');
-        const targetGroup = await tx.reservationGroup.findUnique({
-          where: { id: dto.targetGroupId },
-          include: { slots: true },
-        });
-        if (!targetGroup)
-          throw new NotFoundException(
-            `ReservationGroup ${dto.targetGroupId} not found`,
-          );
-        this.validator.validateGroupStatus(
-          targetGroup.status,
-          'CONFIRMED',
-          '확정된 그룹으로만 이동할 수 있습니다',
+        const updatedGroup = await this.applyMove(
+          tx,
+          sourceGroupId,
+          reservationId,
+          dto,
+          prepared,
         );
-        const currentCount = await tx.reservation.count({
-          where: { groupId: dto.targetGroupId },
-        });
-        this.validator.validateCapacity(targetGroup.capacity, currentCount + 1);
-        const schedule = this.getSchedule(targetGroup);
-        if (schedule)
-          this.validator.validateScheduledMemberSlots(dto.slots, schedule);
-        else if (targetGroup.slots.length > 0)
-          this.validator.validateSlotsOverlap(dto.slots, targetGroup.slots);
-        const newSlots = dto.slots.map((slot) => ({ ...slot, reservationId }));
-        this.validator.assertNoGaps(newSlots);
-        const newMinAge = Math.min(targetGroup.minAge, reservation.childAge);
-        const newMaxAge = Math.max(targetGroup.maxAge, reservation.childAge);
-        const updatedReservations = await tx.reservation.updateMany({
-          where: {
-            id: reservationId,
-            status: 'GROUPED',
-            groupId: sourceGroupId,
-          },
-          data: {
-            status: 'GROUPED',
-            groupId: dto.targetGroupId,
-            requestedGroupId: null,
-          },
-        });
-        if (updatedReservations.count !== 1)
-          throw new ConflictException(
-            '신청 상태가 변경되어 그룹을 이동할 수 없습니다',
-          );
-        await tx.reservationGroupSlot.deleteMany({
-          where: { groupId: sourceGroupId, reservationId },
-        });
-        const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
-          data: newSlots.map((slot) => ({
-            ...slot,
-            groupId: dto.targetGroupId,
-          })),
-        });
-        await tx.reservation.update({
-          where: { id: reservationId },
-          data: {
-            preferredSlots: {
-              deleteMany: {},
-              create: dto.slots.map(
-                ({ dayOfWeek, startMinute, endMinute }) => ({
-                  dayOfWeek,
-                  startMinute,
-                  endMinute,
-                }),
-              ),
-            },
-          },
-        });
-        if (
-          newMinAge !== targetGroup.minAge ||
-          newMaxAge !== targetGroup.maxAge
-        ) {
-          await tx.reservationGroup.update({
-            where: { id: dto.targetGroupId },
-            data: { minAge: newMinAge, maxAge: newMaxAge },
-          });
-        }
         return {
-          reservation,
-          updatedGroup: {
-            ...targetGroup,
-            minAge: newMinAge,
-            maxAge: newMaxAge,
-            slots: [...targetGroup.slots, ...createdSlots],
-          },
-          newSlots,
+          reservation: prepared.reservation,
+          updatedGroup,
+          newSlots: prepared.newSlots,
         };
       },
     );
@@ -286,17 +181,117 @@ export class ReservationGroupMembershipService {
     return updatedGroup;
   }
 
+  private async prepareMove(
+    tx: Prisma.TransactionClient,
+    sourceGroupId: string,
+    reservationId: string,
+    dto: MoveGroupMemberDto,
+  ) {
+    await this.loadConfirmedGroup(
+      tx,
+      sourceGroupId,
+      {},
+      '확정된 그룹에서만 멤버를 이동할 수 있습니다',
+    );
+    const reservation = await this.loadReservation(tx, reservationId);
+    this.assertMemberOf(reservation, sourceGroupId);
+    const targetGroup = await this.loadConfirmedGroup(
+      tx,
+      dto.targetGroupId,
+      { slots: true },
+      '확정된 그룹으로만 이동할 수 있습니다',
+    );
+    const currentCount = await tx.reservation.count({
+      where: { groupId: dto.targetGroupId },
+    });
+    this.validator.validateCapacity(targetGroup.capacity, currentCount + 1);
+    const schedule = this.validator.resolveSchedule(targetGroup);
+    if (schedule)
+      this.validator.validateScheduledMemberSlots(dto.slots, schedule);
+    else if (targetGroup.slots.length > 0)
+      this.validator.validateSlotsOverlap(dto.slots, targetGroup.slots);
+    const newSlots = dto.slots.map((slot) => ({ ...slot, reservationId }));
+    this.validator.assertNoGaps(newSlots);
+    const newMinAge = Math.min(targetGroup.minAge, reservation.childAge);
+    const newMaxAge = Math.max(targetGroup.maxAge, reservation.childAge);
+    return { reservation, targetGroup, newSlots, newMinAge, newMaxAge };
+  }
+
+  private async applyMove(
+    tx: Prisma.TransactionClient,
+    sourceGroupId: string,
+    reservationId: string,
+    dto: MoveGroupMemberDto,
+    {
+      targetGroup,
+      newSlots,
+      newMinAge,
+      newMaxAge,
+    }: {
+      targetGroup: ConfirmedGroupWithSlots;
+      newSlots: GroupSlotDto[];
+      newMinAge: number;
+      newMaxAge: number;
+    },
+  ) {
+    const updatedReservations = await tx.reservation.updateMany({
+      where: {
+        id: reservationId,
+        status: 'GROUPED',
+        groupId: sourceGroupId,
+      },
+      data: {
+        status: 'GROUPED',
+        groupId: dto.targetGroupId,
+        requestedGroupId: null,
+      },
+    });
+    this.assertSingleUpdate(
+      updatedReservations.count,
+      '신청 상태가 변경되어 그룹을 이동할 수 없습니다',
+    );
+    await tx.reservationGroupSlot.deleteMany({
+      where: { groupId: sourceGroupId, reservationId },
+    });
+    const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
+      data: newSlots.map((slot) => ({
+        ...slot,
+        groupId: dto.targetGroupId,
+      })),
+    });
+    await tx.reservation.update({
+      where: { id: reservationId },
+      data: {
+        preferredSlots: {
+          deleteMany: {},
+          create: dto.slots.map(({ dayOfWeek, startMinute, endMinute }) => ({
+            dayOfWeek,
+            startMinute,
+            endMinute,
+          })),
+        },
+      },
+    });
+    if (newMinAge !== targetGroup.minAge || newMaxAge !== targetGroup.maxAge) {
+      await tx.reservationGroup.update({
+        where: { id: dto.targetGroupId },
+        data: { minAge: newMinAge, maxAge: newMaxAge },
+      });
+    }
+    return {
+      ...targetGroup,
+      minAge: newMinAge,
+      maxAge: newMaxAge,
+      slots: [...targetGroup.slots, ...createdSlots],
+    };
+  }
+
   async removeMember(groupId: string, reservationId: string) {
     const { reservation, group } = await this.transaction.run(async (tx) => {
-      const group = await tx.reservationGroup.findUnique({
-        where: { id: groupId },
-        include: { reservations: true },
-      });
-      if (!group)
-        throw new NotFoundException(`ReservationGroup ${groupId} not found`);
-      this.validator.validateGroupStatus(
-        group.status,
-        'CONFIRMED',
+      const group = await this.loadConfirmedGroup(
+        tx,
+        groupId,
+        { reservations: true },
         '확정된 그룹만 멤버를 제거할 수 있습니다',
       );
       const reservation = group.reservations.find(
@@ -310,10 +305,10 @@ export class ReservationGroupMembershipService {
         where: { id: reservationId, groupId, status: 'GROUPED' },
         data: { groupId: null, status: 'WAITING' },
       });
-      if (updatedReservations.count !== 1)
-        throw new ConflictException(
-          '신청 상태가 변경되어 멤버를 제거할 수 없습니다',
-        );
+      this.assertSingleUpdate(
+        updatedReservations.count,
+        '신청 상태가 변경되어 멤버를 제거할 수 없습니다',
+      );
       await tx.reservationGroupSlot.deleteMany({
         where: { groupId, reservationId },
       });
@@ -322,21 +317,46 @@ export class ReservationGroupMembershipService {
     await this.notification.sendGroupMemberRemoved(reservation, group);
   }
 
-  private getSchedule(group: {
-    scheduleDayOfWeek?: string | null;
-    scheduleStartMinute?: number | null;
-    scheduleEndMinute?: number | null;
-  }): { dayOfWeek: string; startMinute: number; endMinute: number } | null {
-    if (
-      group.scheduleDayOfWeek == null ||
-      group.scheduleStartMinute == null ||
-      group.scheduleEndMinute == null
-    )
-      return null;
-    return {
-      dayOfWeek: group.scheduleDayOfWeek,
-      startMinute: group.scheduleStartMinute,
-      endMinute: group.scheduleEndMinute,
-    };
+  private async loadConfirmedGroup<
+    Include extends Prisma.ReservationGroupInclude,
+  >(
+    tx: Prisma.TransactionClient,
+    groupId: string,
+    include: Include,
+    message: string,
+  ): Promise<Prisma.ReservationGroupGetPayload<{ include: Include }>> {
+    const group = await tx.reservationGroup.findUnique({
+      where: { id: groupId },
+      include,
+    });
+    if (!group)
+      throw new NotFoundException(`ReservationGroup ${groupId} not found`);
+    this.validator.validateGroupStatus(group.status, 'CONFIRMED', message);
+    return group as Prisma.ReservationGroupGetPayload<{ include: Include }>;
+  }
+
+  private async loadReservation(
+    tx: Prisma.TransactionClient,
+    reservationId: string,
+  ) {
+    const reservation = await tx.reservation.findUnique({
+      where: { id: reservationId },
+      include: { preferredSlots: true },
+    });
+    if (!reservation)
+      throw new NotFoundException(`Reservation ${reservationId} not found`);
+    return reservation;
+  }
+
+  private assertMemberOf(
+    reservation: { groupId: string | null },
+    groupId: string,
+  ): void {
+    if (reservation.groupId !== groupId)
+      throw new ConflictException('해당 신청은 이 그룹의 멤버가 아닙니다');
+  }
+
+  private assertSingleUpdate(count: number, message: string): void {
+    if (count !== 1) throw new ConflictException(message);
   }
 }

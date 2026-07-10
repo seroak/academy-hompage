@@ -47,7 +47,7 @@ export class ReservationGroupLifecycleService {
       const reservationById = new Map(
         reservations.map((reservation) => [reservation.id, reservation]),
       );
-      const schedule = this.getSchedule(dto);
+      const schedule = this.validator.resolveSchedule(dto);
       if (schedule) {
         const slotsByReservation = new Map<string, GroupSlotDto[]>();
         dto.slots.forEach((slot) => {
@@ -173,23 +173,5 @@ export class ReservationGroupLifecycleService {
       error !== null &&
       (error as { code?: string }).code === 'P2025'
     );
-  }
-
-  private getSchedule(group: {
-    scheduleDayOfWeek?: string | null;
-    scheduleStartMinute?: number | null;
-    scheduleEndMinute?: number | null;
-  }): { dayOfWeek: string; startMinute: number; endMinute: number } | null {
-    if (
-      group.scheduleDayOfWeek == null ||
-      group.scheduleStartMinute == null ||
-      group.scheduleEndMinute == null
-    )
-      return null;
-    return {
-      dayOfWeek: group.scheduleDayOfWeek,
-      startMinute: group.scheduleStartMinute,
-      endMinute: group.scheduleEndMinute,
-    };
   }
 }

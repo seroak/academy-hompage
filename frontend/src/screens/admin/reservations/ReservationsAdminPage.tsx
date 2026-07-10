@@ -6,7 +6,6 @@ import { useReservationAdminState } from './hooks/useReservationAdminState'
 import ReservationAgeFilter from './components/ReservationAgeFilter'
 import ReservationTimetable from './components/ReservationTimetable'
 import GroupConfirmForm from './components/GroupConfirmForm'
-import GroupManagementCard from './components/GroupManagementCard'
 import GroupDetailModal from './components/GroupDetailModal'
 import WalkInMemberForm from './components/WalkInMemberForm'
 
@@ -92,14 +91,6 @@ export default function ReservationsAdminPage() {
           onChangeGroupForm={admin.setGroupForm}
           onRemoveSlot={admin.removeSlot}
           onSubmit={admin.handleConfirmGroup}
-        />
-        <GroupManagementCard
-          groups={admin.groups}
-          fieldErrors={admin.blankGroupFieldErrors}
-          submitError={admin.blankGroupSubmitError}
-          isCreating={admin.isCreating}
-          onCreateBlankGroup={admin.handleCreateBlankGroup}
-          onDeleteGroup={admin.handleCancelGroup}
         />
       </div>
 

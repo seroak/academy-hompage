@@ -10,9 +10,9 @@ type MemberSlotInput = { dayOfWeek: PreferredSlot['dayOfWeek']; startMinute: num
 
 type GroupInfoDraft = {
   label: string
-  capacity: number
-  minAge: number
-  maxAge: number
+  capacity: number | ''
+  minAge: number | ''
+  maxAge: number | ''
 }
 
 type Props = {
@@ -99,7 +99,12 @@ export default function GroupDetailModal({
   }
 
   function saveInfo() {
-    onUpdateGroup(activeGroup.id, info)
+    onUpdateGroup(activeGroup.id, {
+      label: info.label,
+      capacity: info.capacity === '' ? activeGroup.capacity : info.capacity,
+      minAge: info.minAge === '' ? activeGroup.minAge : info.minAge,
+      maxAge: info.maxAge === '' ? activeGroup.maxAge : info.maxAge,
+    })
     setInfoDraft(null)
   }
 
@@ -148,7 +153,7 @@ export default function GroupDetailModal({
               type="number"
               min={1}
               value={info.capacity}
-              onChange={(event) => setInfoDraft({ ...info, capacity: Number(event.target.value) })}
+              onChange={(event) => setInfoDraft({ ...info, capacity: event.target.value === '' ? '' : Number(event.target.value) })}
               className="mt-1 w-full rounded-lg border border-[#f2dfb9] px-3 py-2 text-sm font-semibold text-[#222222]"
             />
           </label>
@@ -160,7 +165,7 @@ export default function GroupDetailModal({
                 min={4}
                 max={10}
                 value={info.minAge}
-                onChange={(event) => setInfoDraft({ ...info, minAge: Number(event.target.value) })}
+                onChange={(event) => setInfoDraft({ ...info, minAge: event.target.value === '' ? '' : Number(event.target.value) })}
                 className="mt-1 w-full rounded-lg border border-[#f2dfb9] px-3 py-2 text-sm font-semibold text-[#222222]"
               />
             </label>
@@ -171,7 +176,7 @@ export default function GroupDetailModal({
                 min={4}
                 max={10}
                 value={info.maxAge}
-                onChange={(event) => setInfoDraft({ ...info, maxAge: Number(event.target.value) })}
+                onChange={(event) => setInfoDraft({ ...info, maxAge: event.target.value === '' ? '' : Number(event.target.value) })}
                 className="mt-1 w-full rounded-lg border border-[#f2dfb9] px-3 py-2 text-sm font-semibold text-[#222222]"
               />
             </label>

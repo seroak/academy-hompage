@@ -11,6 +11,7 @@ import { useLoginModalStore } from '../stores/loginModalStore'
 import AdminLoginModal from './AdminLoginModal'
 
 const navItems = [
+  { to: '/courses', label: '교육과정' },
   { to: '/#programs', label: '프로그램' },
   { to: '/notices', label: '커뮤니티' },
   { to: '/level-test', label: '레벨테스트' },

@@ -75,7 +75,7 @@ export function PreferredSlotCell({
           onEnter({ dayOfWeek: day, minute }, selectedSlot)
         }
       }}
-      className={`relative h-8 rounded-md border text-[10px] font-semibold transition ${
+      className={`relative flex h-8 items-center justify-center rounded-md border text-[10px] font-semibold transition ${
         blocked
           ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300'
           : inCancelPreview
@@ -85,16 +85,16 @@ export function PreferredSlotCell({
               : inPreview
                 ? 'border-brand-500 bg-brand-200 text-brand-900'
                 : isJoinable
-                  ? 'border-emerald-400 bg-emerald-50 text-emerald-700 hover:border-brand-300'
+                  ? 'border-emerald-600 bg-emerald-500 text-white hover:border-emerald-700 hover:bg-emerald-600'
                   : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
       }`}
     >
       {isJoinable && !selected && !blocked && (
         <span
           aria-hidden
-          className="absolute right-0.5 top-0.5 rounded-full bg-emerald-500 px-1 text-[8px] font-bold leading-tight text-white"
+          className="text-[10px] font-bold leading-none"
         >
-          잔여{remainingSeats}
+          잔여 {remainingSeats}석
         </span>
       )}
       {selectedSlot

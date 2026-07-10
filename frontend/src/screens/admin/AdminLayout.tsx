@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/authStore'
 const adminNavItems = [
   { to: '/admin/notices', label: '공지 관리' },
   { to: '/admin/reservations', label: '예약 관리' },
+  { to: '/admin/reservations/groups', label: '수업 관리' },
   { to: '/admin/members', label: '회원 관리' },
   { to: '/admin/level-tests', label: '레벨테스트 관리' },
   { to: '/admin/accounts', label: '관리자 계정' },

@@ -135,6 +135,24 @@ export class ReservationGroupsValidator {
     }
   }
 
+  resolveSchedule(group: {
+    scheduleDayOfWeek?: string | null;
+    scheduleStartMinute?: number | null;
+    scheduleEndMinute?: number | null;
+  }): SlotRange | null {
+    if (
+      group.scheduleDayOfWeek == null ||
+      group.scheduleStartMinute == null ||
+      group.scheduleEndMinute == null
+    )
+      return null;
+    return {
+      dayOfWeek: group.scheduleDayOfWeek,
+      startMinute: group.scheduleStartMinute,
+      endMinute: group.scheduleEndMinute,
+    };
+  }
+
   assertNoGaps(slots: GroupSlotDto[]): void {
     const byReservationDay = new Map<string, GroupSlotDto[]>();
     for (const slot of slots) {

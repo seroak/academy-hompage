@@ -18,6 +18,7 @@ type Props = {
     scheduleEndMinute: number;
   }) => Promise<boolean>;
   onDeleteGroup: (id: string) => void;
+  onOpenGroupDetail: (id: string) => void;
 };
 
 function parseOptionalNumber(value: string): number | undefined {
@@ -31,9 +32,10 @@ export default function GroupManagementCard({
   isCreating,
   onCreateBlankGroup,
   onDeleteGroup,
+  onOpenGroupDetail,
 }: Props) {
   const [label, setLabel] = useState("");
-  const [capacity, setCapacity] = useState(4);
+  const [capacity, setCapacity] = useState<number | ''>(4);
   const [minAge, setMinAge] = useState<number | undefined>(undefined);
   const [maxAge, setMaxAge] = useState<number | undefined>(undefined);
   const [scheduleDayOfWeek, setScheduleDayOfWeek] = useState<(typeof DAY_OF_WEEK_OPTIONS)[number]>("MON");
@@ -49,7 +51,7 @@ export default function GroupManagementCard({
     event.preventDefault();
     const success = await onCreateBlankGroup({
       label,
-      capacity,
+      capacity: capacity === '' ? 4 : capacity,
       minAge,
       maxAge,
       scheduleDayOfWeek,
@@ -97,7 +99,7 @@ export default function GroupManagementCard({
               min={1}
               className={fieldClass}
               value={capacity}
-              onChange={(e) => setCapacity(Number(e.target.value))}
+              onChange={(e) => setCapacity(e.target.value === '' ? '' : Number(e.target.value))}
             />
             {fieldErrors.capacity && <span className={errorClass}>{fieldErrors.capacity}</span>}
           </label>
@@ -192,14 +194,28 @@ export default function GroupManagementCard({
                   <p className="mt-0.5 text-xs font-bold text-[#6f6253]">
                     인원 {group.reservations?.length ?? 0}/{group.capacity} · 만 {group.minAge}~{group.maxAge}세
                   </p>
+                  {group.reservations && group.reservations.length > 0 && (
+                    <p className="mt-1 text-xs font-semibold text-[#8c7f6b]">
+                      학생: {group.reservations.map(r => r.childName).join(', ')}
+                    </p>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onDeleteGroup(group.id)}
-                  className="rounded-full border border-[#ffd6cc] bg-[#fff5f1] px-3 py-1 text-xs font-black text-[#d6452f] transition hover:bg-[#ffe9e1]"
-                >
-                  삭제
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onOpenGroupDetail(group.id)}
+                    className="rounded-full border border-[#d6e4ff] bg-[#f0f5ff] px-3 py-1 text-xs font-black text-[#2f6bd6] transition hover:bg-[#e1ecff]"
+                  >
+                    상세 및 수정
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteGroup(group.id)}
+                    className="rounded-full border border-[#ffd6cc] bg-[#fff5f1] px-3 py-1 text-xs font-black text-[#d6452f] transition hover:bg-[#ffe9e1]"
+                  >
+                    삭제
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
