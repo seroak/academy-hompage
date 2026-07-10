@@ -9,6 +9,47 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page).toHaveTitle(/아이꿈 학원|academy/i)
   })
 
+  test('홈에서 수업 신청 절차를 순서대로 안내한다', async ({ page }) => {
+    const pages = new PublicPages(page)
+    await pages.gotoHome()
+
+    await expect(page.getByRole('heading', { name: '수업 신청, 이렇게 진행돼요' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '아이 정보 입력' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '희망 시간 선택' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '편성 결과 안내' })).toBeVisible()
+  })
+
+  test('홈의 수업 신청 버튼이 신청 페이지로 연결된다', async ({ page }) => {
+    const pages = new PublicPages(page)
+    await pages.gotoHome()
+
+    await expect(page.getByRole('link', { name: '수업 신청하기' })).toHaveAttribute('href', '/apply')
+  })
+
+  test('모바일에서 수업 신청 절차와 신청 버튼을 읽을 수 있다', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    const pages = new PublicPages(page)
+    await pages.gotoHome()
+
+    const firstStep = page.getByRole('heading', { name: '아이 정보 입력' })
+    const secondStep = page.getByRole('heading', { name: '희망 시간 선택' })
+    const thirdStep = page.getByRole('heading', { name: '편성 결과 안내' })
+
+    await expect(firstStep).toBeVisible()
+    await expect(secondStep).toBeVisible()
+    await expect(thirdStep).toBeVisible()
+    await expect(page.getByRole('link', { name: '수업 신청하기' })).toBeVisible()
+
+    const [firstBox, secondBox, thirdBox] = await Promise.all([
+      firstStep.boundingBox(),
+      secondStep.boundingBox(),
+      thirdStep.boundingBox(),
+    ])
+
+    expect(firstBox!.y).toBeLessThan(secondBox!.y)
+    expect(secondBox!.y).toBeLessThan(thirdBox!.y)
+  })
+
   test('교육과정 설명 페이지에 프로그램이 렌더된다', async ({ page }) => {
     const pages = new PublicPages(page)
     await pages.gotoHome()

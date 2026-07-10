@@ -1,3 +1,4 @@
+import ApplicationGuideSection from '../components/ApplicationGuideSection'
 import CourseSection from '../components/CourseSection'
 import Hero from '../components/Hero'
 import ProgramCard from '../components/ProgramCard'
@@ -9,6 +10,7 @@ export default function HomePage() {
       <Hero />
       <ProgramCard />
       <CourseSection />
+      <ApplicationGuideSection />
       <TrustSection />
     </div>
   )
