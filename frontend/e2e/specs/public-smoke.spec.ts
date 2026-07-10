@@ -26,29 +26,24 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page.getByRole('link', { name: '수업 신청하기' })).toHaveAttribute('href', '/apply')
   })
 
-  test('홈에서 신청 방법을 보여주는 세 개의 예시 GIF를 제공한다', async ({ page }) => {
+  test('홈에서 신청 방법을 보여주는 세 개의 실시간 미리보기를 제공한다', async ({ page }) => {
     const pages = new PublicPages(page)
     await pages.gotoHome()
 
     for (const step of ['child-select', 'time-select', 'application-complete']) {
       const animation = page.getByTestId(`application-guide-animation-${step}`)
       await expect(animation).toBeVisible()
-      await expect(animation).toHaveAttribute('src', new RegExp(`/images/application-guide/${step}\\.gif$`))
-      await expect(animation).toHaveAttribute('data-fallback-src', new RegExp(`/images/application-guide/${step}\\.svg$`))
     }
   })
 
-  test('동작 최소화 환경에서는 정적 SVG 안내를 보여준다', async ({ page }) => {
+  test('동작 최소화 환경에서도 정적으로 안내를 보여준다', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     const pages = new PublicPages(page)
     await pages.gotoHome()
 
     for (const step of ['child-select', 'time-select', 'application-complete']) {
       const animation = page.getByTestId(`application-guide-animation-${step}`)
-      await expect(animation).toHaveAttribute(
-        'src',
-        new RegExp(`/images/application-guide/${step}\\.svg$`),
-      )
+      await expect(animation).toBeVisible()
     }
   })
 

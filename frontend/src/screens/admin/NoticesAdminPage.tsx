@@ -6,6 +6,7 @@ import { useNoticesQuery } from '../../queries/useNoticesQuery'
 import { useNoticeMutations } from './hooks/useNoticeMutations'
 import { CreateNoticeInputSchema, type CreateNoticeInput } from '../../api/schemas/notice.schema'
 import type { Notice } from '../../api/schemas/notice.schema'
+import { ApiError } from '../../lib/apiClient'
 
 const emptyForm: CreateNoticeInput = { title: '', content: '', pinned: false }
 
@@ -62,8 +63,8 @@ export default function NoticesAdminPage() {
     if (!window.confirm('이 공지를 삭제하시겠습니까?')) return
     try {
       await deleteNotice(id)
-    } catch {
-      window.alert('공지를 삭제하지 못했습니다.')
+    } catch (cause) {
+      window.alert(cause instanceof ApiError ? cause.message : '공지를 삭제하지 못했습니다.')
     }
   }
 

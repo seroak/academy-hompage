@@ -66,7 +66,9 @@ npm run start:dev
 
 # 시드값으로 초기화
 cd backend
-npx prisma migrate reset
+npx prisma migrate reset      # 스키마 초기화 + 기존 데이터 삭제 (확인 프롬프트 있음, --force로 스킵 가능)
+npm run prisma:generate       # Prisma 7은 자동 생성 안 함 — 명시적 실행 필요
+npm run prisma:seed           # 시드 데이터 재적용
 ```
 
 > **주의**: Prisma 버전은 호환성 유지를 위해 `6.x`로 고정되어 있습니다. `7.x`로 강제 업그레이드하지 마세요.
