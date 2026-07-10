@@ -1,16 +1,18 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { CalendarDays, ChevronRight, MailCheck, UserRoundPen } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 const steps = [
   {
     number: '01',
-    title: '아이 정보 입력',
-    description: '이름, 나이, 보호자 연락처를 입력해요.',
+    title: '자녀 선택',
+    description: '신청할 자녀를 선택해요.',
     icon: UserRoundPen,
     color: 'bg-[#fff0e4] text-[#e86f00]',
+    asset: 'child-select',
   },
   {
     number: '02',
@@ -18,15 +20,41 @@ const steps = [
     description: '가능한 요일과 시간을 골라요.',
     icon: CalendarDays,
     color: 'bg-[#eaf5ff] text-[#438cc9]',
+    asset: 'time-select',
   },
   {
     number: '03',
     title: '편성 결과 안내',
-    description: '모집 중인 반에 합류하거나, 신청이 모인 뒤 이메일로 안내받아요.',
+    description: '편성 결과는 이메일로 안내해 드려요.',
     icon: MailCheck,
     color: 'bg-[#eaf8eb] text-[#499e58]',
+    asset: 'application-complete',
   },
 ]
+
+function GuideAnimation({ asset }: { asset: string }) {
+  const reduceMotion = useReducedMotion()
+  const [isMounted, setIsMounted] = useState(false)
+  const [showFallback, setShowFallback] = useState(false)
+  const fallbackSrc = `/images/application-guide/${asset}.svg`
+  const src = showFallback || (isMounted && reduceMotion) ? fallbackSrc : `/images/application-guide/${asset}.gif`
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  return (
+    <img
+      data-testid={`application-guide-animation-${asset}`}
+      src={src}
+      data-fallback-src={fallbackSrc}
+      alt=""
+      aria-hidden="true"
+      onError={() => setShowFallback(true)}
+      className="aspect-[8/5] w-full rounded-[18px] border border-[#f2dfb9] bg-[#fff8eb] object-cover"
+    />
+  )
+}
 
 export default function ApplicationGuideSection() {
   return (
@@ -58,13 +86,14 @@ export default function ApplicationGuideSection() {
                 transition={{ delay: index * 0.08, duration: 0.4, ease: 'easeOut' }}
                 className="relative rounded-[26px] border border-[#f2dfb9] bg-[#fffdf7] p-6"
               >
+                <GuideAnimation asset={step.asset} />
                 <div className="flex items-start justify-between gap-4">
-                  <span className="text-sm font-black tracking-[0.12em] text-[#b99b64]">{step.number}</span>
-                  <span className={`grid size-11 place-items-center rounded-full ${step.color}`}>
+                  <span className="mt-5 text-sm font-black tracking-[0.12em] text-[#b99b64]">{step.number}</span>
+                  <span className={`mt-4 grid size-11 place-items-center rounded-full ${step.color}`}>
                     <Icon size={22} strokeWidth={2.4} aria-hidden="true" />
                   </span>
                 </div>
-                <h3 className="mt-7 text-lg font-black text-[#222222]">{step.title}</h3>
+                <h3 className="mt-4 text-lg font-black text-[#222222]">{step.title}</h3>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#625845]">{step.description}</p>
               </motion.li>
             )

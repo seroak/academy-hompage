@@ -14,7 +14,7 @@ test.describe('공개 페이지 스모크', () => {
     await pages.gotoHome()
 
     await expect(page.getByRole('heading', { name: '수업 신청, 이렇게 진행돼요' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: '아이 정보 입력' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '자녀 선택' })).toBeVisible()
     await expect(page.getByRole('heading', { name: '희망 시간 선택' })).toBeVisible()
     await expect(page.getByRole('heading', { name: '편성 결과 안내' })).toBeVisible()
   })
@@ -26,12 +26,38 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page.getByRole('link', { name: '수업 신청하기' })).toHaveAttribute('href', '/apply')
   })
 
+  test('홈에서 신청 방법을 보여주는 세 개의 예시 GIF를 제공한다', async ({ page }) => {
+    const pages = new PublicPages(page)
+    await pages.gotoHome()
+
+    for (const step of ['child-select', 'time-select', 'application-complete']) {
+      const animation = page.getByTestId(`application-guide-animation-${step}`)
+      await expect(animation).toBeVisible()
+      await expect(animation).toHaveAttribute('src', new RegExp(`/images/application-guide/${step}\\.gif$`))
+      await expect(animation).toHaveAttribute('data-fallback-src', new RegExp(`/images/application-guide/${step}\\.svg$`))
+    }
+  })
+
+  test('동작 최소화 환경에서는 정적 SVG 안내를 보여준다', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    const pages = new PublicPages(page)
+    await pages.gotoHome()
+
+    for (const step of ['child-select', 'time-select', 'application-complete']) {
+      const animation = page.getByTestId(`application-guide-animation-${step}`)
+      await expect(animation).toHaveAttribute(
+        'src',
+        new RegExp(`/images/application-guide/${step}\\.svg$`),
+      )
+    }
+  })
+
   test('모바일에서 수업 신청 절차와 신청 버튼을 읽을 수 있다', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     const pages = new PublicPages(page)
     await pages.gotoHome()
 
-    const firstStep = page.getByRole('heading', { name: '아이 정보 입력' })
+    const firstStep = page.getByRole('heading', { name: '자녀 선택' })
     const secondStep = page.getByRole('heading', { name: '희망 시간 선택' })
     const thirdStep = page.getByRole('heading', { name: '편성 결과 안내' })
 
