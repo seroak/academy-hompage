@@ -4,16 +4,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { useAuthStore } from '../../stores/authStore'
-import type { AdminRole } from '../../api/schemas/auth.schema'
-
-const adminNavItems: Array<{ to: string; label: string; roles: AdminRole[] }> = [
-  { to: '/admin/courses', label: '강좌 관리', roles: ['CONTENT_MANAGER', 'SUPER_ADMIN'] },
-  { to: '/admin/notices', label: '공지 관리', roles: ['CONTENT_MANAGER', 'SUPER_ADMIN'] },
-  { to: '/admin/instructors', label: '강사 관리', roles: ['CONTENT_MANAGER', 'SUPER_ADMIN'] },
-  { to: '/admin/reservations', label: '예약 관리', roles: ['RESERVATION_MANAGER', 'SUPER_ADMIN'] },
-  { to: '/admin/members', label: '회원 관리', roles: ['RESERVATION_MANAGER', 'SUPER_ADMIN'] },
-  { to: '/admin/level-tests', label: '레벨테스트 관리', roles: ['ASSESSMENT_MANAGER', 'SUPER_ADMIN'] },
-  { to: '/admin/accounts', label: '관리자 계정', roles: ['SUPER_ADMIN'] },
+const adminNavItems = [
+  { to: '/admin/courses', label: '강좌 관리' },
+  { to: '/admin/notices', label: '공지 관리' },
+  { to: '/admin/instructors', label: '강사 관리' },
+  { to: '/admin/reservations', label: '예약 관리' },
+  { to: '/admin/members', label: '회원 관리' },
+  { to: '/admin/level-tests', label: '레벨테스트 관리' },
+  { to: '/admin/accounts', label: '관리자 계정' },
 ]
 
 function navLinkClass(isActive: boolean) {
@@ -26,7 +24,6 @@ function navLinkClass(isActive: boolean) {
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const logout = useAuthStore((state) => state.logout)
-  const admin = useAuthStore((state) => state.admin)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -52,7 +49,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </span>
             </div>
             <nav className="flex flex-wrap gap-2">
-              {adminNavItems.filter((item) => admin && item.roles.includes(admin.role)).map((item) => (
+              {adminNavItems.map((item) => (
                 <Link key={item.to} href={item.to} className={navLinkClass(pathname === item.to)}>
                   {item.label}
                 </Link>

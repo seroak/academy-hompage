@@ -31,12 +31,10 @@ setup('관리자 인증 상태 준비', async ({ context, baseURL }) => {
   // zustand persist(cookieStorage)가 저장하는 형태: { state: {...}, version }.
   // serverAuth.ts는 state.isAuthenticated === true만 확인하므로 accessToken 값 자체는
   // 실제 백엔드 토큰일 필요가 없다(어차피 클라이언트 요청은 각 spec의 page.route()가 가로챈다).
-  // RequireAdmin.tsx는 mount 이후 allowedRoles를 state.admin.role로 검사하므로
-  // SUPER_ADMIN을 심어 모든 admin 페이지의 역할 검사를 통과시킨다.
   const envelope = JSON.stringify({
     state: {
       accessToken: 'e2e-fake-admin-token',
-      admin: { id: 'e2e-admin-1', username: 'e2e-admin', role: 'SUPER_ADMIN' },
+      admin: { id: 'e2e-admin-1', username: 'e2e-admin' },
       isAuthenticated: true,
     },
     version: 0,
