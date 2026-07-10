@@ -7,12 +7,12 @@ export class ApplyPagePO {
     await this.page.goto('/apply')
   }
 
-  get childNameInput() {
-    return this.page.getByLabel('아이 이름')
+  get childSelect() {
+    return this.page.getByLabel('신청할 자녀')
   }
 
-  get childAgeSelect() {
-    return this.page.getByLabel('나이(만)')
+  get childNameInput() {
+    return this.page.getByLabel('아이 이름')
   }
 
   get parentNameInput() {
@@ -21,6 +21,10 @@ export class ApplyPagePO {
 
   get parentEmailInput() {
     return this.page.getByLabel('이메일')
+  }
+
+  get parentPhoneInput() {
+    return this.page.getByLabel('전화번호')
   }
 
   get submitButton() {

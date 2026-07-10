@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { CalendarDays, ChevronRight, MailCheck, UserRoundPen } from 'lucide-react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
+import ChildSelectPreview from './application-guide/ChildSelectPreview'
+import TimeSelectPreview from './application-guide/TimeSelectPreview'
+import ResultPreview from './application-guide/ResultPreview'
 
 const steps = [
   {
@@ -12,7 +14,7 @@ const steps = [
     description: '신청할 자녀를 선택해요.',
     icon: UserRoundPen,
     color: 'bg-[#fff0e4] text-[#e86f00]',
-    asset: 'child-select',
+    Preview: ChildSelectPreview,
   },
   {
     number: '02',
@@ -20,7 +22,7 @@ const steps = [
     description: '가능한 요일과 시간을 골라요.',
     icon: CalendarDays,
     color: 'bg-[#eaf5ff] text-[#438cc9]',
-    asset: 'time-select',
+    Preview: TimeSelectPreview,
   },
   {
     number: '03',
@@ -28,33 +30,9 @@ const steps = [
     description: '편성 결과는 이메일로 안내해 드려요.',
     icon: MailCheck,
     color: 'bg-[#eaf8eb] text-[#499e58]',
-    asset: 'application-complete',
+    Preview: ResultPreview,
   },
 ]
-
-function GuideAnimation({ asset }: { asset: string }) {
-  const reduceMotion = useReducedMotion()
-  const [isMounted, setIsMounted] = useState(false)
-  const [showFallback, setShowFallback] = useState(false)
-  const fallbackSrc = `/images/application-guide/${asset}.svg`
-  const src = showFallback || (isMounted && reduceMotion) ? fallbackSrc : `/images/application-guide/${asset}.gif`
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  return (
-    <img
-      data-testid={`application-guide-animation-${asset}`}
-      src={src}
-      data-fallback-src={fallbackSrc}
-      alt=""
-      aria-hidden="true"
-      onError={() => setShowFallback(true)}
-      className="aspect-[8/5] w-full rounded-[18px] border border-[#f2dfb9] bg-[#fff8eb] object-cover"
-    />
-  )
-}
 
 export default function ApplicationGuideSection() {
   return (
@@ -76,6 +54,7 @@ export default function ApplicationGuideSection() {
         <ol className="relative z-10 mt-10 grid gap-4 lg:grid-cols-3 lg:gap-5">
           {steps.map((step, index) => {
             const Icon = step.icon
+            const Preview = step.Preview
 
             return (
               <motion.li
@@ -86,7 +65,7 @@ export default function ApplicationGuideSection() {
                 transition={{ delay: index * 0.08, duration: 0.4, ease: 'easeOut' }}
                 className="relative rounded-[26px] border border-[#f2dfb9] bg-[#fffdf7] p-6"
               >
-                <GuideAnimation asset={step.asset} />
+                <Preview />
                 <div className="flex items-start justify-between gap-4">
                   <span className="mt-5 text-sm font-black tracking-[0.12em] text-[#b99b64]">{step.number}</span>
                   <span className={`mt-4 grid size-11 place-items-center rounded-full ${step.color}`}>

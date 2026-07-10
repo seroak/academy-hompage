@@ -5,7 +5,15 @@ import { PARENT_STORAGE_STATE, ADMIN_STORAGE_STATE } from '../helpers/authPaths'
 import joinableGroupsFixture from '../fixtures/joinable-groups.json' with { type: 'json' }
 import confirmedSlotsFixture from '../fixtures/confirmed-slots.json' with { type: 'json' }
 
+const childrenFixture = [
+  { id: 'child-e2e-1', name: '김아이', age: 5, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' },
+  { id: 'child-e2e-2', name: '이아이', age: 6, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' },
+]
+
 async function mockApplyDependencies(page: import('@playwright/test').Page) {
+  await routeByMethod(page, apiPattern('/children$'), {
+    GET: (route) => fulfillJson(route, 200, childrenFixture),
+  })
   await routeByMethod(page, apiPattern('/reservation-groups/joinable$'), {
     GET: (route) => fulfillJson(route, 200, joinableGroupsFixture),
   })
@@ -45,9 +53,10 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
     const apply = new ApplyPagePO(page)
     await apply.navigate()
 
-    await apply.childNameInput.fill('김아이')
+    await apply.childSelect.selectOption('child-e2e-1')
     await apply.parentNameInput.fill('김부모')
     await apply.parentEmailInput.fill('parent.e2e@example.com')
+    await apply.parentPhoneInput.fill('010-1234-5678')
 
     await apply.selectSlotByKeyboard('MON', 840, 860)
 
@@ -60,9 +69,10 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
     const apply = new ApplyPagePO(page)
     await apply.navigate()
 
-    await apply.childNameInput.fill('이아이')
+    await apply.childSelect.selectOption('child-e2e-2')
     await apply.parentNameInput.fill('이부모')
     await apply.parentEmailInput.fill('parent2.e2e@example.com')
+    await apply.parentPhoneInput.fill('010-2345-6789')
 
     const group = joinableGroupsFixture[0]
     await apply.joinGroupButton(group.label).click()
@@ -71,6 +81,21 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
     await apply.submitButton.click()
 
     await expect(apply.successHeading).toBeVisible()
+  })
+
+  test('전화번호 없이 신청하면 필수 입력 오류를 표시하고 전송하지 않는다', async ({ page }) => {
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+
+    await apply.childSelect.selectOption('child-e2e-1')
+    await apply.parentNameInput.fill('보호자')
+    await apply.parentEmailInput.fill('no-phone@example.com')
+    await apply.selectSlotByKeyboard('MON', 840, 860)
+
+    await apply.submitButton.click()
+
+    await expect(page.getByText('전화번호를 입력해 주세요')).toBeVisible()
+    await expect(apply.successHeading).not.toBeVisible()
   })
 
   test('모집 중인 시간은 잔여석을 채운 배경으로 명확히 표시한다', async ({ page }) => {
@@ -101,9 +126,11 @@ test.describe('보호자 수업 신청 (접근 제어)', () => {
 
       await expect(page.getByText('관리자 미리보기 화면입니다.')).toBeVisible()
 
+      // 관리자는 자녀 관리와 분리된 기존 미리보기 흐름을 유지한다.
       await apply.childNameInput.fill('관리자테스트')
       await apply.parentNameInput.fill('관리자')
       await apply.parentEmailInput.fill('admin-preview@example.com')
+      await apply.parentPhoneInput.fill('010-3456-7890')
       await apply.selectSlotByKeyboard('TUE', 840, 860)
 
       // alert()는 브라우저 렌더러 스레드를 동기적으로 막기 때문에, click()을 await한 뒤

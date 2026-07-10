@@ -10,6 +10,7 @@ import { useJoinableGroupsQuery } from "./hooks/useJoinableGroupsQuery";
 import { useConfirmedSlotsQuery } from "./hooks/useConfirmedSlotsQuery";
 import PreferredSlotsPicker from "../components/PreferredSlotsPicker";
 import LevelTestSection from "../components/LevelTestSection";
+import { useChildrenQuery } from "../queries/useChildrenQuery";
 import {
   CreateReservationInputSchema,
   DAY_OF_WEEK_LABELS,
@@ -18,6 +19,7 @@ import {
 } from "../api/schemas/reservation.schema";
 
 const emptyForm: CreateReservationInput = {
+  childId: "",
   childName: "",
   childAge: 4,
   parentName: "",
@@ -52,6 +54,7 @@ export default function ApplyPage({
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation();
   const { joinableGroups } = useJoinableGroupsQuery();
   const { confirmedSlots } = useConfirmedSlotsQuery();
+  const { children, isLoading: isChildrenLoading } = useChildrenQuery();
   const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -60,6 +63,20 @@ export default function ApplyPage({
     (group) => form.childAge >= group.minAge && form.childAge <= group.maxAge,
   );
   const requestedGroup = matchingGroups.find((group) => group.id === form.requestedGroupId) ?? null;
+
+  function selectChild(childId: string) {
+    const child = children.find((candidate) => candidate.id === childId);
+    if (!child) return;
+    setForm((current) => ({
+      ...current,
+      childId: child.id,
+      childName: child.name,
+      childAge: child.age,
+      requestedGroupId: undefined,
+      preferredSlots: [],
+      levelTestResultId: undefined,
+    }));
+  }
 
   async function handleSwitchAccount() {
     await logoutParent();
@@ -165,43 +182,30 @@ export default function ApplyPage({
         </div>
       )}
 
+      {!isAdminPreview && !isChildrenLoading && children.length === 0 ? (
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-slate-900">먼저 자녀를 등록해 주세요</h2>
+          <p className="mt-2 text-sm text-slate-600">등록한 자녀 정보로 상담 신청과 레벨테스트를 편리하게 진행할 수 있습니다.</p>
+          <button type="button" onClick={() => router.push('/children')} className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">자녀 등록하기</button>
+        </div>
+      ) : (
+
       <form
         onSubmit={handleSubmit}
         className="mt-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 sm:grid-cols-2"
       >
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
-          아이 이름
-          <input
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            value={form.childName}
-            onChange={(e) => setForm({ ...form, childName: e.target.value })}
-          />
-          {fieldErrors.childName && <span className="text-xs text-red-600">{fieldErrors.childName}</span>}
-        </label>
-
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
-          나이(만)
-          <select
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            value={form.childAge}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                childAge: Number(e.target.value),
-                requestedGroupId: undefined,
-                preferredSlots: [],
-                levelTestResultId: undefined,
-              })
-            }
-          >
-            {CHILD_AGE_OPTIONS.map((age) => (
-              <option key={age} value={age}>
-                만 {age}세
-              </option>
-            ))}
-          </select>
-          {fieldErrors.childAge && <span className="text-xs text-red-600">{fieldErrors.childAge}</span>}
-        </label>
+        {isAdminPreview ? <>
+          <label className="flex flex-col gap-1 text-sm text-slate-700">아이 이름<input className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={form.childName} onChange={(e) => setForm({ ...form, childName: e.target.value })} /></label>
+          <label className="flex flex-col gap-1 text-sm text-slate-700">나이(만)<select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={form.childAge} onChange={(e) => setForm({ ...form, childAge: Number(e.target.value) })}>{CHILD_AGE_OPTIONS.map((age) => <option key={age} value={age}>만 {age}세</option>)}</select></label>
+        </> : <>
+          <label className="flex flex-col gap-1 text-sm text-slate-700">신청할 자녀
+            <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={form.childId} onChange={(e) => selectChild(e.target.value)}>
+              <option value="">자녀를 선택해 주세요</option>
+              {children.map((child) => <option key={child.id} value={child.id}>{child.name} · 만 {child.age}세</option>)}
+            </select>
+          </label>
+          {form.childId && <div className="flex flex-col gap-1 text-sm text-slate-700"><span>아이 정보</span><p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">{form.childName} · 만 {form.childAge}세</p></div>}
+        </>}
 
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           보호자 이름
@@ -225,17 +229,19 @@ export default function ApplyPage({
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-slate-700">
-          전화번호(선택)
+          전화번호
           <input
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
             value={form.parentPhone}
             onChange={(e) => setForm({ ...form, parentPhone: e.target.value })}
           />
+          {fieldErrors.parentPhone && <span className="text-xs text-red-600">{fieldErrors.parentPhone}</span>}
         </label>
 
-        {form.childName && (
+        {form.childId && (
           <LevelTestSection
             key={form.childAge}
+            childId={form.childId}
             childName={form.childName}
             childAge={form.childAge}
             completedResultId={form.levelTestResultId ?? null}
@@ -323,6 +329,7 @@ export default function ApplyPage({
           </button>
         </div>
       </form>
+      )}
     </div>
   );
 }
