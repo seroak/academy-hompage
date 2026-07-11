@@ -9,6 +9,7 @@ import { logoutParent } from '../api/auth.api'
 import { useAuthStore } from '../stores/authStore'
 import { useLoginModalStore } from '../stores/loginModalStore'
 import AdminLoginModal from './AdminLoginModal'
+import LogoMark from './LogoMark'
 
 const navItems = [
   { to: '/', label: '학원 소개' },
@@ -206,7 +207,8 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
     <>
       <header className="sticky top-0 z-50 bg-[#fff9ec]/90 backdrop-blur-md">
         <div className="mx-auto flex h-[84px] max-w-[1280px] items-center justify-between gap-6 px-5 sm:px-8">
-          <Link href="/" className="flex shrink-0 items-center" onClick={() => setIsOpen(false)}>
+          <Link href="/" className="flex shrink-0 items-center gap-2" onClick={() => setIsOpen(false)}>
+            <LogoMark className="size-8" />
             <span className="text-xl font-black tracking-[-0.01em] text-[#222222]">생각을 여는 수학</span>
           </Link>
 
