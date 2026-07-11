@@ -68,9 +68,9 @@ function findRenderableCell(map: Map<string, CellData>, day: string, rowStart: n
   return targetCell;
 }
 
-function addConfirmedGroupsToCellMap(map: Map<string, CellData>, groups: ReservationGroup[]) {
+function addActiveGroupsToCellMap(map: Map<string, CellData>, groups: ReservationGroup[]) {
   for (const group of groups) {
-    if (group.status !== "CONFIRMED") continue;
+    if (group.status !== "CONFIRMED" && group.status !== "EMPTY") continue;
 
     const groupReservations = group.reservations ?? [];
 
@@ -142,7 +142,7 @@ function addWaitingReservationsToCellMap(map: Map<string, CellData>, waiting: Re
 function createCellMap(waiting: Reservation[], groups: ReservationGroup[]): Map<string, CellData> {
   const map = new Map<string, CellData>();
 
-  addConfirmedGroupsToCellMap(map, groups);
+  addActiveGroupsToCellMap(map, groups);
   addWaitingReservationsToCellMap(map, waiting);
 
   return map;

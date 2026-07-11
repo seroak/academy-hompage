@@ -252,7 +252,7 @@ export function isGroupJoinableForReservation(
   reservation: Reservation,
   day: DayOfWeek,
 ): boolean {
-  if (group.status !== 'CONFIRMED') return false
+  if (group.status !== 'CONFIRMED' && group.status !== 'EMPTY') return false
   const memberCount = group.reservations?.length ?? 0
   if (memberCount >= group.capacity) return false
   if (reservation.childAge < group.minAge || reservation.childAge > group.maxAge) return false

@@ -165,6 +165,8 @@ npm run build                  # next build --webpack
 
 ## 아키텍처 규칙
 
+### 공통 CRUD/인증
+
 - **CRUD 패턴 통일**: courses/notices/instructors는 동일한 구조(controller/service/dto, `findAll`/`findOne`/`create`/`update`/`remove`)를 따른다. 새 도메인 추가 시 이 패턴을 복제한다.
 - **인증 가드는 쓰기 작업에만**: `GET`은 공개, `POST`/`PATCH`/`DELETE`에만 `@UseGuards(JwtAuthGuard)`. 새 엔드포인트 추가 시 동일하게 적용.
 - **관리자 권한**: 모든 인증된 관리자는 동일한 전체 권한을 갖는다. 관리자 API에는 서버에서 `JwtAuthGuard`를 적용하고, 프론트 메뉴·페이지 가드는 UX 보조로만 쓴다. 관리자 계정 생성(`POST /admins`)도 인증된 관리자가 수행할 수 있다.
@@ -178,11 +180,19 @@ npm run build                  # next build --webpack
 - **Instructor 삭제**: 담당 강좌가 남아있으면 `ConflictException`(409)을 던진다 — FK 제약 위반을 그대로 노출하지 않는다.
 - **공유 필드 리네임 시 점검 범위**: 예약/강좌 등 여러 계층에 걸친 필드명을 바꿀 때는 `schema.prisma` → migration → 해당 도메인 양쪽 DTO → 양쪽 service/controller spec → `seed.ts` → 프론트 `schemas/*.schema.ts` → `api/*.ts` → 이를 쓰는 화면(`screens/**`) 순으로 훑는다.
 - **알림(이메일 등) 발송 실패 격리**: `NotificationService`류는 SMTP 미설정이거나 발송 실패해도 콘솔 로그로 폴백하고, API 요청 자체는 정상 처리되게 만든다 — 발송 실패가 사용자 요청 실패로 전파되지 않아야 한다. SMTP 미설정 폴백 로그는 subject뿐 아니라 본문(text)도 함께 남긴다 — 인증 링크 등 URL이 본문에 있으면 개발 중 콘솔에서 바로 복사해 쓸 수 있어야 한다.
+
+### 인증/세션
+
 - **인증 상태의 SSR 반영**: 클라이언트 전역 상태(Zustand)가 SSR 초기 렌더에도 영향을 줘야 하면 `src/lib/cookieStorage.ts`(non-httpOnly 쿠키 저장) + `src/lib/serverAuth.ts`(서버 `cookies()` 읽기) + `initialXxx` prop + mount 게이트 패턴을 따른다. 관리자 세션과 부모(보호자) 세션은 서로 독립적인 별개 상태이므로, 인증 가드를 새로 만들 때 "관리자 세션은 있지만 부모 세션은 없음" 같은 조합을 빠뜨리지 않는다.
 - **보호자 로그인 수단**: 소셜 로그인뿐 아니라 이메일/비밀번호("일반 로그인")도 지원한다 — 소셜 전용으로 가정하고 검증·자동화를 생략하지 않는다. 이메일 가입은 즉시 계정을 만들지 않고 매직 링크 인증을 거친다: `POST /auth/parents/signup`이 `ParentEmailVerification`(대기 레코드, `email @unique`)을 upsert하고 인증 메일을 보내며, 링크의 `POST /auth/parents/verify-email`에서만 `ParentUser`가 생성되고 로그인 쿠키가 발급된다. 소셜 전용(`passwordHash` null) 기존 계정과의 병합 분기는 `AuthService.verifyParentEmail`에서 처리한다. 비슷한 "제출 즉시 자원을 만들지 않고 검증 후 생성" 흐름을 추가할 때 이 패턴(대기 테이블 + 토큰 + upsert)을 참고한다.
 - **`/apply` 관리자 프리뷰**: 관리자 세션만 있고 부모 세션이 없는 경우 화면 진입(`isAdminPreview`)은 허용하되 실제 제출은 `alert`로 차단한다(`ApplyPage.tsx`).
-- **예약 그룹 확정 단위**: `reservation-groups` 확정은 요일·시간 셀 단위가 아니라, 사용자가 고른 개별 `reservation` ID 목록 기준으로 동작한다.
 - **로그인 필요 페이지 추가 시**: 새로 만들지 않고 `RequireAdmin`/Header의 기존 리다이렉트+모달 가드 패턴을 복제한다.
+
+### 예약 그룹(reservation-groups)
+
+- **예약 그룹 확정 단위**: `reservation-groups` 확정은 요일·시간 셀 단위가 아니라, 사용자가 고른 개별 `reservation` ID 목록 기준으로 동작한다.
+- **그룹을 반환하는 API는 `reservations`를 반드시 포함**: `reservation-groups`의 조회뿐 아니라 생성/멤버 추가·이동·시간교체 등 모든 뮤테이션이 그룹을 반환할 때 `reservation-group-includes.ts`의 `FULL_GROUP_INCLUDE`(`{ slots: true, reservations: { include: { preferredSlots: true } } }`)를 재사용한다. 일부만 `slots`만 포함해 반환하면, 프론트 낙관적 뮤테이션의 `onSuccess`가 그 응답으로 캐시 그룹을 통째로 덮어쓸 때 `reservations`가 `undefined`가 되어 타임테이블이 그 그룹을 멤버 0명(빈 수업)으로 잘못 렌더링한다(실제로 겪은 버그 — 드래그로 그룹 이동 시 대상 그룹이 잠깐 "빈 수업"으로 깜빡임). 새 그룹-반환 엔드포인트를 추가할 때 이 include를 빠뜨리지 않는다. `onSuccess`가 캐시 항목을 서버 응답으로 통째로 치환하는 패턴(`groups.map((item) => item.id === group.id ? group : item)`) 자체가 전제하는 계약이므로, 새 그룹-반환 뮤테이션을 추가할 때도 이 패턴을 그대로 따르되 응답에 필드 누락이 없는지 먼저 확인한다.
+- **그룹 멤버십의 파생 상태(anchor slot·status)는 프론트 낙관적 업데이트도 백엔드와 동일하게 재현**: `reservation-group-membership.service.ts`의 `vacateMemberSlots`는 그룹의 마지막 멤버가 빠지면 슬롯을 삭제하지 않고 `reservationId: null`로만 비워 anchor slot으로 남기고 그룹 `status`를 `EMPTY`로 전환한다(삭제해버리면 그룹이 그리드에서 완전히 사라진다). `useReservationGroupMutations.ts`의 `onMutate`(addMember/removeMember/moveMember 3곳)도 단순히 멤버를 필터링해 지우는 게 아니라 이 로직(멤버 0명이면 slot을 지우지 않고 `reservationId`만 null 처리 + `status: 'EMPTY'`, 아니면 `status: 'CONFIRMED'`)을 그대로 재현해야 한다. 백엔드에서 멤버 추가/제거/이동의 상태 전이 로직을 바꾸면 이 3곳의 낙관적 업데이트도 함께 갱신한다 — 안 그러면 서버 응답이 오기 전까지 화면이 실제 상태와 어긋난다.
 
 ## 프론트엔드 E2E(Playwright)
 

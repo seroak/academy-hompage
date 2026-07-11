@@ -11,6 +11,7 @@ import {
   GroupSlotDto,
 } from './dto/create-reservation-group.dto.js';
 import { UpdateReservationGroupDto } from './dto/update-reservation-group.dto.js';
+import { FULL_GROUP_INCLUDE } from './reservation-group-includes.js';
 
 @Injectable()
 export class ReservationGroupLifecycleService {
@@ -77,6 +78,7 @@ export class ReservationGroupLifecycleService {
       const createdGroup = await tx.reservationGroup.create({
         data: {
           label: dto.label,
+          status: reservationIds.length > 0 ? 'CONFIRMED' : 'EMPTY',
           capacity: dto.capacity,
           minAge,
           maxAge,
@@ -89,7 +91,7 @@ export class ReservationGroupLifecycleService {
             : {}),
         },
       });
-      const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
+      await tx.reservationGroupSlot.createManyAndReturn({
         data: dto.slots.map((slot) => ({ ...slot, groupId: createdGroup.id })),
       });
       const updatedReservations = await tx.reservation.updateMany({
@@ -101,7 +103,11 @@ export class ReservationGroupLifecycleService {
           '일부 신청의 상태가 변경되어 그룹을 확정할 수 없습니다',
         );
       }
-      return { group: { ...createdGroup, slots: createdSlots }, reservations };
+      const group = await tx.reservationGroup.findUnique({
+        where: { id: createdGroup.id },
+        include: FULL_GROUP_INCLUDE,
+      });
+      return { group: group!, reservations };
     });
 
     await Promise.all(
@@ -136,10 +142,7 @@ export class ReservationGroupLifecycleService {
         return tx.reservationGroup.update({
           where: { id },
           data: dto,
-          include: {
-            slots: true,
-            reservations: { include: { preferredSlots: true } },
-          },
+          include: FULL_GROUP_INCLUDE,
         });
       });
     } catch (error) {

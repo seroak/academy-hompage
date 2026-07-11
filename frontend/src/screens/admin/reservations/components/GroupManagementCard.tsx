@@ -191,7 +191,7 @@ export default function GroupManagementCard({
                   <p className="text-sm font-black text-[#222222]">
                     {group.label}{" "}
                     <span className="font-semibold text-[#6f6253]">
-                      ({group.status === "CONFIRMED" ? "확정" : "취소됨"})
+                      ({group.status === "CONFIRMED" ? "편성됨" : "빈 수업"})
                     </span>
                   </p>
                   <p className="mt-0.5 text-xs font-bold text-[#6f6253]">

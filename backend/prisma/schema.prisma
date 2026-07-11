@@ -103,7 +103,7 @@ enum ReservationStatus {
 
 enum ReservationGroupStatus {
   CONFIRMED
-  CANCELLED
+  EMPTY
 }
 
 model Reservation {
@@ -146,7 +146,7 @@ model ReservationPreferredSlot {
 model ReservationGroup {
   id                  String                 @id @default(cuid())
   label               String
-  status              ReservationGroupStatus @default(CONFIRMED)
+  status              ReservationGroupStatus @default(EMPTY)
   capacity            Int
   minAge              Int
   maxAge              Int

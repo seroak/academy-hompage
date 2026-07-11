@@ -430,6 +430,7 @@ function GroupedReservationsSection({
       {Array.from(groupedByGroupId.entries()).map(([key, { group, reservations }], index) => (
         <div
           key={key}
+          data-testid={group ? `grouped-reservations-${group.id}` : undefined}
           onDragOver={
             group
               ? (event) => {

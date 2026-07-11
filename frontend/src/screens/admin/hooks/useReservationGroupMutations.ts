@@ -62,7 +62,7 @@ export function useReservationGroupMutations() {
       const group: ReservationGroup = {
         id,
         label: input.label,
-        status: 'CONFIRMED',
+        status: input.slots.length > 0 ? 'CONFIRMED' : 'EMPTY',
         capacity: input.capacity,
         minAge: input.minAge ?? 4,
         maxAge: input.maxAge ?? 10,
@@ -115,6 +115,7 @@ export function useReservationGroupMutations() {
       const reservation = cachedReservation(input.reservationId)
       updateCachedLists<ReservationGroup>(queryClient, queryKeys.reservationGroups.all, (groups) => groups.map((group) => group.id !== groupId ? group : {
         ...group,
+        status: 'CONFIRMED',
         slots: [...group.slots, ...input.slots.map((slot) => ({ id: optimisticId('group-slot'), reservationId: input.reservationId, ...slot }))],
         reservations: reservation && !group.reservations?.some((item) => item.id === reservation.id) ? [...(group.reservations ?? []), reservation] : group.reservations,
         updatedAt: nowIso(),
@@ -153,11 +154,22 @@ export function useReservationGroupMutations() {
       removeGroupMember(groupId, reservationId),
     onMutate: async ({ groupId, reservationId }) => {
       const context = await snapshotAll()
-      updateCachedLists<ReservationGroup>(queryClient, queryKeys.reservationGroups.all, (groups) => groups.map((group) => group.id !== groupId ? group : {
-        ...group,
-        slots: group.slots.filter((slot) => slot.reservationId !== reservationId),
-        reservations: group.reservations?.filter((reservation) => reservation.id !== reservationId),
-        updatedAt: nowIso(),
+      updateCachedLists<ReservationGroup>(queryClient, queryKeys.reservationGroups.all, (groups) => groups.map((group) => {
+        if (group.id !== groupId) return group
+        const reservations = (group.reservations ?? []).filter((reservation) => reservation.id !== reservationId)
+        const becameEmpty = reservations.length === 0
+        return {
+          ...group,
+          status: becameEmpty ? 'EMPTY' : 'CONFIRMED',
+          // 백엔드 vacateMemberSlots와 동일하게: 그룹이 완전히 비면 슬롯을 지우지 않고
+          // reservationId만 null로 비워 anchor slot으로 남긴다(그리드가 EMPTY placeholder를
+          // 계속 렌더링할 수 있도록). 다른 멤버가 남아있으면 그대로 제거한다.
+          slots: becameEmpty
+            ? group.slots.map((slot) => (slot.reservationId === reservationId ? { ...slot, reservationId: null } : slot))
+            : group.slots.filter((slot) => slot.reservationId !== reservationId),
+          reservations,
+          updatedAt: nowIso(),
+        }
       }))
       updateReservations((reservation) => reservation.id === reservationId ? { ...reservation, status: 'WAITING', groupId: null, updatedAt: nowIso() } : reservation)
       return context
@@ -214,9 +226,24 @@ export function useReservationGroupMutations() {
       const context = await snapshotAll()
       const reservation = cachedReservation(reservationId)
       updateCachedLists<ReservationGroup>(queryClient, queryKeys.reservationGroups.all, (groups) => groups.map((group) => {
-        if (group.id === fromGroupId) return { ...group, slots: group.slots.filter((slot) => slot.reservationId !== reservationId), reservations: group.reservations?.filter((item) => item.id !== reservationId), updatedAt: nowIso() }
+        if (group.id === fromGroupId) {
+          const reservations = (group.reservations ?? []).filter((item) => item.id !== reservationId)
+          const becameEmpty = reservations.length === 0
+          return {
+            ...group,
+            status: becameEmpty ? 'EMPTY' : 'CONFIRMED',
+            // removeMemberMutation과 동일하게 anchor slot으로 남긴다 — 그렇지 않으면
+            // 일정(schedule) 없는 다중블록 그룹이 optimistic 단계에서 그리드에서 사라진다.
+            slots: becameEmpty
+              ? group.slots.map((slot) => (slot.reservationId === reservationId ? { ...slot, reservationId: null } : slot))
+              : group.slots.filter((slot) => slot.reservationId !== reservationId),
+            reservations,
+            updatedAt: nowIso(),
+          }
+        }
         if (group.id === toGroupId) return {
           ...group,
+          status: 'CONFIRMED',
           slots: [...group.slots, ...slots.map((slot) => ({ id: optimisticId('group-slot'), reservationId, ...slot }))],
           reservations: reservation && !group.reservations?.some((item) => item.id === reservationId) ? [...(group.reservations ?? []), reservation] : group.reservations,
           updatedAt: nowIso(),

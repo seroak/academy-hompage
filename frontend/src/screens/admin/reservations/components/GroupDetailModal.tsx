@@ -61,7 +61,9 @@ export default function GroupDetailModal({
     slotsByMember.set(slot.reservationId, list)
   }
 
-  const otherGroups = allGroups.filter((candidate) => candidate.id !== group.id && candidate.status === 'CONFIRMED')
+  const otherGroups = allGroups.filter((candidate) =>
+    candidate.id !== group.id && (candidate.status === 'CONFIRMED' || candidate.status === 'EMPTY'),
+  )
   const requestedIds = new Set(requestedReservations.map((r) => r.id))
   const eligibleWaiting = waitingReservations.filter(
     (reservation) =>

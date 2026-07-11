@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { FULL_GROUP_INCLUDE } from './reservation-group-includes.js';
 
 @Injectable()
 export class ReservationGroupQueryService {
@@ -7,17 +8,14 @@ export class ReservationGroupQueryService {
 
   findAll() {
     return this.prisma.reservationGroup.findMany({
-      include: {
-        slots: true,
-        reservations: { include: { preferredSlots: true } },
-      },
+      include: FULL_GROUP_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
   }
 
   findConfirmedSlots() {
     return this.prisma.reservationGroupSlot.findMany({
-      where: { group: { status: 'CONFIRMED' } },
+      where: { group: { status: { in: ['CONFIRMED', 'EMPTY'] } } },
       select: { dayOfWeek: true, startMinute: true, endMinute: true },
       orderBy: [{ dayOfWeek: 'asc' }, { startMinute: 'asc' }],
     });
@@ -25,7 +23,7 @@ export class ReservationGroupQueryService {
 
   async findJoinable() {
     const groups = await this.prisma.reservationGroup.findMany({
-      where: { status: 'CONFIRMED' },
+      where: { status: { in: ['CONFIRMED', 'EMPTY'] } },
       include: { slots: true, _count: { select: { reservations: true } } },
     });
 
@@ -62,10 +60,7 @@ export class ReservationGroupQueryService {
   async findOne(id: string) {
     const group = await this.prisma.reservationGroup.findUnique({
       where: { id },
-      include: {
-        slots: true,
-        reservations: { include: { preferredSlots: true } },
-      },
+      include: FULL_GROUP_INCLUDE,
     });
 
     if (!group) {

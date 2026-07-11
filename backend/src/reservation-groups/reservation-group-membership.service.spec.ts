@@ -1,38 +1,7 @@
-import { ConflictException } from '@nestjs/common';
 import { ReservationGroupMembershipService } from './reservation-group-membership.service.js';
 
 describe('ReservationGroupMembershipService', () => {
-  it('취소된 그룹에서는 멤버 제거를 거절한다', async () => {
-    const tx = {
-      reservationGroup: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'g1',
-          status: 'CANCELLED',
-          reservations: [{ id: 'r1' }],
-        }),
-      },
-      reservationGroupSlot: { deleteMany: jest.fn() },
-      reservation: { updateMany: jest.fn() },
-    };
-    const transaction = { run: jest.fn((operation) => operation(tx)) };
-    const validator = {
-      validateGroupStatus: jest.fn(() => {
-        throw new ConflictException('확정된 그룹만 멤버를 제거할 수 있습니다');
-      }),
-    };
-    const service = new ReservationGroupMembershipService(
-      transaction as never,
-      {} as never,
-      validator as never,
-    );
-
-    await expect(service.removeMember('g1', 'r1')).rejects.toThrow(
-      ConflictException,
-    );
-    expect(tx.reservationGroupSlot.deleteMany).not.toHaveBeenCalled();
-  });
-
-  it('마지막 멤버를 제거하면 슬롯을 삭제하지 않고 reservationId만 비운다', async () => {
+  it('마지막 멤버를 제거하면 슬롯을 비우고 그룹 상태를 EMPTY로 전환한다', async () => {
     const tx = {
       reservationGroup: {
         findUnique: jest.fn().mockResolvedValue({
@@ -40,6 +9,7 @@ describe('ReservationGroupMembershipService', () => {
           status: 'CONFIRMED',
           reservations: [{ id: 'r1' }],
         }),
+        update: jest.fn(),
       },
       reservationGroupSlot: {
         deleteMany: jest.fn(),
@@ -66,6 +36,10 @@ describe('ReservationGroupMembershipService', () => {
       data: { reservationId: null },
     });
     expect(tx.reservationGroupSlot.deleteMany).not.toHaveBeenCalled();
+    expect(tx.reservationGroup.update).toHaveBeenCalledWith({
+      where: { id: 'g1' },
+      data: { status: 'EMPTY' },
+    });
   });
 
   it('다른 멤버가 남아있으면 제거된 멤버의 슬롯을 그대로 삭제한다', async () => {
@@ -104,7 +78,7 @@ describe('ReservationGroupMembershipService', () => {
   });
 
   describe('addMember', () => {
-    it('빈 그룹(anchor 슬롯만 있음)에 멤버가 들어오면 anchor 슬롯을 지우고 새 슬롯만 남긴다', async () => {
+    it('빈 그룹에 멤버가 들어오면 anchor 슬롯을 지우고 상태를 CONFIRMED로 전환한다', async () => {
       const anchorSlot = {
         id: 'anchor1',
         groupId: 'g1',
@@ -123,14 +97,26 @@ describe('ReservationGroupMembershipService', () => {
       };
       const tx = {
         reservationGroup: {
-          findUnique: jest.fn().mockResolvedValue({
-            id: 'g1',
-            status: 'CONFIRMED',
-            capacity: 10,
-            minAge: 4,
-            maxAge: 10,
-            slots: [anchorSlot],
-          }),
+          findUnique: jest
+            .fn()
+            .mockResolvedValueOnce({
+              id: 'g1',
+              status: 'EMPTY',
+              capacity: 10,
+              minAge: 4,
+              maxAge: 10,
+              slots: [anchorSlot],
+            })
+            .mockResolvedValueOnce({
+              id: 'g1',
+              status: 'CONFIRMED',
+              capacity: 10,
+              minAge: 4,
+              maxAge: 10,
+              slots: [createdSlot],
+              reservations: [{ id: 'r1' }],
+            }),
+          update: jest.fn(),
         },
         reservation: {
           findUnique: jest.fn().mockResolvedValue({
@@ -176,7 +162,19 @@ describe('ReservationGroupMembershipService', () => {
       expect(tx.reservationGroupSlot.deleteMany).toHaveBeenCalledWith({
         where: { groupId: 'g1', reservationId: null },
       });
+      expect(tx.reservationGroup.update).toHaveBeenCalledWith({
+        where: { id: 'g1' },
+        data: { status: 'CONFIRMED' },
+      });
       expect(updatedGroup.slots).toEqual([createdSlot]);
+      expect(updatedGroup.reservations).toEqual([{ id: 'r1' }]);
+      expect(tx.reservationGroup.findUnique).toHaveBeenLastCalledWith({
+        where: { id: 'g1' },
+        include: {
+          slots: true,
+          reservations: { include: { preferredSlots: true } },
+        },
+      });
     });
   });
 
@@ -184,6 +182,8 @@ describe('ReservationGroupMembershipService', () => {
     function createMoveTx(
       sourceMemberCountAfterMove: number,
       targetSlots: unknown[] = [],
+      targetStatus: 'CONFIRMED' | 'EMPTY' = 'CONFIRMED',
+      targetReservationsAfterMove: unknown[] = [{ id: 'r1' }],
     ) {
       const reservation = {
         id: 'r1',
@@ -191,12 +191,24 @@ describe('ReservationGroupMembershipService', () => {
         childAge: 6,
         preferredSlots: [],
       };
+      let targetFindCount = 0;
       const tx = {
         reservationGroup: {
           findUnique: jest.fn((args: { where: { id: string } }) => {
             if (args.where.id === 'source')
               return Promise.resolve({ id: 'source', status: 'CONFIRMED' });
-            if (args.where.id === 'target')
+            if (args.where.id === 'target') {
+              targetFindCount += 1;
+              if (targetFindCount === 1) {
+                return Promise.resolve({
+                  id: 'target',
+                  status: targetStatus,
+                  capacity: 10,
+                  minAge: 4,
+                  maxAge: 10,
+                  slots: targetSlots,
+                });
+              }
               return Promise.resolve({
                 id: 'target',
                 status: 'CONFIRMED',
@@ -204,7 +216,9 @@ describe('ReservationGroupMembershipService', () => {
                 minAge: 4,
                 maxAge: 10,
                 slots: targetSlots,
+                reservations: targetReservationsAfterMove,
               });
+            }
             return Promise.resolve(null);
           }),
           update: jest.fn(),
@@ -278,7 +292,7 @@ describe('ReservationGroupMembershipService', () => {
       expect(tx.reservationGroupSlot.updateMany).not.toHaveBeenCalled();
     });
 
-    it('빈 그룹(anchor 슬롯만 있음)으로 이동하면 anchor 슬롯을 지운다', async () => {
+    it('빈 그룹으로 이동하면 anchor 슬롯을 지우고 대상 그룹을 CONFIRMED로 전환한다', async () => {
       const anchorSlot = {
         id: 'anchor1',
         groupId: 'target',
@@ -287,7 +301,7 @@ describe('ReservationGroupMembershipService', () => {
         startMinute: 600,
         endMinute: 660,
       };
-      const tx = createMoveTx(1, [anchorSlot]);
+      const tx = createMoveTx(1, [anchorSlot], 'EMPTY');
       const transaction = { run: jest.fn((operation) => operation(tx)) };
       const service = new ReservationGroupMembershipService(
         transaction as never,
@@ -299,6 +313,109 @@ describe('ReservationGroupMembershipService', () => {
 
       expect(tx.reservationGroupSlot.deleteMany).toHaveBeenCalledWith({
         where: { groupId: 'target', reservationId: null },
+      });
+      expect(tx.reservationGroup.update).toHaveBeenCalledWith({
+        where: { id: 'target' },
+        data: { status: 'CONFIRMED' },
+      });
+    });
+
+    it('이동이 끝나면 대상 그룹을 재조회해 신청 목록을 포함해 반환한다', async () => {
+      const tx = createMoveTx(1, [], 'CONFIRMED', [{ id: 'r1' }, { id: 'r2' }]);
+      const transaction = { run: jest.fn((operation) => operation(tx)) };
+      const service = new ReservationGroupMembershipService(
+        transaction as never,
+        notification as never,
+        validator as never,
+      );
+
+      const updatedGroup = await service.moveMember('source', 'r1', dto as never);
+
+      expect(updatedGroup.reservations).toEqual([{ id: 'r1' }, { id: 'r2' }]);
+      expect(tx.reservationGroup.findUnique).toHaveBeenLastCalledWith({
+        where: { id: 'target' },
+        include: {
+          slots: true,
+          reservations: { include: { preferredSlots: true } },
+        },
+      });
+    });
+  });
+
+  describe('replaceMemberSlots', () => {
+    it('시간 교체 후 그룹을 재조회해 신청 목록을 포함해 반환한다', async () => {
+      const createdSlot = {
+        id: 'new1',
+        groupId: 'g1',
+        reservationId: 'r1',
+        dayOfWeek: 'MON',
+        startMinute: 600,
+        endMinute: 660,
+      };
+      const tx = {
+        reservationGroup: {
+          findUnique: jest
+            .fn()
+            .mockResolvedValueOnce({
+              id: 'g1',
+              status: 'CONFIRMED',
+              slots: [],
+            })
+            .mockResolvedValueOnce({
+              id: 'g1',
+              status: 'CONFIRMED',
+              slots: [createdSlot],
+              reservations: [{ id: 'r1' }],
+            }),
+        },
+        reservation: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'r1',
+            groupId: 'g1',
+            status: 'GROUPED',
+            childAge: 6,
+            preferredSlots: [
+              { dayOfWeek: 'MON', startMinute: 600, endMinute: 660 },
+            ],
+          }),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+        reservationGroupSlot: {
+          deleteMany: jest.fn(),
+          createManyAndReturn: jest.fn().mockResolvedValue([createdSlot]),
+        },
+      };
+      const transaction = { run: jest.fn((operation) => operation(tx)) };
+      const validator = {
+        validateGroupStatus: jest.fn(),
+        resolveSchedule: jest.fn().mockReturnValue(null),
+        validateSlotsWithinPreferred: jest.fn(),
+        assertNoGaps: jest.fn(),
+      };
+      const notification = { sendGroupConfirmed: jest.fn() };
+      const service = new ReservationGroupMembershipService(
+        transaction as never,
+        notification as never,
+        validator as never,
+      );
+
+      const dto = {
+        slots: [{ dayOfWeek: 'MON', startMinute: 600, endMinute: 660 }],
+      };
+      const updatedGroup = await service.replaceMemberSlots(
+        'g1',
+        'r1',
+        dto as never,
+      );
+
+      expect(updatedGroup.slots).toEqual([createdSlot]);
+      expect(updatedGroup.reservations).toEqual([{ id: 'r1' }]);
+      expect(tx.reservationGroup.findUnique).toHaveBeenLastCalledWith({
+        where: { id: 'g1' },
+        include: {
+          slots: true,
+          reservations: { include: { preferredSlots: true } },
+        },
       });
     });
   });

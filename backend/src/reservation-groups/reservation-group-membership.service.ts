@@ -11,8 +11,9 @@ import { AddGroupMemberDto } from './dto/add-group-member.dto.js';
 import { ReplaceMemberSlotsDto } from './dto/replace-member-slots.dto.js';
 import { MoveGroupMemberDto } from './dto/move-group-member.dto.js';
 import { GroupSlotDto } from './dto/create-reservation-group.dto.js';
+import { FULL_GROUP_INCLUDE } from './reservation-group-includes.js';
 
-type ConfirmedGroupWithSlots = Prisma.ReservationGroupGetPayload<{
+type GroupWithSlots = Prisma.ReservationGroupGetPayload<{
   include: { slots: true };
 }>;
 
@@ -27,11 +28,11 @@ export class ReservationGroupMembershipService {
   async addMember(groupId: string, dto: AddGroupMemberDto) {
     const { reservation, updatedGroup, newSlots } = await this.transaction.run(
       async (tx) => {
-        const group = await this.loadConfirmedGroup(
+        const group = await this.loadAvailableGroup(
           tx,
           groupId,
           { slots: true },
-          '확정된 그룹에만 인원을 추가할 수 있습니다',
+          '운영 중인 그룹에만 인원을 추가할 수 있습니다',
         );
         const reservation = await this.loadReservation(tx, dto.reservationId);
         this.validator.validateReservationStatus(
@@ -66,7 +67,7 @@ export class ReservationGroupMembershipService {
         }));
         this.validator.assertNoGaps(newSlots);
         await this.clearAnchorSlots(tx, groupId);
-        const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
+        await tx.reservationGroupSlot.createManyAndReturn({
           data: newSlots.map((slot) => ({ ...slot, groupId })),
         });
         const updatedReservations = await tx.reservation.updateMany({
@@ -77,15 +78,17 @@ export class ReservationGroupMembershipService {
           updatedReservations.count,
           '신청 상태가 변경되어 그룹에 추가할 수 없습니다',
         );
+        await tx.reservationGroup.update({
+          where: { id: groupId },
+          data: { status: 'CONFIRMED' },
+        });
+        const updatedGroup = await tx.reservationGroup.findUnique({
+          where: { id: groupId },
+          include: FULL_GROUP_INCLUDE,
+        });
         return {
           reservation,
-          updatedGroup: {
-            ...group,
-            slots: [
-              ...group.slots.filter((slot) => slot.reservationId !== null),
-              ...createdSlots,
-            ],
-          },
+          updatedGroup: updatedGroup!,
           newSlots,
         };
       },
@@ -104,7 +107,7 @@ export class ReservationGroupMembershipService {
     dto: ReplaceMemberSlotsDto,
   ) {
     return this.transaction.run(async (tx) => {
-      const group = await this.loadConfirmedGroup(
+      const group = await this.loadOccupiedGroup(
         tx,
         groupId,
         { slots: true },
@@ -138,16 +141,14 @@ export class ReservationGroupMembershipService {
       await tx.reservationGroupSlot.deleteMany({
         where: { groupId, reservationId },
       });
-      const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
+      await tx.reservationGroupSlot.createManyAndReturn({
         data: newSlots.map((slot) => ({ ...slot, groupId })),
       });
-      return {
-        ...group,
-        slots: [
-          ...group.slots.filter((slot) => slot.reservationId !== reservationId),
-          ...createdSlots,
-        ],
-      };
+      const updatedGroup = await tx.reservationGroup.findUnique({
+        where: { id: groupId },
+        include: FULL_GROUP_INCLUDE,
+      });
+      return updatedGroup!;
     });
   }
 
@@ -194,7 +195,7 @@ export class ReservationGroupMembershipService {
     reservationId: string,
     dto: MoveGroupMemberDto,
   ) {
-    await this.loadConfirmedGroup(
+    await this.loadOccupiedGroup(
       tx,
       sourceGroupId,
       {},
@@ -202,11 +203,11 @@ export class ReservationGroupMembershipService {
     );
     const reservation = await this.loadReservation(tx, reservationId);
     this.assertMemberOf(reservation, sourceGroupId);
-    const targetGroup = await this.loadConfirmedGroup(
+    const targetGroup = await this.loadAvailableGroup(
       tx,
       dto.targetGroupId,
       { slots: true },
-      '확정된 그룹으로만 이동할 수 있습니다',
+      '운영 중인 그룹으로만 이동할 수 있습니다',
     );
     const currentCount = await tx.reservation.count({
       where: { groupId: dto.targetGroupId },
@@ -235,7 +236,7 @@ export class ReservationGroupMembershipService {
       newMinAge,
       newMaxAge,
     }: {
-      targetGroup: ConfirmedGroupWithSlots;
+      targetGroup: GroupWithSlots;
       newSlots: GroupSlotDto[];
       newMinAge: number;
       newMaxAge: number;
@@ -257,9 +258,19 @@ export class ReservationGroupMembershipService {
       updatedReservations.count,
       '신청 상태가 변경되어 그룹을 이동할 수 없습니다',
     );
-    await this.vacateMemberSlots(tx, sourceGroupId, reservationId);
+    const sourceBecameEmpty = await this.vacateMemberSlots(
+      tx,
+      sourceGroupId,
+      reservationId,
+    );
+    if (sourceBecameEmpty) {
+      await tx.reservationGroup.update({
+        where: { id: sourceGroupId },
+        data: { status: 'EMPTY' },
+      });
+    }
     await this.clearAnchorSlots(tx, dto.targetGroupId);
-    const createdSlots = await tx.reservationGroupSlot.createManyAndReturn({
+    await tx.reservationGroupSlot.createManyAndReturn({
       data: newSlots.map((slot) => ({
         ...slot,
         groupId: dto.targetGroupId,
@@ -278,26 +289,25 @@ export class ReservationGroupMembershipService {
         },
       },
     });
-    if (newMinAge !== targetGroup.minAge || newMaxAge !== targetGroup.maxAge) {
-      await tx.reservationGroup.update({
-        where: { id: dto.targetGroupId },
-        data: { minAge: newMinAge, maxAge: newMaxAge },
-      });
-    }
-    return {
-      ...targetGroup,
-      minAge: newMinAge,
-      maxAge: newMaxAge,
-      slots: [
-        ...targetGroup.slots.filter((slot) => slot.reservationId !== null),
-        ...createdSlots,
-      ],
-    };
+    await tx.reservationGroup.update({
+      where: { id: dto.targetGroupId },
+      data: {
+        status: 'CONFIRMED',
+        ...(newMinAge !== targetGroup.minAge || newMaxAge !== targetGroup.maxAge
+          ? { minAge: newMinAge, maxAge: newMaxAge }
+          : {}),
+      },
+    });
+    const updatedGroup = await tx.reservationGroup.findUnique({
+      where: { id: dto.targetGroupId },
+      include: FULL_GROUP_INCLUDE,
+    });
+    return updatedGroup!;
   }
 
   async removeMember(groupId: string, reservationId: string) {
     const { reservation, group } = await this.transaction.run(async (tx) => {
-      const group = await this.loadConfirmedGroup(
+      const group = await this.loadOccupiedGroup(
         tx,
         groupId,
         { reservations: true },
@@ -318,7 +328,17 @@ export class ReservationGroupMembershipService {
         updatedReservations.count,
         '신청 상태가 변경되어 멤버를 제거할 수 없습니다',
       );
-      await this.vacateMemberSlots(tx, groupId, reservationId);
+      const groupBecameEmpty = await this.vacateMemberSlots(
+        tx,
+        groupId,
+        reservationId,
+      );
+      if (groupBecameEmpty) {
+        await tx.reservationGroup.update({
+          where: { id: groupId },
+          data: { status: 'EMPTY' },
+        });
+      }
       return { reservation, group };
     });
     await this.notification.sendGroupMemberRemoved(reservation, group);
@@ -328,7 +348,7 @@ export class ReservationGroupMembershipService {
     tx: Prisma.TransactionClient,
     groupId: string,
     reservationId: string,
-  ) {
+  ): Promise<boolean> {
     const remainingMembers = await tx.reservation.count({
       where: { groupId },
     });
@@ -337,10 +357,12 @@ export class ReservationGroupMembershipService {
         where: { groupId, reservationId },
         data: { reservationId: null },
       });
+      return true;
     } else {
       await tx.reservationGroupSlot.deleteMany({
         where: { groupId, reservationId },
       });
+      return false;
     }
   }
 
@@ -353,7 +375,7 @@ export class ReservationGroupMembershipService {
     });
   }
 
-  private async loadConfirmedGroup<
+  private async loadOccupiedGroup<
     Include extends Prisma.ReservationGroupInclude,
   >(
     tx: Prisma.TransactionClient,
@@ -368,6 +390,26 @@ export class ReservationGroupMembershipService {
     if (!group)
       throw new NotFoundException(`ReservationGroup ${groupId} not found`);
     this.validator.validateGroupStatus(group.status, 'CONFIRMED', message);
+    return group as Prisma.ReservationGroupGetPayload<{ include: Include }>;
+  }
+
+  private async loadAvailableGroup<
+    Include extends Prisma.ReservationGroupInclude,
+  >(
+    tx: Prisma.TransactionClient,
+    groupId: string,
+    include: Include,
+    message: string,
+  ): Promise<Prisma.ReservationGroupGetPayload<{ include: Include }>> {
+    const group = await tx.reservationGroup.findUnique({
+      where: { id: groupId },
+      include,
+    });
+    if (!group)
+      throw new NotFoundException(`ReservationGroup ${groupId} not found`);
+    if (group.status !== 'CONFIRMED' && group.status !== 'EMPTY') {
+      throw new ConflictException(message);
+    }
     return group as Prisma.ReservationGroupGetPayload<{ include: Include }>;
   }
 

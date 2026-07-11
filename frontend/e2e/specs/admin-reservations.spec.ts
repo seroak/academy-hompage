@@ -135,7 +135,7 @@ test.describe('관리자 - 예약 관리', () => {
     const emptiedGroup = {
       id: 'group-emptied',
       label: '비워진 반',
-      status: 'CONFIRMED',
+      status: 'EMPTY',
       capacity: 4,
       minAge: 4,
       maxAge: 6,
@@ -169,6 +169,158 @@ test.describe('관리자 - 예약 관리', () => {
     await placeholder.getByTestId('delete-empty-group-group-emptied').click()
 
     await expect(page.getByTestId('timetable-cell-THU-900').getByTestId('empty-group-group-emptied')).toHaveCount(0)
+  })
+
+  test('학생을 다른 확정 그룹으로 드래그해도 대상 그룹이 빈 수업으로 바뀌지 않는다', async ({ page }) => {
+    // 회귀 테스트: moveMember 응답에 reservations가 빠지면(과거 버그) onSuccess가 대상
+    // 그룹 캐시를 멤버 0명으로 덮어써 타임테이블이 "빈 수업"으로 잘못 렌더링했다.
+    // 이 목 응답은 수정된 백엔드 계약(reservations 포함)을 그대로 반영한다.
+    const movingReservation = {
+      id: 'reservation-drag-src',
+      childName: '이동학생',
+      childAge: 6,
+      parentName: '이동부모',
+      parentEmail: 'move-src.e2e@example.com',
+      parentPhone: null,
+      preferredSlots: [
+        { id: 'p-src-1', reservationId: 'reservation-drag-src', dayOfWeek: 'MON', startMinute: 900, endMinute: 960 },
+      ],
+      note: null,
+      status: 'GROUPED',
+      groupId: 'group-drag-source',
+      requestedGroupId: null,
+      createdAt: '2026-01-10T00:00:00.000Z',
+      updatedAt: '2026-01-10T00:00:00.000Z',
+    }
+    const existingMember = {
+      id: 'reservation-drag-existing',
+      childName: '기존학생',
+      childAge: 6,
+      parentName: '기존부모',
+      parentEmail: 'move-existing.e2e@example.com',
+      parentPhone: null,
+      preferredSlots: [
+        { id: 'p-tgt-1', reservationId: 'reservation-drag-existing', dayOfWeek: 'MON', startMinute: 900, endMinute: 960 },
+      ],
+      note: null,
+      status: 'GROUPED',
+      groupId: 'group-drag-target',
+      requestedGroupId: null,
+      createdAt: '2026-01-10T00:00:00.000Z',
+      updatedAt: '2026-01-10T00:00:00.000Z',
+    }
+    type MockGroupSlot = {
+      id: string
+      reservationId: string | null
+      dayOfWeek: string
+      startMinute: number
+      endMinute: number
+    }
+    type MockGroup = {
+      id: string
+      label: string
+      status: string
+      capacity: number
+      minAge: number
+      maxAge: number
+      scheduleDayOfWeek: string
+      scheduleStartMinute: number
+      scheduleEndMinute: number
+      slots: MockGroupSlot[]
+      reservations: unknown[]
+      createdAt: string
+      updatedAt: string
+    }
+
+    const sourceGroup: MockGroup = {
+      id: 'group-drag-source',
+      label: 'A반',
+      status: 'CONFIRMED',
+      capacity: 4,
+      minAge: 4,
+      maxAge: 8,
+      scheduleDayOfWeek: 'MON',
+      scheduleStartMinute: 900,
+      scheduleEndMinute: 960,
+      slots: [{ id: 'src-slot-1', reservationId: 'reservation-drag-src', dayOfWeek: 'MON', startMinute: 900, endMinute: 960 }],
+      reservations: [movingReservation],
+      createdAt: '2026-01-10T00:00:00.000Z',
+      updatedAt: '2026-01-10T00:00:00.000Z',
+    }
+    const targetGroup: MockGroup = {
+      id: 'group-drag-target',
+      label: 'B반',
+      status: 'CONFIRMED',
+      capacity: 4,
+      minAge: 4,
+      maxAge: 8,
+      scheduleDayOfWeek: 'MON',
+      scheduleStartMinute: 900,
+      scheduleEndMinute: 960,
+      slots: [{ id: 'tgt-slot-1', reservationId: 'reservation-drag-existing', dayOfWeek: 'MON', startMinute: 900, endMinute: 960 }],
+      reservations: [existingMember],
+      createdAt: '2026-01-10T00:00:00.000Z',
+      updatedAt: '2026-01-10T00:00:00.000Z',
+    }
+
+    // onSettled의 invalidateAll이 refetch를 트리거하므로, GET 목이 정적이면 낙관적
+    // 갱신 직후 재조회로 원상태(이동 전)가 다시 덮어써진다. beforeEach의 패턴처럼
+    // 이동 결과를 반영하는 가변 상태로 관리한다.
+    let currentReservations = [movingReservation, existingMember]
+    let currentGroups: MockGroup[] = [sourceGroup, targetGroup]
+
+    await page.route(apiPattern('/reservations(\\?.*)?$'), async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback()
+      await fulfillJson(route, 200, currentReservations)
+    })
+    await page.route(apiPattern('/reservation-groups$'), async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback()
+      await fulfillJson(route, 200, currentGroups)
+    })
+    await page.route(
+      apiPattern('/reservation-groups/group-drag-source/members/reservation-drag-src/move$'),
+      async (route) => {
+        const updatedTarget = {
+          ...targetGroup,
+          slots: [...targetGroup.slots, { id: 'tgt-slot-2', reservationId: 'reservation-drag-src', dayOfWeek: 'MON', startMinute: 900, endMinute: 960 }],
+          reservations: [existingMember, { ...movingReservation, groupId: 'group-drag-target' }],
+        }
+        const updatedSource = {
+          ...sourceGroup,
+          status: 'EMPTY',
+          slots: [{ ...sourceGroup.slots[0], reservationId: null }],
+          reservations: [],
+        }
+        currentGroups = currentGroups.map((group) => {
+          if (group.id === updatedTarget.id) return updatedTarget
+          if (group.id === updatedSource.id) return updatedSource
+          return group
+        })
+        currentReservations = currentReservations.map((reservation) =>
+          reservation.id === movingReservation.id
+            ? { ...reservation, groupId: 'group-drag-target' }
+            : reservation,
+        )
+        await fulfillJson(route, 200, updatedTarget)
+      },
+    )
+
+    const admin = new AdminReservationsPagePO(page)
+    await admin.navigate()
+
+    const cell = page.getByTestId('timetable-cell-MON-900')
+    const sourceContainer = cell.getByTestId('grouped-reservations-group-drag-source')
+    const targetContainer = cell.getByTestId('grouped-reservations-group-drag-target')
+    await expect(sourceContainer.getByText('이동학생')).toBeVisible()
+    await expect(targetContainer.getByText('기존학생')).toBeVisible()
+
+    await sourceContainer.getByText('이동학생').dragTo(targetContainer)
+
+    // 대상 그룹은 이동 도중에도, 이동이 끝난 뒤에도 "빈 수업" 플레이스홀더로 바뀌지 않고
+    // 계속 기존 멤버 + 새로 옮겨온 멤버를 함께 보여줘야 한다.
+    await expect(cell.getByTestId('empty-group-group-drag-target')).toHaveCount(0)
+    await expect(targetContainer.getByText('기존학생')).toBeVisible()
+    await expect(targetContainer.getByText('이동학생')).toBeVisible()
   })
 
   test('학생 직접 등록으로 워크인 예약을 추가할 수 있다', async ({ page }) => {

@@ -7,7 +7,7 @@ import {
   SLOT_STEP_MINUTES,
 } from './reservation.schema'
 
-export const RESERVATION_GROUP_STATUS_OPTIONS = ['CONFIRMED', 'CANCELLED'] as const
+export const RESERVATION_GROUP_STATUS_OPTIONS = ['CONFIRMED', 'EMPTY'] as const
 
 export const ReservationGroupSlotSchema = z.object({
   id: z.string(),

@@ -32,6 +32,18 @@ describe('ReservationGroupQueryService', () => {
     });
   });
 
+  it('공개 확정 시간은 편성·빈 그룹을 모두 포함한다', async () => {
+    prisma.reservationGroupSlot.findMany.mockResolvedValue([]);
+
+    await service.findConfirmedSlots();
+
+    expect(prisma.reservationGroupSlot.findMany).toHaveBeenCalledWith({
+      where: { group: { status: { in: ['CONFIRMED', 'EMPTY'] } } },
+      select: { dayOfWeek: true, startMinute: true, endMinute: true },
+      orderBy: [{ dayOfWeek: 'asc' }, { startMinute: 'asc' }],
+    });
+  });
+
   it('공개 참여 가능 그룹은 개인정보 없이 정원 여유와 중복 제거된 슬롯만 반환한다', async () => {
     prisma.reservationGroup.findMany.mockResolvedValue([
       {
@@ -75,5 +87,9 @@ describe('ReservationGroupQueryService', () => {
         slots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 730 }],
       },
     ]);
+    expect(prisma.reservationGroup.findMany).toHaveBeenCalledWith({
+      where: { status: { in: ['CONFIRMED', 'EMPTY'] } },
+      include: { slots: true, _count: { select: { reservations: true } } },
+    });
   });
 });
