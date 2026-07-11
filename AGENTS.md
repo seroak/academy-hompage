@@ -176,9 +176,9 @@ npm run build                  # next build --webpack
 - **쿼리 훅 배치**: 2곳 이상에서 쓰면 `src/queries/`, 관리자 화면 전용(1곳)이면 `src/screens/admin/hooks/`, 공개 화면 전용(1곳)이면 `src/screens/hooks/`. `queryKeys.ts`는 항상 중앙(`src/queries/queryKeys.ts`)에서 관리.
 - **Instructor 삭제**: 담당 강좌가 남아있으면 `ConflictException`(409)을 던진다 — FK 제약 위반을 그대로 노출하지 않는다.
 - **공유 필드 리네임 시 점검 범위**: 예약/강좌 등 여러 계층에 걸친 필드명을 바꿀 때는 `schema.prisma` → migration → 해당 도메인 양쪽 DTO → 양쪽 service/controller spec → `seed.ts` → 프론트 `schemas/*.schema.ts` → `api/*.ts` → 이를 쓰는 화면(`screens/**`) 순으로 훑는다.
-- **알림(이메일 등) 발송 실패 격리**: `NotificationService`류는 SMTP 미설정이거나 발송 실패해도 콘솔 로그로 폴백하고, API 요청 자체는 정상 처리되게 만든다 — 발송 실패가 사용자 요청 실패로 전파되지 않아야 한다.
+- **알림(이메일 등) 발송 실패 격리**: `NotificationService`류는 SMTP 미설정이거나 발송 실패해도 콘솔 로그로 폴백하고, API 요청 자체는 정상 처리되게 만든다 — 발송 실패가 사용자 요청 실패로 전파되지 않아야 한다. SMTP 미설정 폴백 로그는 subject뿐 아니라 본문(text)도 함께 남긴다 — 인증 링크 등 URL이 본문에 있으면 개발 중 콘솔에서 바로 복사해 쓸 수 있어야 한다.
 - **인증 상태의 SSR 반영**: 클라이언트 전역 상태(Zustand)가 SSR 초기 렌더에도 영향을 줘야 하면 `src/lib/cookieStorage.ts`(non-httpOnly 쿠키 저장) + `src/lib/serverAuth.ts`(서버 `cookies()` 읽기) + `initialXxx` prop + mount 게이트 패턴을 따른다. 관리자 세션과 부모(보호자) 세션은 서로 독립적인 별개 상태이므로, 인증 가드를 새로 만들 때 "관리자 세션은 있지만 부모 세션은 없음" 같은 조합을 빠뜨리지 않는다.
-- **보호자 로그인 수단**: 소셜 로그인뿐 아니라 이메일/비밀번호("일반 로그인")도 지원한다 — 소셜 전용으로 가정하고 검증·자동화를 생략하지 않는다.
+- **보호자 로그인 수단**: 소셜 로그인뿐 아니라 이메일/비밀번호("일반 로그인")도 지원한다 — 소셜 전용으로 가정하고 검증·자동화를 생략하지 않는다. 이메일 가입은 즉시 계정을 만들지 않고 매직 링크 인증을 거친다: `POST /auth/parents/signup`이 `ParentEmailVerification`(대기 레코드, `email @unique`)을 upsert하고 인증 메일을 보내며, 링크의 `POST /auth/parents/verify-email`에서만 `ParentUser`가 생성되고 로그인 쿠키가 발급된다. 소셜 전용(`passwordHash` null) 기존 계정과의 병합 분기는 `AuthService.verifyParentEmail`에서 처리한다. 비슷한 "제출 즉시 자원을 만들지 않고 검증 후 생성" 흐름을 추가할 때 이 패턴(대기 테이블 + 토큰 + upsert)을 참고한다.
 - **`/apply` 관리자 프리뷰**: 관리자 세션만 있고 부모 세션이 없는 경우 화면 진입(`isAdminPreview`)은 허용하되 실제 제출은 `alert`로 차단한다(`ApplyPage.tsx`).
 - **예약 그룹 확정 단위**: `reservation-groups` 확정은 요일·시간 셀 단위가 아니라, 사용자가 고른 개별 `reservation` ID 목록 기준으로 동작한다.
 - **로그인 필요 페이지 추가 시**: 새로 만들지 않고 `RequireAdmin`/Header의 기존 리다이렉트+모달 가드 패턴을 복제한다.
@@ -212,5 +212,6 @@ Prisma Client는 `prisma-client` generator로 `backend/src/generated/prisma`에 
 - 이 git 저장소(`/Users/igyuyeol/Desktop/project`)에는 다수의 독립 프로젝트가 공존한다 — 커밋 시 `academy-hompage/` 밖의 변경을 섞지 않는다.
 - E2E 검증을 위해 띄운 개발 서버를 종료했다면 완료 보고에 반드시 명시한다 — 다음 턴에서 서버 다운이 새 버그로 오인되는 걸 방지.
 - E2E 검증 중 생성한 테스트 데이터(부모 계정, 예약 등)는 완료 보고에 식별자를 명시하고 삭제 여부를 사용자에게 확인받는다.
+- **`npm run start:dev`(`nest start --watch`) 재기동 시 EADDRINUSE 주의**: 이미 떠 있는 watch 프로세스를 죽이지 않고 새로 띄우면, 재컴파일된 새 워커가 이전 워커와 포트(3000)를 두고 충돌해 새 워커만 크래시하고 옛 코드가 계속 떠 있는 상태로 남을 수 있다. 코드를 바꾼 뒤 재검증할 때는 `pkill -f "nest start --watch"` 등으로 완전히 정리한 다음 다시 기동하고, curl 등으로 최신 변경(새 라우트·로그 문구 등)이 실제로 반영됐는지 확인한다.
 - 예약 도메인 E2E용 테스트 데이터는 `POST /reservations/walk-in`(관리자 토큰, 보호자 인증 불필요)으로 `WAITING` 예약을 먼저 만들고, 그 예약 ID를 `POST /reservation-groups`의 `slots[].reservationId`로 참조해 확정 그룹을 만든다 — 예약과 그룹을 한 번에 생성하는 엔드포인트는 없다.
 - 여러 세션에 걸쳐 진행하는 미완성 기능은 완료 전까지 `main`이 항상 빌드 가능한 상태를 유지한다 — 중간 상태로 오래 남으면 무관한 후속 작업의 빌드가 깨질 수 있다.

@@ -1,0 +1,11 @@
+# 도메인 구매 전, 공인 IP로 임시 접근할 때만 사용하는 override.
+# VM에서: cp docker-compose.ip-only.example.yml docker-compose.override.yml
+# 도메인 연결 후에는 docker-compose.override.yml을 삭제하고 caddy 서비스로 전환한다.
+
+services:
+  backend:
+    ports:
+      - '3000:3000'
+  frontend:
+    ports:
+      - '3001:3001'
