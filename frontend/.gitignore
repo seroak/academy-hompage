@@ -14,6 +14,7 @@ dist-ssr
 .next-e2e
 *.local
 .env
+.env.production
 
 # Playwright
 /e2e/.auth

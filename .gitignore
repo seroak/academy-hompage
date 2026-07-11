@@ -1,3 +1,4 @@
 .playwright-mcp/
 /test-results/
 .superpowers
+.env.production
