@@ -1,9 +1,32 @@
 import { JwtStrategy } from './jwt.strategy.js';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ADMIN_AUTH_COOKIE } from '../auth-cookies.js';
+
+interface ExtractableStrategy {
+  _jwtFromRequest: (request: unknown) => string | null;
+}
 
 describe('JwtStrategy', () => {
   const configService = new ConfigService({ JWT_SECRET: 'test-secret' });
+
+  it('extracts the token from the admin auth cookie', () => {
+    const strategy = new JwtStrategy(configService);
+    const request = { headers: { cookie: `${ADMIN_AUTH_COOKIE}=cookie-token` } };
+
+    expect((strategy as unknown as ExtractableStrategy)._jwtFromRequest(request)).toBe(
+      'cookie-token',
+    );
+  });
+
+  it('falls back to the Authorization bearer header when no cookie is present', () => {
+    const strategy = new JwtStrategy(configService);
+    const request = { headers: { authorization: 'Bearer bearer-token' } };
+
+    expect((strategy as unknown as ExtractableStrategy)._jwtFromRequest(request)).toBe(
+      'bearer-token',
+    );
+  });
 
   it('maps the JWT payload to an admin principal', async () => {
     const strategy = new JwtStrategy(configService);

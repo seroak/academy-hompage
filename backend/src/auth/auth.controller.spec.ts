@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
-import { PARENT_AUTH_COOKIE } from './auth-cookies.js';
+import { ADMIN_AUTH_COOKIE, PARENT_AUTH_COOKIE } from './auth-cookies.js';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -32,13 +32,41 @@ describe('AuthController', () => {
     controller = module.get<AuthController>(AuthController);
   });
 
-  it('delegates login to the service with username and password', async () => {
-    service.login.mockResolvedValue({ accessToken: 'token' });
+  it('delegates login to the service and sets an httpOnly admin cookie', async () => {
+    service.login.mockResolvedValue({ accessToken: 'token', admin: { id: '1', username: 'admin' } });
+    const response = mockResponse();
 
-    const result = await controller.login({ username: 'admin', password: 'pw' });
+    const result = await controller.login(
+      { username: 'admin', password: 'pw' },
+      response as never,
+    );
 
-    expect(result).toEqual({ accessToken: 'token' });
+    expect(result).toEqual({ accessToken: 'token', admin: { id: '1', username: 'admin' } });
     expect(service.login).toHaveBeenCalledWith('admin', 'pw');
+    expect(response.cookie).toHaveBeenCalledWith(
+      ADMIN_AUTH_COOKIE,
+      'token',
+      expect.objectContaining({ httpOnly: true }),
+    );
+  });
+
+  it('clears the admin cookie on logout', () => {
+    const response = mockResponse();
+
+    controller.logout(response as never);
+
+    expect(response.clearCookie).toHaveBeenCalledWith(
+      ADMIN_AUTH_COOKIE,
+      expect.objectContaining({ path: '/' }),
+    );
+  });
+
+  it('returns the current admin profile from the request principal', () => {
+    const request = { user: { adminId: '1', username: 'admin' } };
+
+    const result = controller.getMe(request as never);
+
+    expect(result).toEqual({ id: '1', username: 'admin' });
   });
 
   it('delegates parent login to the service and sets an httpOnly parent cookie', async () => {
