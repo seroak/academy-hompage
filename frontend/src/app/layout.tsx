@@ -3,29 +3,34 @@ import type { ReactNode } from 'react'
 import './globals.css'
 import AgentationDev from '../components/AgentationDev'
 import Providers from './providers'
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, baseOpenGraph, siteOgImage } from '../lib/seo'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001'
 const naverVerification = process.env.NAVER_SITE_VERIFICATION
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(baseUrl),
   title: {
-    default: '아이꿈 학원',
-    template: '%s | 아이꿈 학원',
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: '유치부부터 초등 저학년까지, 아이의 속도에 맞춘 따뜻한 배움을 제공합니다.',
-  openGraph: {
-    type: 'website',
-    locale: 'ko_KR',
-    siteName: '아이꿈 학원',
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
+  icons: {
+    icon: '/favicon.svg',
   },
-  verification: naverVerification
-    ? {
-        other: {
-          'naver-site-verification': naverVerification,
-        },
-      }
-    : undefined,
+  openGraph: baseOpenGraph(),
+  twitter: {
+    card: 'summary_large_image',
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [siteOgImage()],
+  },
+  verification: {
+    ...(naverVerification ? { other: { 'naver-site-verification': naverVerification } } : {}),
+    ...(googleVerification ? { google: googleVerification } : {}),
+  },
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

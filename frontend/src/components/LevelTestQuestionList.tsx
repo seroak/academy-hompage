@@ -23,7 +23,7 @@ export default function LevelTestQuestionList({
     <div className="flex flex-col gap-4">
       {questions.map((question, index) => (
         <div key={question.id}>
-          <p className="text-sm font-medium text-slate-800">
+          <p className="text-sm font-black text-[#3f3a31]">
             {index + 1}. {question.prompt}
           </p>
           {question.promptImageUrl && (
@@ -31,7 +31,7 @@ export default function LevelTestQuestionList({
             <img
               src={`${API_BASE_URL}${question.promptImageUrl}`}
               alt="문제 이미지"
-              className="mt-2 max-h-64 rounded-lg border border-slate-200 object-contain"
+              className="mt-2 max-h-64 rounded-2xl border border-[#f2dfb9] object-contain"
             />
           )}
           {question.type === 'MULTIPLE_CHOICE' ? (
@@ -41,7 +41,7 @@ export default function LevelTestQuestionList({
                 return (
                   <label
                     key={choiceIndex}
-                    className={`flex items-center gap-2 text-sm ${isCorrect ? 'font-bold text-emerald-700' : 'text-slate-700'}`}
+                    className={`flex items-center gap-2 text-sm ${isCorrect ? 'font-black text-[#2f7a3d]' : 'font-semibold text-[#3f3a31]'}`}
                   >
                     <input
                       type="radio"
@@ -51,7 +51,7 @@ export default function LevelTestQuestionList({
                     />
                     {choice}
                     {isCorrect && (
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-black text-emerald-700">
+                      <span className="rounded-full bg-[#eaf7ea] px-2 py-0.5 text-xs font-black text-[#2f7a3d]">
                         정답
                       </span>
                     )}
@@ -61,7 +61,7 @@ export default function LevelTestQuestionList({
             </div>
           ) : (
             <textarea
-              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-2 w-full rounded-2xl border border-[#f2dfb9] bg-[#fffdf8] px-4 py-2.5 text-sm font-semibold text-[#3f3a31] outline-none transition focus:border-[#ff8a1f]"
               rows={2}
               value={answers[question.id]?.textAnswer ?? ''}
               onChange={(e) => onTextChange(question.id, e.target.value)}

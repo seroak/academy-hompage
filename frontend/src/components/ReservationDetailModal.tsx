@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type SubmitEvent } from 'react'
 import { X } from 'lucide-react'
 import {
   DAY_OF_WEEK_LABELS,
   RESERVATION_STATUS_LABELS,
   RESERVATION_STATUS_OPTIONS,
+  parseReservationStatus,
   UpdateReservationInputSchema,
   timeRangeLabel,
   type PreferredSlot,
@@ -87,7 +88,7 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
     setIsEditing(false)
   }
 
-  async function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!onSave) return
 
@@ -129,8 +130,8 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
 
   if (!isEditing) {
     return (
-      <div
-        role="dialog"
+      <dialog
+        open
         aria-modal="true"
         aria-labelledby="reservation-detail-title"
         className="max-h-[calc(100vh-48px)] w-full max-w-[440px] overflow-y-auto rounded-[28px] border border-[#f2dfb9] bg-[#fff9ec] p-6 shadow-[0_24px_70px_rgba(48,33,10,0.24)] sm:p-8"
@@ -207,18 +208,18 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
             </button>
           </div>
         )}
-      </div>
+      </dialog>
     )
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      role="dialog"
+    <dialog
+      open
       aria-modal="true"
       aria-label="예약 정보 수정"
       className="max-h-[calc(100vh-48px)] w-full max-w-[820px] overflow-y-auto overflow-x-hidden rounded-[28px] border border-[#f2dfb9] bg-[#fff9ec] p-6 shadow-[0_24px_70px_rgba(48,33,10,0.24)] sm:p-8"
     >
+      <form onSubmit={handleSubmit}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-black text-[#e86f00]">예약 정보 수정</p>
@@ -312,9 +313,10 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
             id="detail-status"
             className={inputClass}
             value={form.status}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, status: event.target.value as Reservation['status'] }))
-            }
+            onChange={(event) => {
+              const status = parseReservationStatus(event.target.value)
+              if (status) setForm((prev) => ({ ...prev, status }))
+            }}
           >
             {RESERVATION_STATUS_OPTIONS.map((option) => (
               <option key={option} value={option}>
@@ -366,7 +368,8 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
           {isSaving ? '저장 중…' : '저장'}
         </button>
       </div>
-    </form>
+      </form>
+    </dialog>
   )
 }
 

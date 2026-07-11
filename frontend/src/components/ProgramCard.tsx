@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpenText, HeartHandshake, Lightbulb, Stars } from 'lucide-react'
 
@@ -31,14 +32,24 @@ const programs = [
 ]
 
 export default function ProgramCard() {
+  const sectionRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (window.location.hash === '#programs') {
+      sectionRef.current?.focus({ preventScroll: true })
+    }
+  }, [])
+
   return (
     <motion.section
+      ref={sectionRef}
       id="programs"
+      tabIndex={-1}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.55, ease: 'easeOut' }}
-      className="relative z-20 mx-auto -mt-36 w-[calc(100%-32px)] max-w-[1120px] rounded-[28px] bg-white px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.08)] sm:w-[calc(100%-80px)] sm:px-10"
+      className="relative z-20 mx-auto -mt-36 w-[calc(100%-32px)] max-w-[1120px] rounded-[28px] bg-white px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.08)] sm:w-[calc(100%-80px)] sm:px-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd66b]"
     >
       <motion.div
         initial="hidden"

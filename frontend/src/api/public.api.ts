@@ -9,7 +9,12 @@ import { QuizQuestionListSchema, type QuizQuestion } from './schemas/levelTest.s
 
 export const PUBLIC_REVALIDATE_SECONDS = 300
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000'
+// 서버 컴포넌트(Node 런타임)에서 실행되므로 브라우저용 NEXT_PUBLIC_API_BASE_URL 대신
+// 컨테이너 내부에서만 유효한 API_INTERNAL_URL을 우선 사용한다 — Docker 등 프론트/백엔드가
+// 분리된 네트워크에서는 두 값이 서로 다른 주소를 가리켜야 한다(브라우저는 공개 도메인,
+// 서버는 도커 네트워크상의 backend 서비스명).
+const API_BASE_URL =
+  process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000'
 
 async function publicApiFetch(path: string): Promise<unknown> {
   const response = await fetch(`${API_BASE_URL}${path}`, {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
-import { DAY_OF_WEEK_LABELS, Reservation, timeRangeLabel, type PreferredSlot } from '../../../../api/schemas/reservation.schema'
+import { DAY_OF_WEEK_LABELS, parseDayOfWeek, Reservation, timeRangeLabel, type PreferredSlot } from '../../../../api/schemas/reservation.schema'
 import { ReservationGroup, UpdateReservationGroupInput } from '../../../../api/schemas/reservation-group.schema'
 import PreferredSlotsPicker from '../../../../components/PreferredSlotsPicker'
 
@@ -76,11 +76,10 @@ export default function GroupDetailModal({
   }
 
   function startEditingSlots(reservationId: string) {
-    const current: PreferredSlot[] = (slotsByMember.get(reservationId) ?? []).map((slot) => ({
-      dayOfWeek: slot.dayOfWeek as PreferredSlot['dayOfWeek'],
-      startMinute: slot.startMinute,
-      endMinute: slot.endMinute,
-    }))
+    const current: PreferredSlot[] = (slotsByMember.get(reservationId) ?? []).flatMap((slot) => {
+      const dayOfWeek = parseDayOfWeek(slot.dayOfWeek)
+      return dayOfWeek ? [{ dayOfWeek, startMinute: slot.startMinute, endMinute: slot.endMinute }] : []
+    })
     setSlotDraft(current)
     setEditingSlotsFor(reservationId)
   }
@@ -110,14 +109,9 @@ export default function GroupDetailModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-full w-full max-w-2xl overflow-y-auto rounded-[28px] bg-white p-6 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+      <button type="button" aria-label="그룹 상세 닫기" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <dialog open className="relative m-0 max-h-full w-full max-w-2xl overflow-y-auto rounded-[28px] bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-xl font-black text-[#222222]">그룹 상세</h2>
           <div className="flex items-center gap-2">
@@ -266,7 +260,10 @@ export default function GroupDetailModal({
                           key={slot.id}
                           className="rounded-full bg-[#fff3c8] px-2.5 py-1 text-xs font-bold text-[#9f4d00]"
                         >
-                          {DAY_OF_WEEK_LABELS[slot.dayOfWeek as keyof typeof DAY_OF_WEEK_LABELS] ?? slot.dayOfWeek}{' '}
+                          {(() => {
+                            const dayOfWeek = parseDayOfWeek(slot.dayOfWeek)
+                            return dayOfWeek ? DAY_OF_WEEK_LABELS[dayOfWeek] : slot.dayOfWeek
+                          })()}{' '}
                           {timeRangeLabel(slot.startMinute, slot.endMinute)}
                         </li>
                       ))}
@@ -335,7 +332,7 @@ export default function GroupDetailModal({
             </ul>
           </div>
         )}
-      </div>
+      </dialog>
     </div>
   )
 }

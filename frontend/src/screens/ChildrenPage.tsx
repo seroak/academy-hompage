@@ -34,7 +34,7 @@ export default function ChildrenPage() {
     setFormError(null)
   }
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const parsed = ChildInputSchema.safeParse(form)
     if (!parsed.success) {

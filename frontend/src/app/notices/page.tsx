@@ -3,18 +3,20 @@ import Link from 'next/link'
 import Badge from '../../components/Badge'
 import Layout from '../../components/Layout'
 import { fetchPublicNotices } from '../../api/public.api'
-import { siteUrl } from '../../lib/seo'
+import { baseOpenGraph, siteUrl } from '../../lib/seo'
 import type { Notice } from '../../api/schemas/notice.schema'
 
 export const revalidate = 300
 
 export const metadata: Metadata = {
   title: '공지사항',
-  description: '아이꿈 학원의 최신 공지사항과 안내를 확인해 보세요.',
+  description: '용인 흥덕 유치부·초등 저학년 수학학원, 생각을 여는 수학의 최신 공지사항과 안내를 확인해 보세요.',
+  keywords: ['용인 수학학원', '흥덕 수학학원'],
   alternates: { canonical: siteUrl('/notices') },
   openGraph: {
-    title: '공지사항 | 아이꿈 학원',
-    description: '아이꿈 학원의 공지사항을 안내합니다.',
+    ...baseOpenGraph(),
+    title: '공지사항 | 생각을 여는 수학',
+    description: '생각을 여는 수학의 공지사항을 안내합니다.',
     url: siteUrl('/notices'),
   },
 }

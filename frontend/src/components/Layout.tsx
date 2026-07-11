@@ -29,9 +29,9 @@ export default async function Layout({
       <footer className="border-t border-[#f2dfb9] bg-[#fff4df] py-8">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-3 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-black text-[#222222]">아이꿈 학원</p>
+            <p className="text-sm font-black text-[#222222]">생각을 여는 수학</p>
             <p className="mt-1 text-xs font-medium text-[#6a6256]">
-              경기도 어딘가 123 · 문의 02-000-0000
+              경기도 용인시 기흥구 흥덕2로65번길 12-15 · 문의 010-2976-0166
             </p>
           </div>
           <p className="text-xs font-semibold text-[#8a7a61]">유치부부터 초등 저학년까지 함께합니다.</p>

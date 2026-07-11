@@ -54,6 +54,16 @@ test.describe('관리자 - 공지 CRUD', () => {
     await expect(admin.noticeListItem('E2E 신규 공지')).toBeVisible()
   })
 
+  test('공지 관리는 관리자 공통 색상과 패널 톤으로 표시된다', async ({ page }) => {
+    const admin = new AdminNoticesPagePO(page)
+    await admin.navigate()
+
+    await expect(admin.page).toHaveClass(/bg-\[#fff9ec\]/)
+    await expect(admin.formPanel).toHaveClass(/rounded-\[28px\]/)
+    await expect(admin.formPanel).toHaveClass(/bg-white/)
+    await expect(admin.submitButton).toHaveClass(/bg-\[#ffd66b\]/)
+  })
+
   test('공지를 수정하면 변경 내용이 반영된다', async ({ page }) => {
     const admin = new AdminNoticesPagePO(page)
     await admin.navigate()

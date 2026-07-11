@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import {
   DAY_OF_WEEK_LABELS,
   DAY_OF_WEEK_OPTIONS,
+  parseDayOfWeek,
   SLOT_STEP_MINUTES,
   timeRangeLabel,
   type PreferredSlot,
@@ -186,10 +187,10 @@ export function usePreferredSlotsSelection(
   function updateFromPoint(clientX: number, clientY: number) {
     const element = document.elementFromPoint(clientX, clientY)
     const cell = element?.closest<HTMLButtonElement>('[data-slot-day][data-slot-minute]')
-    const dayOfWeek = cell?.dataset.slotDay as Anchor['dayOfWeek'] | undefined
+    const dayOfWeek = cell ? parseDayOfWeek(cell.dataset.slotDay ?? '') : null
     const minute = Number(cell?.dataset.slotMinute)
 
-    if (!dayOfWeek || Number.isNaN(minute)) {
+    if (dayOfWeek === null || Number.isNaN(minute)) {
       return
     }
 

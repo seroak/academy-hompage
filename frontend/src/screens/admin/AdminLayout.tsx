@@ -41,7 +41,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 href="/"
                 className="text-xl font-black tracking-[-0.01em] text-[#222222] hover:text-[#e86f00]"
               >
-                아이꿈 학원
+                생각을 여는 수학
               </Link>
               <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#e86f00] shadow-[0_8px_20px_rgba(127,88,22,0.08)]">
                 관리자

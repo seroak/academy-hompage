@@ -1,5 +1,10 @@
 import { Reservation, UpdateReservationInput } from "../../../../api/schemas/reservation.schema";
-import { ReservationGroup, UpdateReservationGroupInput } from "../../../../api/schemas/reservation-group.schema";
+import {
+  AddGroupMemberInput,
+  ReplaceMemberSlotsInput,
+  ReservationGroup,
+  UpdateReservationGroupInput,
+} from "../../../../api/schemas/reservation-group.schema";
 import { DayOfWeek } from "../types";
 import { joinableSlotsForDay, joinableSlotsForAllDays, groupSlotsDeduped } from "../utils/reservationAdminUtils";
 import { ApiError } from "../../../../lib/apiClient";
@@ -8,14 +13,19 @@ export function useReservationAdminActions(
   reservations: Reservation[],
   groups: ReservationGroup[],
   mutations: {
-    updateReservation: (id: string, input: UpdateReservationInput) => Promise<any>;
-    deleteReservation: (id: string) => Promise<any>;
-    addMember: (groupId: string, input: any) => Promise<any>;
-    deleteGroup: (id: string) => Promise<any>;
-    updateGroup: (groupId: string, patch: UpdateReservationGroupInput) => Promise<any>;
-    removeMember: (groupId: string, reservationId: string) => Promise<any>;
-    replaceMemberSlots: (groupId: string, reservationId: string, input: any) => Promise<any>;
-    moveMember: (reservationId: string, fromGroupId: string, toGroupId: string, slots: any[]) => Promise<any>;
+    updateReservation: (id: string, input: UpdateReservationInput) => Promise<Reservation>;
+    deleteReservation: (id: string) => Promise<void>;
+    addMember: (groupId: string, input: AddGroupMemberInput) => Promise<ReservationGroup>;
+    deleteGroup: (id: string) => Promise<void>;
+    updateGroup: (groupId: string, patch: UpdateReservationGroupInput) => Promise<ReservationGroup>;
+    removeMember: (groupId: string, reservationId: string) => Promise<void>;
+    replaceMemberSlots: (groupId: string, reservationId: string, input: ReplaceMemberSlotsInput) => Promise<ReservationGroup>;
+    moveMember: (
+      reservationId: string,
+      fromGroupId: string,
+      toGroupId: string,
+      slots: AddGroupMemberInput["slots"],
+    ) => Promise<ReservationGroup>;
   },
   onReservationDeleted: (id: string) => void,
 ) {

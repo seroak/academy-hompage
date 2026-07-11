@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { DAY_OF_WEEK_LABELS, DAY_OF_WEEK_OPTIONS, OPERATING_END_MINUTE, OPERATING_START_MINUTE, SLOT_STEP_MINUTES, timeLabel } from "../../../../api/schemas/reservation.schema";
+import { useState, type SubmitEvent } from "react";
+import { DAY_OF_WEEK_LABELS, DAY_OF_WEEK_OPTIONS, OPERATING_END_MINUTE, OPERATING_START_MINUTE, parseDayOfWeek, SLOT_STEP_MINUTES, timeLabel } from "../../../../api/schemas/reservation.schema";
 import { ReservationGroup } from "../../../../api/schemas/reservation-group.schema";
 import { fieldClass, labelClass, errorClass } from "../styles";
 
@@ -47,7 +47,7 @@ export default function GroupManagementCard({
     (_, index) => OPERATING_START_MINUTE + index * SLOT_STEP_MINUTES,
   );
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const success = await onCreateBlankGroup({
       label,
@@ -135,7 +135,10 @@ export default function GroupManagementCard({
             <select
               className={fieldClass}
               value={scheduleDayOfWeek}
-              onChange={(event) => setScheduleDayOfWeek(event.target.value as (typeof DAY_OF_WEEK_OPTIONS)[number])}
+              onChange={(event) => {
+                const dayOfWeek = parseDayOfWeek(event.target.value);
+                if (dayOfWeek) setScheduleDayOfWeek(dayOfWeek);
+              }}
             >
               {DAY_OF_WEEK_OPTIONS.map((day) => <option key={day} value={day}>{DAY_OF_WEEK_LABELS[day]}</option>)}
             </select>

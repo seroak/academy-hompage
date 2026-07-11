@@ -45,3 +45,16 @@ export const ParentSignupInputSchema = ParentPasswordAuthInputSchema.extend({
 })
 
 export type ParentSignupInput = z.infer<typeof ParentSignupInputSchema>
+
+export const ParentSignupResponseSchema = z.object({
+  email: z.string(),
+  verificationSent: z.literal(true),
+})
+
+export type ParentSignupResponse = z.infer<typeof ParentSignupResponseSchema>
+
+export const ParentEmailVerifyInputSchema = z.object({
+  token: z.string().min(1),
+})
+
+export type ParentEmailVerifyInput = z.infer<typeof ParentEmailVerifyInputSchema>

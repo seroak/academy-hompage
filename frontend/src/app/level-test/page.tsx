@@ -3,15 +3,17 @@ import { redirect } from 'next/navigation'
 import Layout from '../../components/Layout'
 import LevelTestPage from '../../screens/LevelTestPage'
 import { getServerAuth } from '../../lib/serverAuth'
-import { siteUrl } from '../../lib/seo'
+import { baseOpenGraph, siteUrl } from '../../lib/seo'
 
 export const metadata: Metadata = {
   title: '레벨테스트',
-  description: '아이꿈 학원 레벨테스트를 예약 없이 바로 응시해 보세요.',
+  description: '용인 흥덕 유치부·초등 저학년 수학학원, 생각을 여는 수학 레벨테스트를 예약 없이 바로 응시해 보세요.',
+  keywords: ['용인 수학학원', '흥덕 수학학원', '저학년 수학학원'],
   alternates: { canonical: siteUrl('/level-test') },
   openGraph: {
-    title: '레벨테스트 | 아이꿈 학원',
-    description: '아이꿈 학원 레벨테스트를 예약 없이 바로 응시해 보세요.',
+    ...baseOpenGraph(),
+    title: '레벨테스트 | 생각을 여는 수학',
+    description: '생각을 여는 수학 레벨테스트를 예약 없이 바로 응시해 보세요.',
     url: siteUrl('/level-test'),
   },
 }

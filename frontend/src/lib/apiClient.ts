@@ -14,6 +14,18 @@ export class ApiError extends Error {
 
 export type ApiAuthMode = 'admin' | 'parent' | 'none'
 
+function errorMessage(body: unknown, fallback: string): string {
+  if (
+    typeof body === 'object' &&
+    body !== null &&
+    'message' in body &&
+    typeof body.message === 'string'
+  ) {
+    return body.message
+  }
+  return fallback
+}
+
 interface ApiFetchOptions {
   authMode?: ApiAuthMode
 }
@@ -43,8 +55,8 @@ export async function apiFetch(
   })
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ message: response.statusText }))
-    throw new ApiError(response.status, body.message ?? response.statusText)
+    const body: unknown = await response.json().catch(() => ({ message: response.statusText }))
+    throw new ApiError(response.status, errorMessage(body, response.statusText))
   }
 
   const text = await response.text()

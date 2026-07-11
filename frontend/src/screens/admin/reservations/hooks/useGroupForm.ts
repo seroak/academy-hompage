@@ -1,5 +1,9 @@
-import { useState, type FormEvent } from 'react'
-import { CreateReservationGroupInputSchema, CreateReservationGroupInput } from '../../../../api/schemas/reservation-group.schema'
+import { useState, type SubmitEvent } from 'react'
+import {
+  CreateReservationGroupInputSchema,
+  CreateReservationGroupInput,
+  ReservationGroup,
+} from '../../../../api/schemas/reservation-group.schema'
 import { DayOfWeek, ReservationGroupFormState, SelectedSlot } from '../types'
 import { findSlotGap, mergeContiguousSlots, singleScheduleBlock } from '../utils/reservationAdminUtils'
 
@@ -11,7 +15,7 @@ export function useGroupForm(
   selectedSlots: Map<string, SelectedSlot>,
   selectedAges: number[],
   selectedReservationCount: number,
-  createGroup: (input: CreateReservationGroupInput) => Promise<any>,
+  createGroup: (input: CreateReservationGroupInput) => Promise<ReservationGroup>,
   onSuccess: () => void
 ) {
   const [groupForm, setGroupForm] = useState<ReservationGroupFormState>(emptyGroupForm)
@@ -24,7 +28,7 @@ export function useGroupForm(
   const groupMinAge = groupForm.minAgeOverride ?? (selectedAges.length > 0 ? Math.min(...selectedAges) : undefined)
   const groupMaxAge = groupForm.maxAgeOverride ?? (selectedAges.length > 0 ? Math.max(...selectedAges) : undefined)
 
-  async function handleConfirmGroup(event: FormEvent) {
+  async function handleConfirmGroup(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const gapSlot = findSlotGap(Array.from(selectedSlots.values()))

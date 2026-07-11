@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Badge from '../../../components/Badge'
 import Layout from '../../../components/Layout'
 import { fetchPublicNotice } from '../../../api/public.api'
-import { siteUrl, truncateDescription } from '../../../lib/seo'
+import { baseOpenGraph, siteUrl, truncateDescription } from '../../../lib/seo'
 
 export const revalidate = 300
 
@@ -30,7 +30,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description,
     alternates: { canonical: siteUrl(`/notices/${notice.id}`) },
     openGraph: {
-      title: `${notice.title} | 아이꿈 학원`,
+      ...baseOpenGraph(),
+      title: `${notice.title} | 생각을 여는 수학`,
       description,
       url: siteUrl(`/notices/${notice.id}`),
     },

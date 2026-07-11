@@ -6,7 +6,7 @@ test.describe('공개 페이지 스모크', () => {
   test('홈 진입', async ({ page }) => {
     const pages = new PublicPages(page)
     await pages.gotoHome()
-    await expect(page).toHaveTitle(/아이꿈 학원|academy/i)
+    await expect(page).toHaveTitle(/생각을 여는 수학|academy/i)
   })
 
   test('홈에서 수업 신청 절차를 순서대로 안내한다', async ({ page }) => {

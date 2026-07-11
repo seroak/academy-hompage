@@ -10,15 +10,12 @@ export default function MathHero() {
 
       <div className="relative z-10 grid items-center gap-5 lg:grid-cols-[1fr_1fr]">
         <div className="max-w-[540px]">
-          <p className="inline-flex rounded-full border border-[#ffc75c] bg-white/75 px-3 py-1.5 text-[11px] font-bold tracking-[0.07em] text-[#d86a00]">
-            IKKOOM MATH CURRICULUM
-          </p>
           <h1 className="mt-5 text-[clamp(2rem,3.2vw,2.625rem)] font-bold leading-[1.2] tracking-[-0.045em] text-[#222222]">
             놀이에서 시작해
             <br />
             사고력과 교과로 연결되는
             <br />
-            <span className="text-[#f47a16]">아이꿈만의 수학교육</span>
+            <span className="text-[#f47a16]">생각을 여는 수학만의 교육</span>
           </h1>
           <p className="mt-5 max-w-[32rem] text-sm font-medium leading-7 text-[#5f584c] sm:text-base">
             아이의 흥미를 발견하고, 스스로 생각하는 힘과 수학 자신감으로 이어갑니다.

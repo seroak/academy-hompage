@@ -3,12 +3,14 @@ import {
   LoginResponseSchema,
   ParentLoginResponseSchema,
   ParentProfileSchema,
+  ParentSignupResponseSchema,
   type LoginResponse,
   type OAuthProvider,
   type ParentPasswordAuthInput,
   type ParentLoginResponse,
   type ParentProfile,
   type ParentSignupInput,
+  type ParentSignupResponse,
 } from './schemas/auth.schema'
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
@@ -42,10 +44,18 @@ export async function loginParentWithPassword(
   return ParentLoginResponseSchema.parse(raw)
 }
 
-export async function signupParent(input: ParentSignupInput): Promise<ParentLoginResponse> {
+export async function signupParent(input: ParentSignupInput): Promise<ParentSignupResponse> {
   const raw = await apiFetch('/auth/parents/signup', {
     method: 'POST',
     body: JSON.stringify(input),
+  }, { authMode: 'none' })
+  return ParentSignupResponseSchema.parse(raw)
+}
+
+export async function verifyParentEmail(token: string): Promise<ParentLoginResponse> {
+  const raw = await apiFetch('/auth/parents/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
   }, { authMode: 'none' })
   return ParentLoginResponseSchema.parse(raw)
 }

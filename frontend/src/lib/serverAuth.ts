@@ -10,12 +10,16 @@ const EMPTY_AUTH: ServerAuth = { admin: false, parent: null }
 
 const PARENT_SESSION_COOKIE = 'academy-parent-session'
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
 // zustand persist가 쿠키에 저장하는 형태: { state: {...}, version: number }
 function parsePersistState(raw: string | undefined): unknown {
   if (!raw) return null
   try {
-    const envelope = JSON.parse(raw) as { state?: unknown }
-    return envelope?.state ?? null
+    const envelope: unknown = JSON.parse(raw)
+    return isRecord(envelope) ? envelope.state ?? null : null
   } catch {
     return null
   }
@@ -35,7 +39,15 @@ function decodeJwtPayload(token: string | undefined): ParentJwtPayload | null {
   if (parts.length !== 3) return null
   try {
     const json = Buffer.from(parts[1], 'base64url').toString('utf8')
-    return JSON.parse(json) as ParentJwtPayload
+    const payload: unknown = JSON.parse(json)
+    if (!isRecord(payload)) return null
+    return {
+      sub: typeof payload.sub === 'string' ? payload.sub : undefined,
+      email: typeof payload.email === 'string' || payload.email === null ? payload.email : undefined,
+      name: typeof payload.name === 'string' || payload.name === null ? payload.name : undefined,
+      tokenType: typeof payload.tokenType === 'string' ? payload.tokenType : undefined,
+      exp: typeof payload.exp === 'number' ? payload.exp : undefined,
+    }
   } catch {
     return null
   }
@@ -64,10 +76,8 @@ function parentFromSessionCookie(token: string | undefined): ParentProfile | nul
 export async function getServerAuth(): Promise<ServerAuth> {
   const jar = await cookies()
 
-  const adminState = parsePersistState(jar.get('academy-admin-auth')?.value) as
-    | { isAuthenticated?: boolean }
-    | null
-  const admin = adminState?.isAuthenticated === true
+  const adminState = parsePersistState(jar.get('academy-admin-auth')?.value)
+  const admin = isRecord(adminState) && adminState.isAuthenticated === true
 
   const parent = parentFromSessionCookie(jar.get(PARENT_SESSION_COOKIE)?.value)
 

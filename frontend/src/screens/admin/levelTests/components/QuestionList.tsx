@@ -19,8 +19,9 @@ export default function QuestionList({ questions, ageFilter, onAgeFilterChange, 
   return (
     <div className="mt-6">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-bold text-[#6f6253]">나이 필터</label>
+        <label htmlFor="question-age-filter" className="text-sm font-bold text-[#6f6253]">나이 필터</label>
         <select
+          id="question-age-filter"
           className="rounded-lg border border-[#f2dfb9] px-3 py-2 text-sm font-semibold text-[#222222]"
           value={ageFilter ?? ''}
           onChange={(event) =>

@@ -3,6 +3,14 @@ import { z } from 'zod'
 export const DAY_OF_WEEK_OPTIONS = ['MON', 'TUE', 'WED', 'THU', 'FRI'] as const
 export const RESERVATION_STATUS_OPTIONS = ['WAITING', 'GROUPED', 'CANCELLED'] as const
 
+export function parseDayOfWeek(value: string): (typeof DAY_OF_WEEK_OPTIONS)[number] | null {
+  return DAY_OF_WEEK_OPTIONS.find((day) => day === value) ?? null
+}
+
+export function parseReservationStatus(value: string): (typeof RESERVATION_STATUS_OPTIONS)[number] | null {
+  return RESERVATION_STATUS_OPTIONS.find((status) => status === value) ?? null
+}
+
 export const DAY_OF_WEEK_LABELS: Record<(typeof DAY_OF_WEEK_OPTIONS)[number], string> = {
   MON: '월',
   TUE: '화',

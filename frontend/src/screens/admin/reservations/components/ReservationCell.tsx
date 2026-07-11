@@ -68,6 +68,25 @@ type GroupedReservationsSectionProps = {
   onMoveMember: (reservationId: string, fromGroupId: string, toGroupId: string) => void;
 };
 
+function parseDragPayload(raw: string): DragPayload | null {
+  try {
+    const payload: unknown = JSON.parse(raw);
+    if (
+      typeof payload === 'object' &&
+      payload !== null &&
+      'reservationId' in payload &&
+      'fromGroupId' in payload &&
+      typeof payload.reservationId === 'string' &&
+      typeof payload.fromGroupId === 'string'
+    ) {
+      return { reservationId: payload.reservationId, fromGroupId: payload.fromGroupId };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function groupReservationsByGroup(
   reservations: Reservation[],
   groupByReservationId: Map<string, ReservationGroup>,
@@ -234,7 +253,8 @@ function EmptyGroupsSection({ groups, onOpenGroupDetail, onMoveMember, onDeleteG
             setDragOverGroupId(null);
             const raw = event.dataTransfer.getData(DRAG_PAYLOAD_TYPE);
             if (!raw) return;
-            const payload = JSON.parse(raw) as DragPayload;
+            const payload = parseDragPayload(raw);
+            if (!payload) return;
             if (payload.fromGroupId === group.id) return;
             onMoveMember(payload.reservationId, payload.fromGroupId, group.id);
           }}
@@ -427,7 +447,8 @@ function GroupedReservationsSection({
                   setDragOverGroupId(null);
                   const raw = event.dataTransfer.getData(DRAG_PAYLOAD_TYPE);
                   if (!raw) return;
-                  const payload = JSON.parse(raw) as DragPayload;
+                  const payload = parseDragPayload(raw);
+                  if (!payload) return;
                   if (payload.fromGroupId === group.id) return;
                   onMoveMember(payload.reservationId, payload.fromGroupId, group.id);
                 }

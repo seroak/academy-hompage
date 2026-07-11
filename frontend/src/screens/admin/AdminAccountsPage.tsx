@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createAdmin } from '../../api/admins.api'
 import { CreateAdminInputSchema, type CreateAdminInput } from '../../api/schemas/admin.schema'
@@ -26,7 +26,7 @@ export default function AdminAccountsPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  async function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const parsed = CreateAdminInputSchema.safeParse(form)
     if (!parsed.success) {

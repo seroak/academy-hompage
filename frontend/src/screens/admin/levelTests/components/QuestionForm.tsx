@@ -114,9 +114,10 @@ export default function QuestionForm({
           <select
             className="rounded-lg border border-[#f2dfb9] px-3 py-2 text-sm font-semibold text-[#222222]"
             value={form.type}
-            onChange={(event) =>
-              onChange({ ...form, type: event.target.value as QuestionFormState['type'] })
-            }
+            onChange={(event) => {
+              const type = LEVEL_TEST_QUESTION_TYPE_OPTIONS.find((option) => option === event.target.value)
+              if (type) onChange({ ...form, type })
+            }}
           >
             {LEVEL_TEST_QUESTION_TYPE_OPTIONS.map((type) => (
               <option key={type} value={type}>

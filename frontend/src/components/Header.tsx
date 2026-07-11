@@ -11,8 +11,9 @@ import { useLoginModalStore } from '../stores/loginModalStore'
 import AdminLoginModal from './AdminLoginModal'
 
 const navItems = [
-  { to: '/courses', label: '교육과정' },
+  { to: '/', label: '학원 소개' },
   { to: '/#programs', label: '프로그램' },
+  { to: '/courses', label: '교육과정' },
   { to: '/notices', label: '커뮤니티' },
   { to: '/level-test', label: '레벨테스트' },
 ]
@@ -44,7 +45,7 @@ function ParentProfileMenu({
     if (!isOpen) return
 
     function handlePointerDown(event: PointerEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (containerRef.current && event.target instanceof Node && !containerRef.current.contains(event.target)) {
         setIsOpen(false)
       }
     }
@@ -167,6 +168,15 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
     router.push('/apply')
   }
 
+  function handleNavItemClick(to: string) {
+    setIsOpen(false)
+    if (to === '/#programs' && pathname === '/') {
+      requestAnimationFrame(() => {
+        document.getElementById('programs')?.focus({ preventScroll: true })
+      })
+    }
+  }
+
   function closeLoginModal() {
     closeSharedLoginModal()
     if (hasAdminLoginParam || hasParentLoginParam) {
@@ -197,7 +207,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
       <header className="sticky top-0 z-50 bg-[#fff9ec]/90 backdrop-blur-md">
         <div className="mx-auto flex h-[84px] max-w-[1280px] items-center justify-between gap-6 px-5 sm:px-8">
           <Link href="/" className="flex shrink-0 items-center" onClick={() => setIsOpen(false)}>
-            <span className="text-xl font-black tracking-[-0.01em] text-[#222222]">아이꿈 학원</span>
+            <span className="text-xl font-black tracking-[-0.01em] text-[#222222]">생각을 여는 수학</span>
           </Link>
 
           <nav className="hidden items-center gap-2 lg:flex">
@@ -205,6 +215,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
               <Link
                 key={item.to}
                 href={item.to}
+                onClick={() => handleNavItemClick(item.to)}
                 className={navLinkClass(pathname === item.to)}
               >
                 {item.label}
@@ -280,7 +291,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                   key={item.to}
                   href={item.to}
                   className={navLinkClass(pathname === item.to)}
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => handleNavItemClick(item.to)}
                 >
                   {item.label}
                 </Link>

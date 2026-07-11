@@ -13,11 +13,9 @@ export default function ResultDetailModal({ result, onClose }: Props) {
   if (!result) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8" onClick={onClose}>
-      <div
-        className="max-h-full w-full max-w-2xl overflow-y-auto rounded-[28px] bg-white p-6 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+      <button type="button" aria-label="결과 상세 닫기" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <dialog open className="relative m-0 max-h-full w-full max-w-2xl overflow-y-auto rounded-[28px] bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-xl font-black text-[#222222]">
@@ -75,7 +73,7 @@ export default function ResultDetailModal({ result, onClose }: Props) {
             </li>
           ))}
         </ul>
-      </div>
+      </dialog>
     </div>
   )
 }

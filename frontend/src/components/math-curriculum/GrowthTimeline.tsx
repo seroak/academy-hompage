@@ -17,7 +17,7 @@ export default function GrowthTimeline() {
     <section className="rounded-[24px] bg-[#fff5df] px-5 py-10 sm:px-8 lg:px-10 lg:py-12">
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-bold tracking-[0.06em] text-[#e86f00]">GROWTH JOURNEY</p>
-        <h2 className="mt-2 text-[clamp(1.625rem,2.8vw,2.25rem)] font-bold tracking-[-0.045em] text-[#222222]">아이꿈 수학은 이렇게 성장합니다</h2>
+        <h2 className="mt-2 text-[clamp(1.625rem,2.8vw,2.25rem)] font-bold tracking-[-0.045em] text-[#222222]">생각을 여는 수학은 이렇게 성장합니다</h2>
         <p className="mt-2 text-sm font-medium leading-6 text-[#6a6256]">재미있게 시작한 수학 경험이 스스로 생각하고 해결하는 힘으로 자라납니다.</p>
       </div>
       <ol className="mx-auto mt-8 grid max-w-[1020px] gap-6 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">

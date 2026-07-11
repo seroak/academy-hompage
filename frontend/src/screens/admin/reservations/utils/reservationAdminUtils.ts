@@ -1,4 +1,4 @@
-import { Reservation, SLOT_STEP_MINUTES } from '../../../../api/schemas/reservation.schema'
+import { parseDayOfWeek, Reservation, SLOT_STEP_MINUTES } from '../../../../api/schemas/reservation.schema'
 import { ReservationGroup } from '../../../../api/schemas/reservation-group.schema'
 import { DayOfWeek, SelectedSlot } from '../types'
 
@@ -129,7 +129,8 @@ export function singleScheduleBlock<
   }
   if (seen.size !== 1) return null
   const { dayOfWeek, startMinute, endMinute } = slots[0]
-  return { dayOfWeek: dayOfWeek as DayOfWeek, startMinute, endMinute }
+  const parsedDayOfWeek = parseDayOfWeek(dayOfWeek)
+  return parsedDayOfWeek ? { dayOfWeek: parsedDayOfWeek, startMinute, endMinute } : null
 }
 
 function resolveGroupSchedule(
@@ -237,7 +238,8 @@ export function groupSlotsDeduped(
     const key = `${slot.dayOfWeek}-${slot.startMinute}-${slot.endMinute}`
     if (seen.has(key)) continue
     seen.add(key)
-    result.push({ dayOfWeek: slot.dayOfWeek as DayOfWeek, startMinute: slot.startMinute, endMinute: slot.endMinute })
+    const dayOfWeek = parseDayOfWeek(slot.dayOfWeek)
+    if (dayOfWeek) result.push({ dayOfWeek, startMinute: slot.startMinute, endMinute: slot.endMinute })
   }
   return result
 }
