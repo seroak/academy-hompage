@@ -128,5 +128,45 @@ describe('NotificationService', () => {
         }),
       ).resolves.not.toThrow();
     });
+
+    it('이메일 인증 메일을 발송하고 본문에 인증 링크를 포함한다', async () => {
+      const service = await createService();
+
+      await service.sendParentEmailVerification(
+        'parent@example.com',
+        '김엄마',
+        'http://localhost:3001/auth/verify-email?token=abc123',
+      );
+
+      expect(sendMail).toHaveBeenCalledTimes(1);
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'parent@example.com',
+          text: expect.stringContaining(
+            'http://localhost:3001/auth/verify-email?token=abc123',
+          ),
+        }),
+      );
+    });
+  });
+
+  describe('SMTP 미설정 - 인증 메일', () => {
+    beforeEach(() => {
+      delete configValues.SMTP_HOST;
+    });
+
+    it('인증 메일도 발송하지 않고 예외를 던지지 않는다', async () => {
+      const service = await createService();
+
+      await expect(
+        service.sendParentEmailVerification(
+          'parent@example.com',
+          '김엄마',
+          'http://localhost:3001/auth/verify-email?token=abc123',
+        ),
+      ).resolves.not.toThrow();
+
+      expect(sendMail).not.toHaveBeenCalled();
+    });
   });
 });

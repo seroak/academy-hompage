@@ -102,6 +102,18 @@ export class NotificationService {
     );
   }
 
+  async sendParentEmailVerification(
+    email: string,
+    name: string,
+    verifyUrl: string,
+  ): Promise<void> {
+    await this.sendMail(
+      email,
+      '[학원] 이메일 인증을 완료해 주세요',
+      `${name}님, 아래 링크를 눌러 이메일 인증을 완료하고 회원가입을 마쳐 주세요.\n${verifyUrl}\n\n본인이 요청하지 않았다면 이 메일을 무시해 주세요.`,
+    );
+  }
+
   private async sendMail(to: string, subject: string, text: string): Promise<void> {
     if (!to) {
       this.logger.log(`(수신 이메일 없음) subject=${subject}`);
@@ -109,7 +121,7 @@ export class NotificationService {
     }
 
     if (!this.transporter) {
-      this.logger.log(`(SMTP 미설정) to=${to} subject=${subject}`);
+      this.logger.log(`(SMTP 미설정) to=${to} subject=${subject}\n${text}`);
       return;
     }
 

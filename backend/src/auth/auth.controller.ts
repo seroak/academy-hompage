@@ -3,6 +3,7 @@ import { AuthService } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ParentLoginDto } from './dto/parent-login.dto.js';
 import { ParentSignupDto } from './dto/parent-signup.dto.js';
+import { VerifyEmailDto } from './dto/verify-email.dto.js';
 import { clearAuthCookie, setAuthCookie } from './auth-cookies.js';
 import type { ClearCookieResponse, CookieResponse } from './auth-cookies.js';
 
@@ -28,12 +29,18 @@ export class AuthController {
   }
 
   @Post('parents/signup')
-  @HttpCode(HttpStatus.CREATED)
-  async signupParent(
-    @Body() dto: ParentSignupDto,
+  @HttpCode(HttpStatus.ACCEPTED)
+  async signupParent(@Body() dto: ParentSignupDto) {
+    return this.authService.signupParent(dto);
+  }
+
+  @Post('parents/verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyParentEmail(
+    @Body() dto: VerifyEmailDto,
     @Res({ passthrough: true }) response: CookieResponse,
   ) {
-    const result = await this.authService.signupParent(dto);
+    const result = await this.authService.verifyParentEmail(dto.token);
     setAuthCookie(response, 'parent', result.accessToken);
     return result;
   }

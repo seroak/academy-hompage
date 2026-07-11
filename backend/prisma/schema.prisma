@@ -75,6 +75,17 @@ model ParentAuthSession {
   createdAt    DateTime   @default(now())
 }
 
+model ParentEmailVerification {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  token        String    @unique
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  createdAt    DateTime  @default(now())
+}
+
 model Notice {
   id        String   @id @default(cuid())
   title     String

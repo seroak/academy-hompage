@@ -5,14 +5,24 @@ import { PARENT_AUTH_COOKIE } from './auth-cookies.js';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let service: { login: jest.Mock; loginParent: jest.Mock; signupParent: jest.Mock };
+  let service: {
+    login: jest.Mock;
+    loginParent: jest.Mock;
+    signupParent: jest.Mock;
+    verifyParentEmail: jest.Mock;
+  };
 
   function mockResponse() {
     return { cookie: jest.fn(), clearCookie: jest.fn() };
   }
 
   beforeEach(async () => {
-    service = { login: jest.fn(), loginParent: jest.fn(), signupParent: jest.fn() };
+    service = {
+      login: jest.fn(),
+      loginParent: jest.fn(),
+      signupParent: jest.fn(),
+      verifyParentEmail: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -49,19 +59,37 @@ describe('AuthController', () => {
     );
   });
 
-  it('delegates parent signup to the service and sets an httpOnly parent cookie', async () => {
-    service.signupParent.mockResolvedValue({ accessToken: 'parent-token', parent: { id: '1' } });
-    const response = mockResponse();
+  it('delegates parent signup to the service without setting a cookie', async () => {
+    service.signupParent.mockResolvedValue({
+      email: 'parent@example.com',
+      verificationSent: true,
+    });
 
     const dto = {
       name: '김엄마',
       email: 'parent@example.com',
       password: 'password123',
     };
-    const result = await controller.signupParent(dto, response as never);
+    const result = await controller.signupParent(dto);
+
+    expect(result).toEqual({ email: 'parent@example.com', verificationSent: true });
+    expect(service.signupParent).toHaveBeenCalledWith(dto);
+  });
+
+  it('delegates email verification to the service and sets an httpOnly parent cookie', async () => {
+    service.verifyParentEmail.mockResolvedValue({
+      accessToken: 'parent-token',
+      parent: { id: '1' },
+    });
+    const response = mockResponse();
+
+    const result = await controller.verifyParentEmail(
+      { token: 'valid-token' },
+      response as never,
+    );
 
     expect(result).toEqual({ accessToken: 'parent-token', parent: { id: '1' } });
-    expect(service.signupParent).toHaveBeenCalledWith(dto);
+    expect(service.verifyParentEmail).toHaveBeenCalledWith('valid-token');
     expect(response.cookie).toHaveBeenCalledWith(
       PARENT_AUTH_COOKIE,
       'parent-token',

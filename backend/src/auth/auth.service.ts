@@ -1,14 +1,21 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { NotificationService } from '../notifications/notification.service.js';
 import { ParentSignupDto } from './dto/parent-signup.dto.js';
+
+const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async login(username: string, password: string) {
@@ -33,7 +40,51 @@ export class AuthService {
   async signupParent(dto: ParentSignupDto) {
     const email = this.normalizeEmail(dto.email);
     const existingParent = await this.prisma.parentUser.findUnique({ where: { email } });
+
+    if (existingParent?.passwordHash) {
+      throw new ConflictException('이미 가입된 이메일입니다.');
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, 10);
+    const token = randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS);
+
+    await this.prisma.parentEmailVerification.upsert({
+      where: { email },
+      create: {
+        email,
+        name: dto.name,
+        passwordHash,
+        token,
+        expiresAt,
+      },
+      update: {
+        name: dto.name,
+        passwordHash,
+        token,
+        expiresAt,
+        consumedAt: null,
+      },
+    });
+
+    const verifyUrl = `${this.frontendUrl()}/auth/verify-email?token=${token}`;
+    await this.notificationService.sendParentEmailVerification(email, dto.name, verifyUrl);
+
+    return { email, verificationSent: true as const };
+  }
+
+  async verifyParentEmail(token: string) {
+    const verification = await this.prisma.parentEmailVerification.findUnique({
+      where: { token },
+    });
+
+    if (!verification || verification.consumedAt || verification.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('인증 링크가 유효하지 않거나 만료되었습니다.');
+    }
+
+    const existingParent = await this.prisma.parentUser.findUnique({
+      where: { email: verification.email },
+    });
 
     if (existingParent?.passwordHash) {
       throw new ConflictException('이미 가입된 이메일입니다.');
@@ -43,17 +94,22 @@ export class AuthService {
       ? await this.prisma.parentUser.update({
           where: { id: existingParent.id },
           data: {
-            passwordHash,
-            name: existingParent.name ?? dto.name,
+            passwordHash: verification.passwordHash,
+            name: existingParent.name ?? verification.name,
           },
         })
       : await this.prisma.parentUser.create({
           data: {
-            email,
-            name: dto.name,
-            passwordHash,
+            email: verification.email,
+            name: verification.name,
+            passwordHash: verification.passwordHash,
           },
         });
+
+    await this.prisma.parentEmailVerification.update({
+      where: { id: verification.id },
+      data: { consumedAt: new Date() },
+    });
 
     return this.createParentLoginResponse(parent);
   }
@@ -88,5 +144,9 @@ export class AuthService {
 
   private normalizeEmail(email: string) {
     return email.trim().toLowerCase();
+  }
+
+  private frontendUrl() {
+    return this.configService.get<string>('FRONTEND_URL', 'http://localhost:3001');
   }
 }
