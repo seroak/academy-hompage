@@ -1,0 +1,28 @@
+export default function LogoMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      className={className}
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="logo-mark-badge" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ffd66b" />
+          <stop offset="1" stopColor="#e86f00" />
+        </linearGradient>
+      </defs>
+      <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#logo-mark-badge)" />
+      <path
+        d="M16 13.4c-1.15-1.55-3.1-2.4-5.6-2.4-1.15 0-2.15.16-2.9.36a.7.7 0 0 0-.5.68v9.02c0 .5.48.86.96.72.68-.2 1.5-.32 2.44-.32 2.16 0 3.86.7 4.94 1.86a.87.87 0 0 0 1.32 0c1.08-1.16 2.78-1.86 4.94-1.86.94 0 1.76.12 2.44.32.48.14.96-.22.96-.72v-9.02a.7.7 0 0 0-.5-.68 9.6 9.6 0 0 0-2.9-.36c-2.5 0-4.45.85-5.6 2.4Z"
+        fill="#fff7e6"
+      />
+      <path
+        d="M16 13.4v9.9"
+        stroke="#e86f00"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
