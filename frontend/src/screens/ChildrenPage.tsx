@@ -7,6 +7,7 @@ import { createChild, deleteChild, updateChild } from '../api/children.api'
 import { CHILD_AGE_OPTIONS, ChildInputSchema, type Child, type ChildInput } from '../api/schemas/child.schema'
 import { queryKeys } from '../queries/queryKeys'
 import { useChildrenQuery } from '../queries/useChildrenQuery'
+import { nowIso, optimisticId, restoreQuerySnapshots, snapshotQueryLists, updateCachedLists } from '../queries/optimisticCache'
 
 const emptyForm: ChildInput = { name: '', age: 4 }
 
@@ -18,9 +19,50 @@ export default function ChildrenPage() {
   const [formError, setFormError] = useState<string | null>(null)
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.children.all })
-  const create = useMutation({ mutationFn: createChild, onSuccess: invalidate })
-  const update = useMutation({ mutationFn: ({ id, input }: { id: string; input: ChildInput }) => updateChild(id, input), onSuccess: invalidate })
-  const remove = useMutation({ mutationFn: deleteChild, onSuccess: invalidate })
+  const create = useMutation({
+    mutationFn: createChild,
+    onMutate: async (input) => {
+      const snapshots = await snapshotQueryLists<Child>(queryClient, queryKeys.children.all)
+      const child = { id: optimisticId('child'), ...input, createdAt: nowIso(), updatedAt: nowIso() }
+      updateCachedLists<Child>(queryClient, queryKeys.children.all, (children) => [...children, child])
+      return { snapshots, optimisticId: child.id }
+    },
+    onError: (_error, _input, context) => {
+      if (!context) return
+      restoreQuerySnapshots(queryClient, context.snapshots)
+    },
+    onSuccess: (child, _input, context) => updateCachedLists<Child>(queryClient, queryKeys.children.all, (children) =>
+      children.map((item) => item.id === context?.optimisticId ? child : item),
+    ),
+    onSettled: invalidate,
+  })
+  const update = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: ChildInput }) => updateChild(id, input),
+    onMutate: async ({ id, input }) => {
+      const snapshots = await snapshotQueryLists<Child>(queryClient, queryKeys.children.all)
+      updateCachedLists<Child>(queryClient, queryKeys.children.all, (children) => children.map((child) => child.id === id ? { ...child, ...input, updatedAt: nowIso() } : child))
+      return { snapshots }
+    },
+    onError: (_error, _variables, context) => {
+      if (!context) return
+      restoreQuerySnapshots(queryClient, context.snapshots)
+    },
+    onSuccess: (child) => updateCachedLists<Child>(queryClient, queryKeys.children.all, (children) => children.map((item) => item.id === child.id ? child : item)),
+    onSettled: invalidate,
+  })
+  const remove = useMutation({
+    mutationFn: deleteChild,
+    onMutate: async (id) => {
+      const snapshots = await snapshotQueryLists<Child>(queryClient, queryKeys.children.all)
+      updateCachedLists<Child>(queryClient, queryKeys.children.all, (children) => children.filter((child) => child.id !== id))
+      return { snapshots }
+    },
+    onError: (_error, _id, context) => {
+      if (!context) return
+      restoreQuerySnapshots(queryClient, context.snapshots)
+    },
+    onSettled: invalidate,
+  })
 
   function startEdit(child: Child) {
     setEditing(child)

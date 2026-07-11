@@ -1,11 +1,8 @@
 'use client'
 
 import { useState, type SubmitEvent } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { createAdmin } from '../../api/admins.api'
 import { CreateAdminInputSchema, type CreateAdminInput } from '../../api/schemas/admin.schema'
 import { ApiError } from '../../lib/apiClient'
-import { queryKeys } from '../../queries/queryKeys'
 import { useAuthStore } from '../../stores/authStore'
 import { useAdminsQuery } from './hooks/useAdminsQuery'
 import { useAdminMutations } from './hooks/useAdminMutations'
@@ -16,15 +13,13 @@ const emptyForm: CreateAdminInput = {
 }
 
 export default function AdminAccountsPage() {
-  const queryClient = useQueryClient()
   const currentAdminId = useAuthStore((state) => state.admin?.id)
   const { admins, isLoading, error: listError } = useAdminsQuery()
-  const { deleteAdmin, isDeleting } = useAdminMutations()
+  const { createAdmin, deleteAdmin, isCreating, isDeleting } = useAdminMutations()
 
   const [form, setForm] = useState<CreateAdminInput>(emptyForm)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -36,16 +31,12 @@ export default function AdminAccountsPage() {
 
     setError(null)
     setSuccess(null)
-    setIsSubmitting(true)
     try {
       const created = await createAdmin(parsed.data)
       setSuccess(`${created.username} 계정을 생성했습니다.`)
       setForm(emptyForm)
-      await queryClient.invalidateQueries({ queryKey: queryKeys.admins.all })
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : '관리자 계정을 생성하지 못했습니다.')
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -92,8 +83,8 @@ export default function AdminAccountsPage() {
           </label>
           {error && <p className="rounded-2xl bg-[#fff0ed] px-4 py-3 text-sm font-bold text-[#d6452f]">{error}</p>}
           {success && <p className="rounded-2xl bg-[#eaf7ea] px-4 py-3 text-sm font-bold text-[#2f7a3d]">{success}</p>}
-          <button type="submit" disabled={isSubmitting} className="h-12 rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418] disabled:opacity-60">
-            {isSubmitting ? '생성 중...' : '관리자 계정 생성'}
+          <button type="submit" disabled={isCreating} className="h-12 rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418] disabled:opacity-60">
+            {isCreating ? '생성 중...' : '관리자 계정 생성'}
           </button>
         </form>
       </section>
