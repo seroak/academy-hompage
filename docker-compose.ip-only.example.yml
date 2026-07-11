@@ -1,11 +1,8 @@
-# 도메인 구매 전, 공인 IP로 임시 접근할 때만 사용하는 override.
+# Caddy(80/443, HTTPS)가 정상 동작하기 전, 공인 IP:3000으로 직접 백엔드를 테스트할 때만 쓰는 override.
+# Caddy로 https://api.openmath.io.kr 접속이 확인되면 이 override는 제거하고 3000 포트는 막는 걸 권장한다.
 # VM에서: cp docker-compose.ip-only.example.yml docker-compose.override.yml
-# 도메인 연결 후에는 docker-compose.override.yml을 삭제하고 caddy 서비스로 전환한다.
 
 services:
   backend:
     ports:
       - '3000:3000'
-  frontend:
-    ports:
-      - '3001:3001'
