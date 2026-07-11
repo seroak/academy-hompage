@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
+import { redirect } from 'next/navigation'
 import AdminLayout from '../../screens/admin/AdminLayout'
-import RequireAdmin from '../../screens/admin/RequireAdmin'
 import { getServerAuth } from '../../lib/serverAuth'
 
 export default async function AdminRoute({
@@ -10,9 +10,9 @@ export default async function AdminRoute({
 }) {
   const { admin } = await getServerAuth()
 
-  return (
-    <RequireAdmin initialAdmin={admin}>
-      <AdminLayout>{children}</AdminLayout>
-    </RequireAdmin>
-  )
+  if (!admin) {
+    redirect('/?adminLogin=1')
+  }
+
+  return <AdminLayout>{children}</AdminLayout>
 }

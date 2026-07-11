@@ -91,10 +91,9 @@ export async function fetchLevelTestResult(id: string): Promise<LevelTestResult>
 export async function submitLevelTestResult(
   input: SubmitLevelTestResultInput,
 ): Promise<LevelTestResult> {
-  const raw = await apiFetch(
-    '/level-tests/results',
-    { method: 'POST', body: JSON.stringify(input) },
-    { authMode: 'parent' },
-  )
+  const raw = await apiFetch('/level-tests/results', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
   return LevelTestResultSchema.parse(raw)
 }

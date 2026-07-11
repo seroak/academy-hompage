@@ -27,6 +27,9 @@ export const queryKeys = {
   admins: {
     all: ['admins'] as const,
   },
+  adminMe: {
+    all: ['adminMe'] as const,
+  },
   levelTests: {
     questions: {
       all: ['levelTests', 'questions'] as const,

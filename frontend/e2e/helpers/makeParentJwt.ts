@@ -26,3 +26,24 @@ export function makeParentJwt({ sub, email, name, expiresInSeconds = 60 * 60 }: 
   )
   return `${header}.${payload}.e2e-fake-signature`
 }
+
+export interface FakeAdminPayload {
+  sub: string
+  username: string
+  expiresInSeconds?: number
+}
+
+// serverAuth.ts(getServerAuth)는 관리자 세션 쿠키도 학부모와 동일하게 서명 검증 없이
+// payload만 디코드한다(tokenType==='admin' && username 존재 && exp 확인).
+export function makeAdminJwt({ sub, username, expiresInSeconds = 60 * 60 }: FakeAdminPayload): string {
+  const header = base64url(JSON.stringify({ alg: 'none', typ: 'JWT' }))
+  const payload = base64url(
+    JSON.stringify({
+      sub,
+      username,
+      tokenType: 'admin',
+      exp: Math.floor(Date.now() / 1000) + expiresInSeconds,
+    }),
+  )
+  return `${header}.${payload}.e2e-fake-signature`
+}

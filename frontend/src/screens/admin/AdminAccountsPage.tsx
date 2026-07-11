@@ -3,7 +3,7 @@
 import { useState, type SubmitEvent } from 'react'
 import { CreateAdminInputSchema, type CreateAdminInput } from '../../api/schemas/admin.schema'
 import { ApiError } from '../../lib/apiClient'
-import { useAuthStore } from '../../stores/authStore'
+import { useAdminMeQuery } from './hooks/useAdminMeQuery'
 import { useAdminsQuery } from './hooks/useAdminsQuery'
 import { useAdminMutations } from './hooks/useAdminMutations'
 
@@ -13,7 +13,7 @@ const emptyForm: CreateAdminInput = {
 }
 
 export default function AdminAccountsPage() {
-  const currentAdminId = useAuthStore((state) => state.admin?.id)
+  const { currentAdminId } = useAdminMeQuery()
   const { admins, isLoading, error: listError } = useAdminsQuery()
   const { createAdmin, deleteAdmin, isCreating, isDeleting } = useAdminMutations()
 

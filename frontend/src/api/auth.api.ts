@@ -1,9 +1,11 @@
 import { API_BASE_URL, apiFetch } from '../lib/apiClient'
 import {
+  AdminProfileSchema,
   LoginResponseSchema,
   ParentLoginResponseSchema,
   ParentProfileSchema,
   ParentSignupResponseSchema,
+  type AdminProfile,
   type LoginResponse,
   type OAuthProvider,
   type ParentPasswordAuthInput,
@@ -17,8 +19,17 @@ export async function login(username: string, password: string): Promise<LoginRe
   const raw = await apiFetch('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ username, password }),
-  }, { authMode: 'none' })
+  })
   return LoginResponseSchema.parse(raw)
+}
+
+export async function logoutAdmin(): Promise<void> {
+  await apiFetch('/auth/logout', { method: 'POST' })
+}
+
+export async function fetchAdminMe(): Promise<AdminProfile> {
+  const raw = await apiFetch('/auth/admin/me')
+  return AdminProfileSchema.parse(raw)
 }
 
 export function socialLoginStartUrl(provider: OAuthProvider, returnTo = '/'): string {
@@ -30,7 +41,7 @@ export async function exchangeSocialLogin(code: string): Promise<ParentLoginResp
   const raw = await apiFetch('/auth/social/exchange', {
     method: 'POST',
     body: JSON.stringify({ code }),
-  }, { authMode: 'none' })
+  })
   return ParentLoginResponseSchema.parse(raw)
 }
 
@@ -40,7 +51,7 @@ export async function loginParentWithPassword(
   const raw = await apiFetch('/auth/parents/login', {
     method: 'POST',
     body: JSON.stringify(input),
-  }, { authMode: 'none' })
+  })
   return ParentLoginResponseSchema.parse(raw)
 }
 
@@ -48,7 +59,7 @@ export async function signupParent(input: ParentSignupInput): Promise<ParentSign
   const raw = await apiFetch('/auth/parents/signup', {
     method: 'POST',
     body: JSON.stringify(input),
-  }, { authMode: 'none' })
+  })
   return ParentSignupResponseSchema.parse(raw)
 }
 
@@ -56,15 +67,15 @@ export async function verifyParentEmail(token: string): Promise<ParentLoginRespo
   const raw = await apiFetch('/auth/parents/verify-email', {
     method: 'POST',
     body: JSON.stringify({ token }),
-  }, { authMode: 'none' })
+  })
   return ParentLoginResponseSchema.parse(raw)
 }
 
 export async function fetchParentMe(): Promise<ParentProfile> {
-  const raw = await apiFetch('/auth/social/me', {}, { authMode: 'parent' })
+  const raw = await apiFetch('/auth/social/me')
   return ParentProfileSchema.parse(raw)
 }
 
 export async function logoutParent(): Promise<void> {
-  await apiFetch('/auth/parents/logout', { method: 'POST' }, { authMode: 'none' })
+  await apiFetch('/auth/parents/logout', { method: 'POST' })
 }

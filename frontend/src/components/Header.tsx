@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { CalendarCheck, ChevronDown, LogIn, LogOut, Menu, Shield, X } from 'lucide-react'
 import type { ParentProfile } from '../api/schemas/auth.schema'
-import { logoutParent } from '../api/auth.api'
-import { useAuthStore } from '../stores/authStore'
+import { logoutAdmin, logoutParent } from '../api/auth.api'
 import { useLoginModalStore } from '../stores/loginModalStore'
 import AdminLoginModal from './AdminLoginModal'
 import LogoMark from './LogoMark'
@@ -121,34 +120,27 @@ export interface HeaderInitialAuth {
 
 export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth }) {
   const [isOpen, setIsOpen] = useState(false)
-  // 관리자 인증은 클라이언트 스토어(persist 쿠키)를 쓰므로, 서버(쿠키)와 클라이언트
-  // 첫 렌더가 항상 일치하도록 mount 전에는 서버가 내려준 initialAuth를 그대로 쓰고
-  // mount 후에야 zustand 스토어 값으로 전환한다. 학부모 인증은 httpOnly 쿠키를
-  // 서버 컴포넌트(getServerAuth)만 읽으므로 initialAuth 값을 그대로 쓴다.
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // 관리자·학부모 인증 모두 httpOnly 쿠키를 서버 컴포넌트(getServerAuth)만 읽으므로
+  // initialAuth 값을 그대로 쓴다 — 클라이언트 JS는 로그인 상태를 읽을 수 없다.
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const adminFromStore = useAuthStore((state) => state.isAuthenticated)
-  const isAuthenticated = mounted ? adminFromStore : initialAuth.admin
+  const isAuthenticated = initialAuth.admin
   const isParentAuthenticated = initialAuth.parent !== null
   const parent = initialAuth.parent
   const isLoginModalOpen = useLoginModalStore((state) => state.isOpen)
   const loginModalRedirectTo = useLoginModalStore((state) => state.redirectTo)
   const openSharedLoginModal = useLoginModalStore((state) => state.open)
   const closeSharedLoginModal = useLoginModalStore((state) => state.close)
-  const logout = useAuthStore((state) => state.logout)
   const router = useRouter()
   const hasAdminLoginParam = searchParams?.get('adminLogin') === '1'
   const hasParentLoginParam = searchParams?.get('login') === '1'
   const shouldShowLoginModal = isLoginModalOpen || hasAdminLoginParam || hasParentLoginParam
   const parentLoginRedirectTo = hasParentLoginParam ? '/apply' : loginModalRedirectTo
 
-  function handleLogout() {
-    logout()
+  async function handleLogout() {
     setIsOpen(false)
+    await logoutAdmin()
+    router.refresh()
     router.push('/')
   }
 
@@ -191,6 +183,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
 
   function handleLoginSuccess() {
     closeSharedLoginModal()
+    router.refresh()
     router.push('/admin')
   }
 

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { useAuthStore } from '../../stores/authStore'
+import { logoutAdmin } from '../../api/auth.api'
 const adminNavItems = [
   { to: '/admin/notices', label: '공지 관리' },
   { to: '/admin/reservations', label: '예약 관리' },
@@ -22,12 +22,12 @@ function navLinkClass(isActive: boolean) {
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const logout = useAuthStore((state) => state.logout)
   const pathname = usePathname()
   const router = useRouter()
 
-  function handleLogout() {
-    logout()
+  async function handleLogout() {
+    await logoutAdmin()
+    router.refresh()
     router.push('/admin/login')
   }
 
