@@ -7,6 +7,16 @@ import {
 } from './auth-cookies.js';
 
 describe('auth cookies', () => {
+  const originalCookieDomain = process.env.COOKIE_DOMAIN;
+
+  afterEach(() => {
+    if (originalCookieDomain === undefined) {
+      delete process.env.COOKIE_DOMAIN;
+    } else {
+      process.env.COOKIE_DOMAIN = originalCookieDomain;
+    }
+  });
+
   it('sets httpOnly auth cookies with shared options', () => {
     const response = { cookie: jest.fn() };
 
@@ -23,6 +33,29 @@ describe('auth cookies', () => {
       'parent-token',
       expect.objectContaining({ httpOnly: true, sameSite: 'lax', path: '/' }),
     );
+  });
+
+  it('applies COOKIE_DOMAIN to auth cookies when set, so subdomains share the session', () => {
+    process.env.COOKIE_DOMAIN = 'openmath.io.kr';
+    const response = { cookie: jest.fn() };
+
+    setAuthCookie(response, 'parent', 'parent-token');
+
+    expect(response.cookie).toHaveBeenCalledWith(
+      PARENT_AUTH_COOKIE,
+      'parent-token',
+      expect.objectContaining({ domain: 'openmath.io.kr' }),
+    );
+  });
+
+  it('omits the domain option when COOKIE_DOMAIN is not set (dev/localhost)', () => {
+    delete process.env.COOKIE_DOMAIN;
+    const response = { cookie: jest.fn() };
+
+    setAuthCookie(response, 'parent', 'parent-token');
+
+    const [, , options] = response.cookie.mock.calls[0];
+    expect(options.domain).toBeUndefined();
   });
 
   it('clears auth cookies with matching paths', () => {

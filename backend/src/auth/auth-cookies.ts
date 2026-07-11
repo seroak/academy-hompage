@@ -19,6 +19,7 @@ interface AuthCookieOptions {
   secure: boolean;
   path: string;
   maxAge: number;
+  domain?: string;
 }
 
 interface CookieRequest {
@@ -30,12 +31,14 @@ function cookieName(kind: AuthKind) {
 }
 
 function cookieOptions(): AuthCookieOptions {
+  const domain = process.env.COOKIE_DOMAIN;
   return {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: AUTH_COOKIE_MAX_AGE_MS,
+    ...(domain ? { domain } : {}),
   };
 }
 
