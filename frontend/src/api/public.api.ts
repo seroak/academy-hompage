@@ -5,7 +5,6 @@ import {
   type ConfirmedSlot,
   type JoinableGroup,
 } from './schemas/reservation-group.schema'
-import { QuizQuestionListSchema, type QuizQuestion } from './schemas/levelTest.schema'
 
 export const PUBLIC_REVALIDATE_SECONDS = 300
 
@@ -71,16 +70,6 @@ export async function fetchJoinableGroups(): Promise<JoinableGroup[]> {
   try {
     const raw = await publicApiFetchFresh('/reservation-groups/joinable')
     return JoinableGroupListSchema.parse(raw)
-  } catch {
-    return []
-  }
-}
-
-// 레벨테스트는 매 응시마다 새로 무작위 출제되어야 하므로 5분 캐시(publicApiFetch)를 쓰지 않는다.
-export async function fetchLevelTestQuiz(age: number): Promise<QuizQuestion[]> {
-  try {
-    const raw = await publicApiFetchFresh(`/level-tests/quiz?age=${age}`)
-    return QuizQuestionListSchema.parse(raw)
   } catch {
     return []
   }
