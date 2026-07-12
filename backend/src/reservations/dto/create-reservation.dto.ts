@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
+  IsEmail,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -51,12 +52,14 @@ export class CreateReservationDto {
   childAge: number;
 
   @IsString()
+  @IsNotEmpty()
   parentName: string;
 
-  @IsString()
+  @IsEmail()
   parentEmail: string;
 
   @IsString()
+  @IsNotEmpty()
   parentPhone: string;
 
   @ArrayMinSize(1)

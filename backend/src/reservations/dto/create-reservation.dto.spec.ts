@@ -73,4 +73,23 @@ describe('CreateReservationDto', () => {
 
     expect(errors.some((error) => error.property === 'parentPhone')).toBe(true);
   });
+
+  it('빈 보호자 정보와 잘못된 이메일은 실패한다', async () => {
+    const dto = plainToInstance(CreateReservationDto, {
+      childId: 'child-1',
+      childName: '아이',
+      childAge: 5,
+      parentName: '',
+      parentEmail: 'not-an-email',
+      parentPhone: '',
+      preferredSlots: [{ dayOfWeek: 'MON', startMinute: 780, endMinute: 850 }],
+    });
+
+    const errors = await validate(dto);
+    const invalidProperties = errors.map((error) => error.property);
+
+    expect(invalidProperties).toEqual(
+      expect.arrayContaining(['parentName', 'parentEmail', 'parentPhone']),
+    );
+  });
 });

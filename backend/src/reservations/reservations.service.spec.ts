@@ -3,6 +3,7 @@ import { NotFoundException, ConflictException } from '@nestjs/common';
 import { ReservationsService } from './reservations.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NotificationService } from '../notifications/notification.service.js';
+import { ReservationsTransactionService } from './reservations-transaction.service.js';
 
 describe('ReservationsService', () => {
   let service: ReservationsService;
@@ -18,6 +19,7 @@ describe('ReservationsService', () => {
     child: { findFirst: jest.Mock };
   };
   let notification: { sendReservationReceived: jest.Mock };
+  let transaction: { run: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -34,12 +36,16 @@ describe('ReservationsService', () => {
     notification = {
       sendReservationReceived: jest.fn().mockResolvedValue(undefined),
     };
+    transaction = {
+      run: jest.fn((operation) => operation(prisma)),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReservationsService,
         { provide: PrismaService, useValue: prisma },
         { provide: NotificationService, useValue: notification },
+        { provide: ReservationsTransactionService, useValue: transaction },
       ],
     }).compile();
 

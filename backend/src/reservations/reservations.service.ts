@@ -6,12 +6,14 @@ import { CreateReservationDto } from './dto/create-reservation.dto.js';
 import { CreateWalkInReservationDto } from './dto/create-walk-in-reservation.dto.js';
 import { UpdateReservationDto } from './dto/update-reservation.dto.js';
 import { QueryReservationsDto } from './dto/query-reservations.dto.js';
+import { ReservationsTransactionService } from './reservations-transaction.service.js';
 
 @Injectable()
 export class ReservationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notification: NotificationService,
+    private readonly transaction: ReservationsTransactionService,
   ) {}
 
   findAll(query: QueryReservationsDto) {
@@ -67,30 +69,32 @@ export class ReservationsService {
       throw new NotFoundException(`Child ${dto.childId} not found`);
     }
 
-    const existingReservations = await this.prisma.reservation.findMany({
-      where: { childId: dto.childId, status: { not: 'CANCELLED' } },
-      include: { preferredSlots: true },
-    });
-
-    const hasOverlap = existingReservations.some((existing) =>
-      existing.preferredSlots.some((existingSlot) =>
-        dto.preferredSlots.some((newSlot) => this.slotsOverlap(newSlot, existingSlot)),
-      ),
-    );
-
-    if (hasOverlap) {
-      throw new ConflictException('이미 같은 시간에 신청한 내역이 있습니다.');
-    }
-
     const { preferredSlots, ...reservationData } = dto;
 
-    const reservation = await this.prisma.reservation.create({
-      data: {
-        ...reservationData,
-        parentUserId,
-        preferredSlots: { create: preferredSlots },
-      },
-      include: { preferredSlots: true },
+    const reservation = await this.transaction.run(async (tx) => {
+      const existingReservations = await tx.reservation.findMany({
+        where: { childId: dto.childId, status: { not: 'CANCELLED' } },
+        include: { preferredSlots: true },
+      });
+
+      const hasOverlap = existingReservations.some((existing) =>
+        existing.preferredSlots.some((existingSlot) =>
+          dto.preferredSlots.some((newSlot) => this.slotsOverlap(newSlot, existingSlot)),
+        ),
+      );
+
+      if (hasOverlap) {
+        throw new ConflictException('이미 같은 시간에 신청한 내역이 있습니다.');
+      }
+
+      return tx.reservation.create({
+        data: {
+          ...reservationData,
+          parentUserId,
+          preferredSlots: { create: preferredSlots },
+        },
+        include: { preferredSlots: true },
+      });
     });
     await this.notification.sendReservationReceived(reservation);
     return reservation;
