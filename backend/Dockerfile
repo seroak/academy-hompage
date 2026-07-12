@@ -9,8 +9,8 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
 ENV NODE_ENV=production
+RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src ./src
 COPY prisma ./prisma
