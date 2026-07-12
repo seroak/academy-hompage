@@ -79,6 +79,8 @@ jobs:
               exit 1
             fi
 
+            docker exec academy-caddy-prod caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+
             if [ -n "$ACTIVE" ]; then
               $COMPOSE stop backend_$ACTIVE
               $COMPOSE rm -f backend_$ACTIVE
