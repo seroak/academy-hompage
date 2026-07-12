@@ -108,6 +108,31 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
     await expect(remainingSeats).toHaveCSS('font-size', '10px')
     await expect(cell).toHaveClass(/bg-emerald-500/)
   })
+
+  test('모바일에서 시간표는 페이지가 아니라 자체 영역만 가로 스크롤한다', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 844 })
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+
+    const widths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+      picker: document.querySelector('[data-testid="preferred-slots-scroll"]')?.scrollWidth ?? 0,
+      pickerViewport: document.querySelector('[data-testid="preferred-slots-scroll"]')?.clientWidth ?? 0,
+    }))
+
+    expect(widths.document).toBe(widths.viewport)
+    expect(widths.picker).toBeGreaterThan(widths.pickerViewport)
+  })
+
+  test('시간표 셀은 모바일 터치에 충분한 높이를 제공한다', async ({ page }) => {
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+
+    const box = await apply.slotCell('MON', 840).boundingBox()
+
+    expect(box?.height).toBeGreaterThanOrEqual(44)
+  })
 })
 
 test.describe('보호자 수업 신청 (접근 제어)', () => {

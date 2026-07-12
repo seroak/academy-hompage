@@ -9,6 +9,14 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page).toHaveTitle(/생각을 여는 수학|academy/i)
   })
 
+  test('로그인 모달을 열면 포커스가 모달 안에서 시작한다', async ({ page }) => {
+    await page.goto('/?login=1')
+
+    const dialog = page.getByRole('dialog', { name: '로그인' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.locator(':focus')).toHaveCount(1)
+  })
+
   test('홈에서 수업 신청 절차를 순서대로 안내한다', async ({ page }) => {
     const pages = new PublicPages(page)
     await pages.gotoHome()
