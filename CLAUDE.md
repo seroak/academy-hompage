@@ -49,6 +49,8 @@ npx playwright test
 - `DELETE`는 204를 반환한다.
 - Prisma schema·migration 변경은 대상 DB에 적용하고 실제 API 요청으로 검증한다.
 - 통합 경로 변경은 양쪽 서버와 Playwright 또는 curl로 확인한다. 정적 단일 영역 변경에 양쪽 서버를 강제하지 않는다.
+- 운영 Compose 명령은 프로젝트 루트에서 실행한다. 루트 `.env.production`은 Compose 치환용이고, 백엔드 런타임 환경변수는 `backend/.env.production`에서 관리한다.
+- `(healthy)`는 백엔드·DB 상태만 확인한다. OAuth 등 외부 연동 설정은 실제 흐름으로 별도 검증한다.
 - 필수 검증을 못 했으면 구현과 검증 상태를 분리하고 미실행 검증을 남은 작업으로 명시한다.
 - lint 경고 해결에 임계값 상향·규칙 비활성화·예외 추가를 쓰려면 먼저 사용자 승인을 받는다.
 - E2E·빌드 후 `git status`와 diff로 생성 파일 변경을 확인한다. 기존 사용자 변경은 덮어쓰지 않는다.
