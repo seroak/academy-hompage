@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 import type { ParentProfile } from "../api/schemas/auth.schema";
@@ -8,8 +8,8 @@ import { logoutParent } from "../api/auth.api";
 import { useApplyReservationMutation } from "./hooks/useApplyReservationMutation";
 import { useJoinableGroupsQuery } from "./hooks/useJoinableGroupsQuery";
 import { useConfirmedSlotsQuery } from "./hooks/useConfirmedSlotsQuery";
-import { useMyReservationsQuery } from "./hooks/useMyReservationsQuery";
 import PreferredSlotsPicker from "../components/PreferredSlotsPicker";
+
 import { useChildrenQuery } from "../queries/useChildrenQuery";
 import {
   CreateReservationInputSchema,
@@ -32,8 +32,6 @@ const emptyForm: CreateReservationInput = {
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
 
-const FIELD_ORDER = ["childId", "parentName", "parentEmail", "parentPhone", "preferredSlots"] as const;
-
 function formForParent(parent: ParentProfile | null): CreateReservationInput {
   if (!parent) return emptyForm;
 
@@ -55,34 +53,14 @@ export default function ApplyPage({
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation();
   const { joinableGroups } = useJoinableGroupsQuery();
   const { confirmedSlots } = useConfirmedSlotsQuery();
-  const { myReservations } = useMyReservationsQuery();
   const { children, isLoading: isChildrenLoading } = useChildrenQuery();
   const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
-
-  function clearFieldError(name: string) {
-    setFieldErrors((current) => {
-      if (!current[name]) return current;
-      const next = { ...current };
-      delete next[name];
-      return next;
-    });
-  }
-
-  function inputClass(name: string) {
-    return `scroll-mt-24 rounded-lg border px-3 py-2 text-sm ${
-      fieldErrors[name] ? "border-red-500 ring-1 ring-red-500" : "border-slate-300"
-    }`;
-  }
 
   const matchingGroups = joinableGroups.filter(
     (group) => form.childAge >= group.minAge && form.childAge <= group.maxAge,
   );
-  const appliedSlots = myReservations
-    .filter((reservation) => reservation.childId === form.childId)
-    .flatMap((reservation) => reservation.preferredSlots);
   const requestedGroup = matchingGroups.find((group) => group.id === form.requestedGroupId) ?? null;
 
   function selectChild(childId: string) {
@@ -96,7 +74,6 @@ export default function ApplyPage({
       requestedGroupId: undefined,
       preferredSlots: [],
     }));
-    clearFieldError("childId");
   }
 
   async function handleSwitchAccount() {
@@ -136,13 +113,6 @@ export default function ApplyPage({
       }
 
       setFieldErrors(errors);
-
-      const firstErrorField = FIELD_ORDER.find((name) => errors[name]);
-      if (firstErrorField) {
-        const el = fieldRefs.current[firstErrorField];
-        el?.scrollIntoView({ behavior: "smooth", block: "start" });
-        el?.focus({ preventScroll: true });
-      }
       return;
     }
 
@@ -167,8 +137,8 @@ export default function ApplyPage({
       <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center">
         <h1 className="text-xl font-bold text-slate-900">접수 완료</h1>
         <p className="mt-3 text-sm text-slate-600">
-          수업 신청이 접수되었습니다. 모집 중인 반에 합류를 신청하셨다면 관리자 확인 후, 그렇지 않다면 비슷한
-          신청이 모이면 그룹 편성 결과를 이메일로 안내드리겠습니다.
+          수업 신청이 접수되었습니다. 모집 중인 반에 합류를 신청하셨다면 관리자 확인 후, 그렇지 않다면 비슷한 신청이
+          모이면 그룹 편성 결과를 이메일로 안내드리겠습니다.
         </p>
         <button
           type="button"
@@ -185,8 +155,8 @@ export default function ApplyPage({
     <div className="mx-auto max-w-4xl">
       <h1 className="text-2xl font-bold text-slate-900">수업 신청</h1>
       <p className="mt-2 text-sm text-slate-600">
-        지금 모집 중인 반이 있으면 바로 합류를 신청할 수 있고, 없다면 비슷한 희망 시간대의 신청이 모일 때
-        그룹을 편성해 안내드립니다.
+        지금 모집 중인 반이 있으면 바로 합류를 신청할 수 있고, 없다면 비슷한 희망 시간대의 신청이 모일 때 그룹을 편성해
+        안내드립니다.
       </p>
       {parent && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
@@ -213,167 +183,189 @@ export default function ApplyPage({
       {!isAdminPreview && !isChildrenLoading && children.length === 0 ? (
         <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">먼저 자녀를 등록해 주세요</h2>
-          <p className="mt-2 text-sm text-slate-600">등록한 자녀 정보로 상담 신청과 레벨테스트를 편리하게 진행할 수 있습니다.</p>
-          <button type="button" onClick={() => router.push('/children')} className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">자녀 등록하기</button>
-        </div>
-      ) : (
-
-      <form
-        onSubmit={handleSubmit}
-        className="mt-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 sm:grid-cols-2"
-      >
-        {isAdminPreview ? <>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">아이 이름<input className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={form.childName} onChange={(e) => setForm({ ...form, childName: e.target.value })} /></label>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">나이(만)<select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={form.childAge} onChange={(e) => setForm({ ...form, childAge: Number(e.target.value) })}>{CHILD_AGE_OPTIONS.map((age) => <option key={age} value={age}>만 {age}세</option>)}</select></label>
-        </> : <>
-          <label className="flex flex-col gap-1 text-sm text-slate-700">신청할 자녀
-            <select
-              ref={(el) => { fieldRefs.current.childId = el; }}
-              className={inputClass("childId")}
-              aria-invalid={!!fieldErrors.childId}
-              value={form.childId}
-              onChange={(e) => selectChild(e.target.value)}
-            >
-              <option value="">자녀를 선택해 주세요</option>
-              {children.map((child) => <option key={child.id} value={child.id}>{child.name} · 만 {child.age}세</option>)}
-            </select>
-            {fieldErrors.childId && <span className="text-xs text-red-600">{fieldErrors.childId}</span>}
-          </label>
-          <div className="flex flex-col gap-1 text-sm text-slate-700">
-            <span>아이 정보</span>
-            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
-              {form.childId ? `${form.childName} · 만 ${form.childAge}세` : "자녀를 선택하면 정보가 표시됩니다"}
-            </p>
-          </div>
-        </>}
-
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
-          보호자 이름
-          <input
-            ref={(el) => { fieldRefs.current.parentName = el; }}
-            className={inputClass("parentName")}
-            aria-invalid={!!fieldErrors.parentName}
-            value={form.parentName}
-            onChange={(e) => { setForm({ ...form, parentName: e.target.value }); clearFieldError("parentName"); }}
-          />
-          {fieldErrors.parentName && <span className="text-xs text-red-600">{fieldErrors.parentName}</span>}
-        </label>
-
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
-          이메일
-          <input
-            ref={(el) => { fieldRefs.current.parentEmail = el; }}
-            type="email"
-            className={inputClass("parentEmail")}
-            aria-invalid={!!fieldErrors.parentEmail}
-            value={form.parentEmail}
-            onChange={(e) => { setForm({ ...form, parentEmail: e.target.value }); clearFieldError("parentEmail"); }}
-          />
-          {fieldErrors.parentEmail && <span className="text-xs text-red-600">{fieldErrors.parentEmail}</span>}
-        </label>
-
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
-          전화번호
-          <input
-            ref={(el) => { fieldRefs.current.parentPhone = el; }}
-            className={inputClass("parentPhone")}
-            aria-invalid={!!fieldErrors.parentPhone}
-            value={form.parentPhone}
-            onChange={(e) => { setForm({ ...form, parentPhone: e.target.value }); clearFieldError("parentPhone"); }}
-          />
-          {fieldErrors.parentPhone && <span className="text-xs text-red-600">{fieldErrors.parentPhone}</span>}
-        </label>
-
-        {matchingGroups.length > 0 && (
-          <div className="col-span-full rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-            <p className="text-sm font-semibold text-emerald-800">
-              만 {form.childAge}세가 합류할 수 있는 모집 중인 반이 있어요.
-            </p>
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {matchingGroups.map((group) => (
-                <li key={group.id}>
-                  <button
-                    type="button"
-                    onClick={() => joinGroup(group.id)}
-                    disabled={form.requestedGroupId === group.id}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      form.requestedGroupId === group.id
-                        ? 'border-emerald-600 bg-emerald-600 text-white'
-                        : 'border-emerald-300 bg-white text-emerald-700 hover:border-emerald-500'
-                    }`}
-                  >
-                    {group.label} ({group.filledCount}/{group.capacity}명) ·{' '}
-                    {group.slots
-                      .map((slot) => `${DAY_OF_WEEK_LABELS[slot.dayOfWeek]} ${timeRangeLabel(slot.startMinute, slot.endMinute)}`)
-                      .join(', ')}
-                    {form.requestedGroupId === group.id ? ' · 합류 신청됨' : ' · 이 반에 합류 신청'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            {requestedGroup && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-emerald-800">
-                <span>
-                  "{requestedGroup.label}" 반에 합류를 신청했습니다. 아래 희망 시간이 자동으로 채워졌습니다.
-                </span>
-                <button
-                  type="button"
-                  onClick={cancelJoinRequest}
-                  className="font-semibold text-emerald-700 underline hover:text-emerald-900"
-                >
-                  합류 신청 취소
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <fieldset
-          ref={(el) => { fieldRefs.current.preferredSlots = el; }}
-          tabIndex={-1}
-          className="col-span-full min-w-0 scroll-mt-24"
-        >
-          <legend className={`text-sm font-medium ${fieldErrors.preferredSlots ? "text-red-600" : "text-slate-800"}`}>
-            가능한 시간
-          </legend>
-          {fieldErrors.preferredSlots && (
-            <span className="mt-1 block text-xs text-red-600">{fieldErrors.preferredSlots}</span>
-          )}
-          <PreferredSlotsPicker
-            value={form.preferredSlots}
-            onChange={(slots) => {
-              setForm({ ...form, preferredSlots: slots, requestedGroupId: undefined });
-              clearFieldError("preferredSlots");
-            }}
-            joinableGroups={matchingGroups}
-            confirmedSlots={confirmedSlots}
-            appliedSlots={appliedSlots}
-            childAge={form.childAge}
-          />
-        </fieldset>
-
-        <label className="col-span-full flex flex-col gap-1 text-sm text-slate-700">
-          요청사항(선택)
-          <textarea
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            rows={3}
-            value={form.note}
-            onChange={(e) => setForm({ ...form, note: e.target.value })}
-          />
-        </label>
-
-        {submitError && <p className="col-span-full text-sm text-red-600">{submitError}</p>}
-
-        <div className="col-span-full">
+          <p className="mt-2 text-sm text-slate-600">
+            등록한 자녀 정보로 상담 신청과 레벨테스트를 편리하게 진행할 수 있습니다.
+          </p>
           <button
-            type="submit"
-            disabled={isSubmitting}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            type="button"
+            onClick={() => router.push("/children")}
+            className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
-            신청하기
+            자녀 등록하기
           </button>
         </div>
-      </form>
+      ) : (
+        <form
+          onSubmit={handleSubmit}
+          className="mt-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 sm:grid-cols-2"
+        >
+          {isAdminPreview ? (
+            <>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                아이 이름
+                <input
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  value={form.childName}
+                  onChange={(e) => setForm({ ...form, childName: e.target.value })}
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                나이(만)
+                <select
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  value={form.childAge}
+                  onChange={(e) => setForm({ ...form, childAge: Number(e.target.value) })}
+                >
+                  {CHILD_AGE_OPTIONS.map((age) => (
+                    <option key={age} value={age}>
+                      만 {age}세
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : (
+            <>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                신청할 자녀
+                <select
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  value={form.childId}
+                  onChange={(e) => selectChild(e.target.value)}
+                >
+                  <option value="">자녀를 선택해 주세요</option>
+                  {children.map((child) => (
+                    <option key={child.id} value={child.id}>
+                      {child.name} · 만 {child.age}세
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {form.childId && (
+                <div className="flex flex-col gap-1 text-sm text-slate-700">
+                  <span>아이 정보</span>
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
+                    {form.childName} · 만 {form.childAge}세
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          <label className="flex flex-col gap-1 text-sm text-slate-700">
+            보호자 이름
+            <input
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              value={form.parentName}
+              onChange={(e) => setForm({ ...form, parentName: e.target.value })}
+            />
+            {fieldErrors.parentName && <span className="text-xs text-red-600">{fieldErrors.parentName}</span>}
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-slate-700">
+            이메일
+            <input
+              type="email"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              value={form.parentEmail}
+              onChange={(e) => setForm({ ...form, parentEmail: e.target.value })}
+            />
+            {fieldErrors.parentEmail && <span className="text-xs text-red-600">{fieldErrors.parentEmail}</span>}
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-slate-700">
+            전화번호
+            <input
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              value={form.parentPhone}
+              onChange={(e) => setForm({ ...form, parentPhone: e.target.value })}
+            />
+            {fieldErrors.parentPhone && <span className="text-xs text-red-600">{fieldErrors.parentPhone}</span>}
+          </label>
+
+          {matchingGroups.length > 0 && (
+            <div className="col-span-full rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-sm font-semibold text-emerald-800">
+                만 {form.childAge}세가 합류할 수 있는 모집 중인 반이 있어요.
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {matchingGroups.map((group) => (
+                  <li key={group.id}>
+                    <button
+                      type="button"
+                      onClick={() => joinGroup(group.id)}
+                      disabled={form.requestedGroupId === group.id}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                        form.requestedGroupId === group.id
+                          ? "border-emerald-600 bg-emerald-600 text-white"
+                          : "border-emerald-300 bg-white text-emerald-700 hover:border-emerald-500"
+                      }`}
+                    >
+                      {group.label} ({group.filledCount}/{group.capacity}명) ·{" "}
+                      {group.slots
+                        .map(
+                          (slot) =>
+                            `${DAY_OF_WEEK_LABELS[slot.dayOfWeek]} ${timeRangeLabel(slot.startMinute, slot.endMinute)}`,
+                        )
+                        .join(", ")}
+                      {form.requestedGroupId === group.id ? " · 합류 신청됨" : " · 이 반에 합류 신청"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {requestedGroup && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-emerald-800">
+                  <span>
+                    "{requestedGroup.label}" 반에 합류를 신청했습니다. 아래 희망 시간이 자동으로 채워졌습니다.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={cancelJoinRequest}
+                    className="font-semibold text-emerald-700 underline hover:text-emerald-900"
+                  >
+                    합류 신청 취소
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          <fieldset className="col-span-full">
+            <legend className="text-sm font-medium text-slate-800">가능한 시간</legend>
+            <PreferredSlotsPicker
+              value={form.preferredSlots}
+              onChange={(slots) => setForm({ ...form, preferredSlots: slots, requestedGroupId: undefined })}
+              joinableGroups={matchingGroups}
+              confirmedSlots={confirmedSlots}
+              childAge={form.childAge}
+            />
+            {fieldErrors.preferredSlots && (
+              <span className="mt-1 block text-xs text-red-600">{fieldErrors.preferredSlots}</span>
+            )}
+          </fieldset>
+
+          <label className="col-span-full flex flex-col gap-1 text-sm text-slate-700">
+            요청사항(선택)
+            <textarea
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              rows={3}
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+            />
+          </label>
+
+          {submitError && <p className="col-span-full text-sm text-red-600">{submitError}</p>}
+
+          <div className="col-span-full">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+            >
+              신청하기
+            </button>
+          </div>
+        </form>
       )}
     </div>
   );

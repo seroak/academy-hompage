@@ -165,6 +165,30 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
     await expect(apply.successHeading).toBeVisible()
   })
 
+  test('희망 시간을 먼저 선택한 뒤 자녀를 선택해도 시간 선택이 유지된다', async ({ page }) => {
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+
+    await apply.selectSlotByKeyboard('MON', 840, 860)
+    await apply.childSelect.selectOption('child-e2e-1')
+
+    await expect(page.getByText('월 14:00~14:20 · 20분')).toBeVisible()
+  })
+
+  test('자녀가 없어도 레벨테스트 안내 없이 상담 신청만 안내한다', async ({ page }) => {
+    await routeByMethod(page, apiPattern('/children$'), {
+      GET: (route) => fulfillJson(route, 200, []),
+    })
+
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+
+    await expect(
+      page.getByText('등록한 자녀 정보로 상담 신청을 편리하게 진행할 수 있습니다.'),
+    ).toBeVisible()
+    await expect(page.getByText(/레벨테스트/)).toHaveCount(0)
+  })
+
   test('모바일에서 요일 탭을 바꾸면 진행 중인 선택이 초기화된다', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 844 })
     const apply = new ApplyPagePO(page)

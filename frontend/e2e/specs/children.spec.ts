@@ -22,6 +22,7 @@ test.describe('내 자녀 관리', () => {
     })
 
     await page.goto('/children')
+    await expect(page.getByText('등록한 자녀 정보는 상담 신청에 그대로 사용할 수 있습니다.')).toBeVisible()
     await page.getByLabel('자녀 이름').fill('즉시 표시 아이')
     await page.getByLabel('만 나이').selectOption('5')
     await page.getByRole('button', { name: '자녀 등록' }).click()

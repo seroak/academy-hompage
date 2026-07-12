@@ -95,7 +95,7 @@ export default function ChildrenPage() {
   }
 
   async function handleDelete(child: Child) {
-    if (!window.confirm(`${child.name} 어린이를 삭제할까요? 기존 신청과 레벨테스트 이력은 유지됩니다.`)) return
+    if (!window.confirm(`${child.name} 어린이를 삭제할까요? 기존 신청 이력은 유지됩니다.`)) return
     try {
       await remove.mutateAsync(child.id)
       if (editing?.id === child.id) cancelEdit()
@@ -112,7 +112,7 @@ export default function ChildrenPage() {
         <p className="text-xs font-black uppercase tracking-wide text-[#e86f00]">내 계정</p>
         <h1 className="mt-2 text-3xl font-black text-[#222222]">내 자녀</h1>
         <p className="mt-3 text-sm font-semibold leading-6 text-[#6f6253]">
-          등록한 자녀 정보는 상담 신청과 레벨테스트에 그대로 사용할 수 있습니다.
+          등록한 자녀 정보는 상담 신청에 그대로 사용할 수 있습니다.
         </p>
 
         {isLoading ? (
