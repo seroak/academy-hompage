@@ -19,7 +19,8 @@
 ## Next.js와 React
 
 - 공개 페이지 SEO는 App Router metadata와 서버 렌더링을 기준으로 관리한다. 브라우저 상태는 `use client` 컴포넌트로 분리한다.
-- 페이지 `openGraph`는 layout과 딥머지되지 않는다. `baseOpenGraph()`를 스프레드해 기본 속성을 유지한다.
+- 페이지 metadata 객체는 layout과 딥머지되지 않는다. `openGraph`는 `baseOpenGraph()`, canonical을 정의한 `alternates`는 `rssAlternate()`를 함께 스프레드해 공통 속성을 유지한다.
+- 백엔드 콘텐츠로 만드는 RSS 같은 피드 라우트는 빌드 시 빈 응답이 정적 산출물로 고정되지 않게 동적 생성하고 응답 캐시 헤더로 부하를 제어한다.
 - `AgentationDev.tsx`는 개발 환경에서만 루트 레이아웃에 렌더링한다.
 - props·store·query 값 변경을 이유로 같은 컴포넌트 state를 `useEffect`에서 보정하지 않는다. `key` 재마운트 또는 렌더 중 이전 값 비교를 사용한다.
 - `useEffect`는 네트워크 구독, DOM 조작, 타이머 같은 실제 사이드 이펙트에만 사용한다.
