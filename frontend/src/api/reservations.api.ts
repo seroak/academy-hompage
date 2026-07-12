@@ -1,9 +1,11 @@
 import { apiFetch } from '../lib/apiClient'
 import {
+  MyReservationListSchema,
   ReservationListSchema,
   ReservationSchema,
   type CreateReservationInput,
   type CreateWalkInReservationInput,
+  type MyReservation,
   type Reservation,
   type ReservationFilters,
   type UpdateReservationInput,
@@ -21,6 +23,11 @@ function toQueryString(filters: ReservationFilters): string {
 export async function fetchReservations(filters: ReservationFilters = {}): Promise<Reservation[]> {
   const raw = await apiFetch(`/reservations${toQueryString(filters)}`)
   return ReservationListSchema.parse(raw)
+}
+
+export async function fetchMyReservations(): Promise<MyReservation[]> {
+  const raw = await apiFetch('/reservations/mine')
+  return MyReservationListSchema.parse(raw)
 }
 
 export async function fetchReservation(id: string): Promise<Reservation> {

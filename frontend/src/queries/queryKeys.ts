@@ -11,6 +11,9 @@ export const queryKeys = {
     list: (filters: unknown) => ['reservations', filters] as const,
     detail: (id: string) => ['reservations', id] as const,
   },
+  myReservations: {
+    all: ['myReservations'] as const,
+  },
   reservationGroups: {
     all: ['reservationGroups'] as const,
     detail: (id: string) => ['reservationGroups', id] as const,

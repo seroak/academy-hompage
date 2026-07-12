@@ -97,6 +97,14 @@ export const ReservationListSchema = z.array(ReservationSchema)
 
 export type Reservation = z.infer<typeof ReservationSchema>
 
+export const MyReservationSchema = ReservationSchema.extend({
+  childId: z.string().nullable().optional(),
+})
+
+export const MyReservationListSchema = z.array(MyReservationSchema)
+
+export type MyReservation = z.infer<typeof MyReservationSchema>
+
 export const CreateReservationInputSchema = z.object({
   childId: z.string().min(1, '자녀를 선택해 주세요'),
   childName: z.string().min(1, '아이 이름을 입력해 주세요'),
