@@ -17,6 +17,14 @@ test.describe('공개 페이지 스모크', () => {
     await expect(dialog.locator(':focus')).toHaveCount(1)
   })
 
+  test('로그인 모달의 소셜 로그인 버튼마다 브랜드 마크를 표시한다', async ({ page }) => {
+    await page.goto('/?login=1')
+
+    await expect(page.getByTestId('oauth-provider-icon-google')).toBeVisible()
+    await expect(page.getByTestId('oauth-provider-icon-kakao')).toBeVisible()
+    await expect(page.getByTestId('oauth-provider-icon-naver')).toBeVisible()
+  })
+
   test('홈에서 수업 신청 절차를 순서대로 안내한다', async ({ page }) => {
     const pages = new PublicPages(page)
     await pages.gotoHome()
