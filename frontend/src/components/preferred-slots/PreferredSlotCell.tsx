@@ -16,6 +16,7 @@ interface PreferredSlotCellProps {
   inCancelPreview: boolean
   joinableGroups: JoinableGroup[]
   blocked: boolean
+  alreadyApplied: boolean
   remainingSeats?: number
   isDragging: boolean
   hasAnchor: boolean
@@ -32,6 +33,7 @@ export function PreferredSlotCell({
   inCancelPreview,
   joinableGroups,
   blocked,
+  alreadyApplied,
   remainingSeats,
   isDragging,
   hasAnchor,
@@ -47,18 +49,20 @@ export function PreferredSlotCell({
       type="button"
       data-slot-day={day}
       data-slot-minute={minute}
-      disabled={blocked}
+      disabled={blocked || alreadyApplied}
       title={
         blocked
           ? '이미 정원이 찬 확정 시간이라 신청할 수 없습니다'
-          : isJoinable
-            ? joinableGroups
-                .map((group) => `${group.label} 모집중 ${group.filledCount}/${group.capacity}`)
-                .join(', ')
-            : undefined
+          : alreadyApplied
+            ? '이미 신청한 시간입니다'
+            : isJoinable
+              ? joinableGroups
+                  .map((group) => `${group.label} 모집중 ${group.filledCount}/${group.capacity}`)
+                  .join(', ')
+              : undefined
       }
       aria-label={`${DAY_OF_WEEK_LABELS[day]}요일 ${timeLabel(minute)} 선택${
-        blocked ? ' (신청 불가)' : isJoinable ? ' (모집중인 반 있음)' : ''
+        blocked ? ' (신청 불가)' : alreadyApplied ? ' (이미 신청한 시간)' : isJoinable ? ' (모집중인 반 있음)' : ''
       }`}
       onPointerDown={(event) => {
         event.currentTarget.setPointerCapture(event.pointerId)
@@ -78,18 +82,20 @@ export function PreferredSlotCell({
       className={`relative flex h-8 items-center justify-center rounded-md border text-[10px] font-semibold transition ${
         blocked
           ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300'
-          : inCancelPreview
-            ? 'border-red-400 bg-red-500 text-white'
-            : selected
-              ? 'border-brand-700 bg-brand-600 text-white hover:border-red-300 hover:bg-red-500'
-              : inPreview
-                ? 'border-brand-500 bg-brand-200 text-brand-900'
-                : isJoinable
-                  ? 'border-emerald-600 bg-emerald-500 text-white hover:border-emerald-700 hover:bg-emerald-600'
-                  : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
+          : alreadyApplied
+            ? 'cursor-not-allowed border-amber-300 bg-amber-100 text-amber-500'
+            : inCancelPreview
+              ? 'border-red-400 bg-red-500 text-white'
+              : selected
+                ? 'border-brand-700 bg-brand-600 text-white hover:border-red-300 hover:bg-red-500'
+                : inPreview
+                  ? 'border-brand-500 bg-brand-200 text-brand-900'
+                  : isJoinable
+                    ? 'border-emerald-600 bg-emerald-500 text-white hover:border-emerald-700 hover:bg-emerald-600'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
       }`}
     >
-      {isJoinable && !selected && !blocked && (
+      {isJoinable && !selected && !blocked && !alreadyApplied && (
         <span
           aria-hidden
           className="text-[10px] font-bold leading-none"

@@ -20,6 +20,7 @@ interface PreferredSlotsPickerProps {
   onChange: (slots: PreferredSlot[]) => void;
   joinableGroups?: JoinableGroup[];
   confirmedSlots?: ConfirmedSlot[];
+  appliedSlots?: PreferredSlot[];
   childAge?: number;
 }
 
@@ -33,6 +34,7 @@ export default function PreferredSlotsPicker({
   onChange,
   joinableGroups = [],
   confirmedSlots = [],
+  appliedSlots = [],
   childAge,
 }: PreferredSlotsPickerProps) {
   const gridRef = useRef<HTMLDivElement>(null);
@@ -50,6 +52,12 @@ export default function PreferredSlotsPicker({
 
   function isConfirmedAt(dayOfWeek: (typeof DAY_OF_WEEK_OPTIONS)[number], minute: number): boolean {
     return confirmedSlots.some(
+      (slot) => slot.dayOfWeek === dayOfWeek && slot.startMinute <= minute && slot.endMinute > minute,
+    );
+  }
+
+  function isAppliedAt(dayOfWeek: (typeof DAY_OF_WEEK_OPTIONS)[number], minute: number): boolean {
+    return appliedSlots.some(
       (slot) => slot.dayOfWeek === dayOfWeek && slot.startMinute <= minute && slot.endMinute > minute,
     );
   }
@@ -81,6 +89,12 @@ export default function PreferredSlotsPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [confirmedSlots, joinableGroups, childAge]);
 
+  // 정원이 찬 확정 시간뿐 아니라 이미 신청한 시간도 드래그 선택의 경계(장애물)로 취급한다.
+  const disabledSlots = useMemo(
+    () => [...blockedSlots, ...appliedSlots],
+    [blockedSlots, appliedSlots],
+  );
+
   const {
     anchor,
     isDragging,
@@ -101,7 +115,7 @@ export default function PreferredSlotsPicker({
     setIsDragging,
     buildSlotFromAnchor,
     isBlockedAt,
-  } = usePreferredSlotsSelection(value, onChange, blockedSlots);
+  } = usePreferredSlotsSelection(value, onChange, disabledSlots);
 
   function remainingSeatsFor(joinable: JoinableGroup[]) {
     if (joinable.length === 0) return undefined;
@@ -120,7 +134,8 @@ export default function PreferredSlotsPicker({
       selectedSlot,
     );
     const joinable = joinableGroupsAt(day, minute);
-    const blocked = isBlockedAt(day, minute);
+    const applied = isAppliedAt(day, minute);
+    const blocked = isBlockedAt(day, minute) && !applied;
 
     return (
       <PreferredSlotCell
@@ -132,6 +147,7 @@ export default function PreferredSlotsPicker({
         inCancelPreview={inCancelPreview}
         joinableGroups={joinable}
         blocked={blocked}
+        alreadyApplied={applied}
         remainingSeats={remainingSeatsFor(joinable)}
         isDragging={isDragging}
         hasAnchor={Boolean(anchor)}
@@ -163,6 +179,12 @@ export default function PreferredSlotsPicker({
         <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
           <span aria-hidden className="size-1.5 rounded-full bg-slate-300" />
           회색 칸은 이미 정원이 찬 확정 시간이라 신청할 수 없어요.
+        </p>
+      )}
+      {appliedSlots.length > 0 && (
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-amber-600">
+          <span aria-hidden className="size-1.5 rounded-full bg-amber-300" />
+          주황색 칸은 이 아이가 이미 신청한 시간이라 다시 선택할 수 없어요.
         </p>
       )}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

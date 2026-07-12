@@ -8,6 +8,7 @@ import { logoutParent } from "../api/auth.api";
 import { useApplyReservationMutation } from "./hooks/useApplyReservationMutation";
 import { useJoinableGroupsQuery } from "./hooks/useJoinableGroupsQuery";
 import { useConfirmedSlotsQuery } from "./hooks/useConfirmedSlotsQuery";
+import { useMyReservationsQuery } from "./hooks/useMyReservationsQuery";
 import PreferredSlotsPicker from "../components/PreferredSlotsPicker";
 import { useChildrenQuery } from "../queries/useChildrenQuery";
 import {
@@ -54,6 +55,7 @@ export default function ApplyPage({
   const { apply, isSubmitting, isSuccess, reset } = useApplyReservationMutation();
   const { joinableGroups } = useJoinableGroupsQuery();
   const { confirmedSlots } = useConfirmedSlotsQuery();
+  const { myReservations } = useMyReservationsQuery();
   const { children, isLoading: isChildrenLoading } = useChildrenQuery();
   const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -78,6 +80,9 @@ export default function ApplyPage({
   const matchingGroups = joinableGroups.filter(
     (group) => form.childAge >= group.minAge && form.childAge <= group.maxAge,
   );
+  const appliedSlots = myReservations
+    .filter((reservation) => reservation.childId === form.childId)
+    .flatMap((reservation) => reservation.preferredSlots);
   const requestedGroup = matchingGroups.find((group) => group.id === form.requestedGroupId) ?? null;
 
   function selectChild(childId: string) {
@@ -342,6 +347,7 @@ export default function ApplyPage({
             }}
             joinableGroups={matchingGroups}
             confirmedSlots={confirmedSlots}
+            appliedSlots={appliedSlots}
             childAge={form.childAge}
           />
         </fieldset>
