@@ -109,10 +109,15 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
     await expect(cell).toHaveClass(/bg-emerald-500/)
   })
 
-  test('모바일에서 시간표는 페이지가 아니라 자체 영역만 가로 스크롤한다', async ({ page }) => {
+  test('모바일에서 시간표는 요일 탭으로 하루씩 보여주며 가로 스크롤이 없다', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 844 })
     const apply = new ApplyPagePO(page)
     await apply.navigate()
+
+    // matchMedia 기반 useIsNarrow는 마운트 후 useEffect에서 갱신되므로,
+    // 요일 탭이 실제로 뜰 때까지 기다린 뒤 폭을 측정해야 하이드레이션 타이밍에
+    // 흔들리지 않는다.
+    await expect(apply.dayTabs).toBeVisible()
 
     const widths = await page.evaluate(() => ({
       viewport: document.documentElement.clientWidth,
@@ -122,7 +127,15 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
     }))
 
     expect(widths.document).toBe(widths.viewport)
-    expect(widths.picker).toBeGreaterThan(widths.pickerViewport)
+    expect(widths.picker).toBe(widths.pickerViewport)
+  })
+
+  test('데스크톱에서는 요일 탭 없이 5일 그리드를 그대로 보여준다', async ({ page }) => {
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+
+    await expect(apply.dayTabs).toHaveCount(0)
+    await expect(apply.slotCell('FRI', 840)).toBeVisible()
   })
 
   test('시간표 셀은 모바일 터치에 충분한 높이를 제공한다', async ({ page }) => {
@@ -132,6 +145,37 @@ test.describe('보호자 수업 신청 (정상 플로우)', () => {
     const box = await apply.slotCell('MON', 840).boundingBox()
 
     expect(box?.height).toBeGreaterThanOrEqual(44)
+  })
+
+  test('모바일에서 두 번 탭하는 사이에 스크롤해도 시간이 정상적으로 선택된다', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 844 })
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+    await expect(apply.dayTabs).toBeVisible()
+
+    await apply.childSelect.selectOption('child-e2e-1')
+    await apply.parentNameInput.fill('김부모')
+    await apply.parentEmailInput.fill('parent.tap.e2e@example.com')
+    await apply.parentPhoneInput.fill('010-1234-5678')
+
+    await apply.selectSlotByTap('MON', 840, 860, { scrollBetween: true })
+
+    await apply.submitButton.click()
+
+    await expect(apply.successHeading).toBeVisible()
+  })
+
+  test('모바일에서 요일 탭을 바꾸면 진행 중인 선택이 초기화된다', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 844 })
+    const apply = new ApplyPagePO(page)
+    await apply.navigate()
+    await expect(apply.dayTabs).toBeVisible()
+
+    // 시작 탭만 해서 anchor를 잡아둔 뒤, 다른 요일 탭으로 전환한다.
+    await apply.tapSlotCell('MON', 840)
+    await apply.dayTab('화').click()
+
+    await expect(page.getByText('시작 시각을 탭한 뒤 종료 시각을 한 번 더 탭하세요')).toBeVisible()
   })
 })
 
