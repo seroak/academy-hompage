@@ -8,6 +8,7 @@
 - Dockerfile은 `NODE_ENV=production`보다 먼저 `npm ci`를 실행한다. seed를 위해 `src/generated`와 필요한 `src` 소스를 러너 이미지에 포함한다.
 - SSR fetch는 `API_INTERNAL_URL`을 우선하고 `NEXT_PUBLIC_API_BASE_URL`로 폴백한다. SSR 목록이 비어 보이면 이 URL부터 확인한다.
 - 도메인 변경 시 루트 `.env.production`, `backend/.env.production`, Vercel 환경변수와 Google OAuth 리디렉션 URI·출처를 함께 갱신한다.
+- Vercel Production에는 `NEXT_PUBLIC_SITE_URL`을 실제 프론트 도메인으로 설정하고 `NAVER_SITE_VERIFICATION`을 서치어드바이저가 발급한 값으로 설정한 뒤 재배포한다. 두 값은 metadata·사이트맵의 빌드 결과에 영향을 주므로 환경변수 저장만 하고 재배포를 생략하지 않는다.
 - 배포용 SSH 키는 전용 패스프레이즈 없는 키를 사용하고 시크릿으로 등록한다.
 
 ## 백엔드 무중단(블루-그린) 배포
