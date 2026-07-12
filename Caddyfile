@@ -3,5 +3,10 @@
 }
 
 {$API_DOMAIN} {
-	reverse_proxy backend:3000
+	reverse_proxy backend_blue:3000 backend_green:3000 {
+		lb_policy round_robin
+		health_uri /health
+		health_interval 5s
+		health_timeout 3s
+	}
 }

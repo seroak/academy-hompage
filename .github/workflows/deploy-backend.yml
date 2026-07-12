@@ -46,8 +46,42 @@ jobs:
           username: ubuntu
           key: ${{ secrets.OCI_SSH_KEY }}
           script: |
+            set -e
             cd ~/academy-hompage
             git pull origin main
-            docker compose -f docker-compose.prod.yml -f docker-compose.override.yml --env-file .env.production pull backend
-            docker compose -f docker-compose.prod.yml -f docker-compose.override.yml --env-file .env.production up -d backend
+
+            COMPOSE="docker compose -f docker-compose.prod.yml -f docker-compose.override.yml --env-file .env.production --profile green"
+
+            ACTIVE=""
+            for c in blue green; do
+              if [ "$(docker inspect -f '{{.State.Running}}' academy-backend-$c 2>/dev/null)" = "true" ]; then
+                ACTIVE=$c
+              fi
+            done
+            if [ "$ACTIVE" = "blue" ]; then STANDBY=green; else STANDBY=blue; fi
+            echo "active=${ACTIVE:-none} standby=$STANDBY"
+
+            $COMPOSE pull backend_$STANDBY
+            $COMPOSE up -d backend_$STANDBY
+
+            STATUS="starting"
+            for i in $(seq 1 20); do
+              STATUS=$(docker inspect -f '{{.State.Health.Status}}' academy-backend-$STANDBY 2>/dev/null || echo "missing")
+              [ "$STATUS" = "healthy" ] && break
+              sleep 3
+            done
+
+            if [ "$STATUS" != "healthy" ]; then
+              echo "backend_$STANDBY health check failed (status=$STATUS), rolling back"
+              docker logs --tail 100 academy-backend-$STANDBY || true
+              $COMPOSE stop backend_$STANDBY
+              $COMPOSE rm -f backend_$STANDBY
+              exit 1
+            fi
+
+            if [ -n "$ACTIVE" ]; then
+              $COMPOSE stop backend_$ACTIVE
+              $COMPOSE rm -f backend_$ACTIVE
+            fi
+
             docker image prune -f
