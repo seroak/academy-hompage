@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import './globals.css'
 import AgentationDev from '../components/AgentationDev'
 import Providers from './providers'
-import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, baseOpenGraph, siteOgImage } from '../lib/seo'
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, baseOpenGraph, siteOgImage, siteUrl } from '../lib/seo'
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001'
 const naverVerification = process.env.NAVER_SITE_VERIFICATION
@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   keywords: SITE_KEYWORDS,
+  alternates: {
+    types: { 'application/rss+xml': siteUrl('/rss.xml') },
+  },
   icons: {
     icon: '/favicon-theme.png',
     apple: '/favicon-theme.png',

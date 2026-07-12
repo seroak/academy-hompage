@@ -110,4 +110,29 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page.getByRole('heading', { name: pinned.title, level: 1 })).toBeVisible()
     await expect(page.getByText(pinned.content)).toBeVisible()
   })
+
+  test('네이버 검색로봇용 사이트맵과 RSS를 제공한다', async ({ request }) => {
+    const sitemap = await request.get('/sitemap.xml')
+    await expect(sitemap).toBeOK()
+    const sitemapXml = await sitemap.text()
+
+    for (const path of [
+      '/courses/young-children-math',
+      '/courses/thinking-math',
+      '/courses/elementary-lower-grades',
+    ]) {
+      expect(sitemapXml).toContain(`http://localhost:3410${path}`)
+    }
+
+    const rss = await request.get('/rss.xml')
+    await expect(rss).toBeOK()
+    expect(rss.headers()['content-type']).toContain('application/rss+xml')
+
+    const rssXml = await rss.text()
+    expect(rssXml).toContain('<rss version="2.0">')
+    expect(rssXml).toContain('http://localhost:3410/notices/notice-1')
+    expect(rssXml).toContain(
+      '2026년 상반기 신규 수강생 모집을 시작합니다. 많은 관심 부탁드립니다.',
+    )
+  })
 })
