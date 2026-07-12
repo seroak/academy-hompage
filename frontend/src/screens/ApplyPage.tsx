@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 import type { ParentProfile } from "../api/schemas/auth.schema";
@@ -33,6 +33,8 @@ const emptyForm: CreateReservationInput = {
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
 
+const FIELD_ORDER = ["childId", "parentName", "parentEmail", "parentPhone", "preferredSlots"] as const;
+
 function formForParent(parent: ParentProfile | null): CreateReservationInput {
   if (!parent) return emptyForm;
 
@@ -58,6 +60,22 @@ export default function ApplyPage({
   const [form, setForm] = useState<CreateReservationInput>(() => formForParent(parent));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  function clearFieldError(name: string) {
+    setFieldErrors((current) => {
+      if (!current[name]) return current;
+      const next = { ...current };
+      delete next[name];
+      return next;
+    });
+  }
+
+  function inputClass(name: string) {
+    return `scroll-mt-24 rounded-lg border px-3 py-2 text-sm ${
+      fieldErrors[name] ? "border-red-500 ring-1 ring-red-500" : "border-slate-300"
+    }`;
+  }
 
   const matchingGroups = joinableGroups.filter(
     (group) => form.childAge >= group.minAge && form.childAge <= group.maxAge,
@@ -76,6 +94,7 @@ export default function ApplyPage({
       preferredSlots: [],
       levelTestResultId: undefined,
     }));
+    clearFieldError("childId");
   }
 
   async function handleSwitchAccount() {
@@ -115,6 +134,13 @@ export default function ApplyPage({
       }
 
       setFieldErrors(errors);
+
+      const firstErrorField = FIELD_ORDER.find((name) => errors[name]);
+      if (firstErrorField) {
+        const el = fieldRefs.current[firstErrorField];
+        el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        el?.focus({ preventScroll: true });
+      }
       return;
     }
 
@@ -199,20 +225,34 @@ export default function ApplyPage({
           <label className="flex flex-col gap-1 text-sm text-slate-700">나이(만)<select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={form.childAge} onChange={(e) => setForm({ ...form, childAge: Number(e.target.value) })}>{CHILD_AGE_OPTIONS.map((age) => <option key={age} value={age}>만 {age}세</option>)}</select></label>
         </> : <>
           <label className="flex flex-col gap-1 text-sm text-slate-700">신청할 자녀
-            <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" value={form.childId} onChange={(e) => selectChild(e.target.value)}>
+            <select
+              ref={(el) => { fieldRefs.current.childId = el; }}
+              className={inputClass("childId")}
+              aria-invalid={!!fieldErrors.childId}
+              value={form.childId}
+              onChange={(e) => selectChild(e.target.value)}
+            >
               <option value="">자녀를 선택해 주세요</option>
               {children.map((child) => <option key={child.id} value={child.id}>{child.name} · 만 {child.age}세</option>)}
             </select>
+            {fieldErrors.childId && <span className="text-xs text-red-600">{fieldErrors.childId}</span>}
           </label>
-          {form.childId && <div className="flex flex-col gap-1 text-sm text-slate-700"><span>아이 정보</span><p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">{form.childName} · 만 {form.childAge}세</p></div>}
+          <div className="flex flex-col gap-1 text-sm text-slate-700">
+            <span>아이 정보</span>
+            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
+              {form.childId ? `${form.childName} · 만 ${form.childAge}세` : "자녀를 선택하면 정보가 표시됩니다"}
+            </p>
+          </div>
         </>}
 
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           보호자 이름
           <input
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            ref={(el) => { fieldRefs.current.parentName = el; }}
+            className={inputClass("parentName")}
+            aria-invalid={!!fieldErrors.parentName}
             value={form.parentName}
-            onChange={(e) => setForm({ ...form, parentName: e.target.value })}
+            onChange={(e) => { setForm({ ...form, parentName: e.target.value }); clearFieldError("parentName"); }}
           />
           {fieldErrors.parentName && <span className="text-xs text-red-600">{fieldErrors.parentName}</span>}
         </label>
@@ -220,10 +260,12 @@ export default function ApplyPage({
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           이메일
           <input
+            ref={(el) => { fieldRefs.current.parentEmail = el; }}
             type="email"
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            className={inputClass("parentEmail")}
+            aria-invalid={!!fieldErrors.parentEmail}
             value={form.parentEmail}
-            onChange={(e) => setForm({ ...form, parentEmail: e.target.value })}
+            onChange={(e) => { setForm({ ...form, parentEmail: e.target.value }); clearFieldError("parentEmail"); }}
           />
           {fieldErrors.parentEmail && <span className="text-xs text-red-600">{fieldErrors.parentEmail}</span>}
         </label>
@@ -231,9 +273,11 @@ export default function ApplyPage({
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           전화번호
           <input
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            ref={(el) => { fieldRefs.current.parentPhone = el; }}
+            className={inputClass("parentPhone")}
+            aria-invalid={!!fieldErrors.parentPhone}
             value={form.parentPhone}
-            onChange={(e) => setForm({ ...form, parentPhone: e.target.value })}
+            onChange={(e) => { setForm({ ...form, parentPhone: e.target.value }); clearFieldError("parentPhone"); }}
           />
           {fieldErrors.parentPhone && <span className="text-xs text-red-600">{fieldErrors.parentPhone}</span>}
         </label>
@@ -293,18 +337,27 @@ export default function ApplyPage({
           </div>
         )}
 
-        <fieldset className="col-span-full">
-          <legend className="text-sm font-medium text-slate-800">가능한 시간</legend>
+        <fieldset
+          ref={(el) => { fieldRefs.current.preferredSlots = el; }}
+          tabIndex={-1}
+          className="col-span-full scroll-mt-24"
+        >
+          <legend className={`text-sm font-medium ${fieldErrors.preferredSlots ? "text-red-600" : "text-slate-800"}`}>
+            가능한 시간
+          </legend>
+          {fieldErrors.preferredSlots && (
+            <span className="mt-1 block text-xs text-red-600">{fieldErrors.preferredSlots}</span>
+          )}
           <PreferredSlotsPicker
             value={form.preferredSlots}
-            onChange={(slots) => setForm({ ...form, preferredSlots: slots, requestedGroupId: undefined })}
+            onChange={(slots) => {
+              setForm({ ...form, preferredSlots: slots, requestedGroupId: undefined });
+              clearFieldError("preferredSlots");
+            }}
             joinableGroups={matchingGroups}
             confirmedSlots={confirmedSlots}
             childAge={form.childAge}
           />
-          {fieldErrors.preferredSlots && (
-            <span className="mt-1 block text-xs text-red-600">{fieldErrors.preferredSlots}</span>
-          )}
         </fieldset>
 
         <label className="col-span-full flex flex-col gap-1 text-sm text-slate-700">

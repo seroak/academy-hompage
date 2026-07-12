@@ -7,8 +7,17 @@ export const BUSINESS_LOCALITY = '용인시 기흥구'
 export const BUSINESS_ADDRESS = '경기도 용인시 기흥구 흥덕2로65번길 12-15'
 export const BUSINESS_PHONE = '010-2976-0166'
 
-// 네이버 스마트플레이스에 등록된 URL이 확인되면 채워서 JSON-LD sameAs에 연결한다.
-export const NAVER_PLACE_URL: string | undefined = undefined
+export const NAVER_PLACE_URL: string | undefined = 'https://map.naver.com/p/entry/place/1536785087'
+
+// 정규 수업 운영 시간 기준(상담 문의는 시간 제한 없이 별도 대응).
+// dayOfWeek는 schema.org DayOfWeek 열거값(영문)을 그대로 사용해야 구조화 데이터로 유효하다.
+export const BUSINESS_HOURS = [
+  {
+    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    opens: '13:00',
+    closes: '20:00',
+  },
+]
 
 export const SITE_KEYWORDS = [
   '용인 수학학원',
@@ -55,7 +64,7 @@ export function truncateDescription(value: string, maxLength = 120): string {
 export function buildOrganizationJsonLd() {
   return {
     '@context': 'https://schema.org',
-    '@type': 'EducationalOrganization',
+    '@type': ['EducationalOrganization', 'LocalBusiness'],
     name: SITE_NAME,
     url: siteUrl('/'),
     description: SITE_DESCRIPTION,
@@ -69,6 +78,10 @@ export function buildOrganizationJsonLd() {
     telephone: BUSINESS_PHONE,
     areaServed: '경기도 용인시',
     knowsAbout: ['플레이팩토', '요리수 수학', '씨투엠(C2M)'],
+    openingHoursSpecification: BUSINESS_HOURS.map((hours) => ({
+      '@type': 'OpeningHoursSpecification',
+      ...hours,
+    })),
     ...(NAVER_PLACE_URL ? { sameAs: [NAVER_PLACE_URL] } : {}),
   }
 }

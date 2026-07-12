@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   keywords: SITE_KEYWORDS,
   icons: {
     icon: '/favicon-theme.png',
+    apple: '/favicon-theme.png',
   },
   openGraph: baseOpenGraph(),
   twitter: {

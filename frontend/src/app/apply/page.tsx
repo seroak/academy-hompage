@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: '상담 신청',
   description: '용인 흥덕 유치부·초등 저학년 수학학원, 생각을 여는 수학 수업 상담과 그룹 편성 신청을 남겨 주세요.',
   keywords: ['용인 수학학원', '흥덕 수학학원', '유치부 수학학원'],
-  alternates: { canonical: siteUrl('/apply') },
+  robots: { index: false, follow: false },
   openGraph: {
     ...baseOpenGraph(),
     title: '상담 신청 | 생각을 여는 수학',
