@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import { DAY_OF_WEEK_LABELS, parseDayOfWeek, Reservation, timeRangeLabel, type PreferredSlot } from '../../../../api/schemas/reservation.schema'
 import { ReservationGroup, UpdateReservationGroupInput } from '../../../../api/schemas/reservation-group.schema'
 import PreferredSlotsPicker from '../../../../components/PreferredSlotsPicker'
+import { useModalFocusTrap } from '../../../../hooks/useModalFocusTrap'
 
 type MemberSlotInput = { dayOfWeek: PreferredSlot['dayOfWeek']; startMinute: number; endMinute: number }
 
@@ -42,6 +43,7 @@ export default function GroupDetailModal({
   onAddMember,
   onCancelGroup,
 }: Props) {
+  const dialogRef = useModalFocusTrap(Boolean(group))
   const [infoDraft, setInfoDraft] = useState<GroupInfoDraft | null>(null)
   const [editingSlotsFor, setEditingSlotsFor] = useState<string | null>(null)
   const [slotDraft, setSlotDraft] = useState<PreferredSlot[]>([])
@@ -113,22 +115,23 @@ export default function GroupDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
       <button type="button" aria-label="그룹 상세 닫기" className="absolute inset-0 cursor-default" onClick={onClose} />
-      <dialog open className="relative m-0 max-h-full w-full max-w-2xl overflow-y-auto rounded-[28px] bg-white p-6 shadow-2xl">
+      <dialog ref={dialogRef} open aria-modal="true" aria-labelledby="group-detail-title" className="relative m-0 max-h-full w-full max-w-2xl overflow-y-auto rounded-[28px] bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-xl font-black text-[#222222]">그룹 상세</h2>
+          <h2 id="group-detail-title" className="text-xl font-black text-[#222222]">그룹 상세</h2>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleCancelGroup}
-              className="rounded-full border border-[#ffd6cc] bg-[#fff5f1] px-3 py-1.5 text-xs font-black text-[#d6452f] transition hover:bg-[#ffe9e1]"
+              className="inline-flex h-11 items-center rounded-full border border-[#ffd6cc] bg-[#fff5f1] px-3 text-xs font-black text-[#d6452f] transition hover:bg-[#ffe9e1]"
             >
               그룹 취소
             </button>
             <button
               type="button"
+              data-autofocus
               onClick={onClose}
               aria-label="닫기"
-              className="grid size-8 place-items-center rounded-full text-slate-400 hover:bg-slate-100"
+              className="grid size-11 place-items-center rounded-full text-slate-400 hover:bg-slate-100"
             >
               <X size={18} />
             </button>

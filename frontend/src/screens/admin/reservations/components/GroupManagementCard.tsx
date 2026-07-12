@@ -207,14 +207,14 @@ export default function GroupManagementCard({
                   <button
                     type="button"
                     onClick={() => onOpenGroupDetail(group.id)}
-                    className="rounded-full border border-[#d6e4ff] bg-[#f0f5ff] px-3 py-1 text-xs font-black text-[#2f6bd6] transition hover:bg-[#e1ecff]"
+                    className="inline-flex h-11 items-center rounded-full border border-[#d6e4ff] bg-[#f0f5ff] px-3 text-xs font-black text-[#2f6bd6] transition hover:bg-[#e1ecff]"
                   >
                     상세 및 수정
                   </button>
                   <button
                     type="button"
                     onClick={() => onDeleteGroup(group.id)}
-                    className="rounded-full border border-[#ffd6cc] bg-[#fff5f1] px-3 py-1 text-xs font-black text-[#d6452f] transition hover:bg-[#ffe9e1]"
+                    className="inline-flex h-11 items-center rounded-full border border-[#ffd6cc] bg-[#fff5f1] px-3 text-xs font-black text-[#d6452f] transition hover:bg-[#ffe9e1]"
                   >
                     삭제
                   </button>

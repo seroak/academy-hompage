@@ -168,7 +168,7 @@ export default function PreferredSlotsPicker({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-brand-50/40 p-3">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-brand-50/40 p-3">
       {joinableGroups.length > 0 && (
         <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
           <span aria-hidden className="size-1.5 rounded-full bg-emerald-500" />
@@ -202,7 +202,7 @@ export default function PreferredSlotsPicker({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div data-testid="preferred-slots-scroll" className="min-w-0 max-w-full overflow-x-auto">
         <div
           ref={gridRef}
           className="grid min-w-[720px] grid-cols-[64px_repeat(5,minmax(92px,1fr))] gap-1"

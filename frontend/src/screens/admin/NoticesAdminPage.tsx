@@ -186,14 +186,14 @@ export default function NoticesAdminPage() {
                     <button
                       type="button"
                       onClick={() => startEdit(notice)}
-                      className="rounded-full border border-[#f2dfb9] px-4 py-2 text-sm font-black text-[#6f6253] transition hover:border-[#ffd66b] hover:text-[#e86f00]"
+                      className="inline-flex h-11 items-center rounded-full border border-[#f2dfb9] px-4 text-sm font-black text-[#6f6253] transition hover:border-[#ffd66b] hover:text-[#e86f00]"
                     >
                       수정
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(notice.id)}
-                      className="rounded-full border border-[#ffd6ce] px-4 py-2 text-sm font-black text-[#d6452f] transition hover:bg-[#fff0ed]"
+                      className="inline-flex h-11 items-center rounded-full border border-[#ffd6ce] px-4 text-sm font-black text-[#d6452f] transition hover:bg-[#fff0ed]"
                     >
                       삭제
                     </button>

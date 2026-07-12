@@ -331,7 +331,7 @@ export default function ApplyPage({
         <fieldset
           ref={(el) => { fieldRefs.current.preferredSlots = el; }}
           tabIndex={-1}
-          className="col-span-full scroll-mt-24"
+          className="col-span-full min-w-0 scroll-mt-24"
         >
           <legend className={`text-sm font-medium ${fieldErrors.preferredSlots ? "text-red-600" : "text-slate-800"}`}>
             가능한 시간

@@ -8,6 +8,7 @@ import { loginParentWithPassword, signupParent, socialLoginStartUrl } from '../a
 import type { OAuthProvider } from '../api/schemas/auth.schema'
 import { useLoginMutation } from '../screens/admin/hooks/useLoginMutation'
 import { ApiError } from '../lib/apiClient'
+import { useModalFocusTrap } from '../hooks/useModalFocusTrap'
 
 interface AdminLoginModalProps {
   isOpen: boolean
@@ -56,6 +57,7 @@ export default function AdminLoginModal({
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false)
   const { login, isLoggingIn, loginError } = useLoginMutation()
   const pathname = usePathname()
+  const dialogRef = useModalFocusTrap(isOpen)
 
   useEffect(() => {
     if (!isOpen) {
@@ -150,6 +152,7 @@ export default function AdminLoginModal({
       }}
     >
       <dialog
+        ref={dialogRef}
         open
         aria-modal="true"
         aria-labelledby="login-title"
@@ -169,6 +172,7 @@ export default function AdminLoginModal({
           </div>
           <button
             type="button"
+            data-autofocus
             aria-label="로그인 창 닫기"
             onClick={onClose}
             className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-[#3f3a31] shadow-[0_8px_20px_rgba(48,33,10,0.08)] transition hover:text-[#d6452f]"

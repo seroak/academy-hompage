@@ -79,7 +79,7 @@ export function PreferredSlotCell({
           onEnter({ dayOfWeek: day, minute }, selectedSlot)
         }
       }}
-      className={`relative flex h-8 items-center justify-center rounded-md border text-[10px] font-semibold transition ${
+      className={`relative flex h-11 items-center justify-center rounded-md border text-[10px] font-semibold transition ${
         blocked
           ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300'
           : alreadyApplied

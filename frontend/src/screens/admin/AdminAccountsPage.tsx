@@ -118,7 +118,7 @@ export default function AdminAccountsPage() {
                   type="button"
                   onClick={() => handleDelete(admin.id, admin.username)}
                   disabled={isDeleting || admin.id === currentAdminId}
-                  className="text-sm font-bold text-[#d6452f] hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-bold text-[#d6452f] hover:underline disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   삭제
                 </button>

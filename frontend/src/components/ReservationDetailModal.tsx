@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type SubmitEvent } from 'react'
+import { useEffect, useState, type RefObject, type SubmitEvent } from 'react'
 import { X } from 'lucide-react'
 import {
   DAY_OF_WEEK_LABELS,
@@ -14,6 +14,7 @@ import {
   type UpdateReservationInput,
 } from '../api/schemas/reservation.schema'
 import PreferredSlotsPicker from './PreferredSlotsPicker'
+import { useModalFocusTrap } from '../hooks/useModalFocusTrap'
 
 interface ReservationDetailModalProps {
   reservation: Reservation | null
@@ -67,9 +68,10 @@ interface ReservationDetailContentProps {
   onClose: () => void
   onSave?: (id: string, input: UpdateReservationInput) => Promise<void>
   isSaving?: boolean
+  dialogRef: RefObject<HTMLDialogElement | null>
 }
 
-function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: ReservationDetailContentProps) {
+function ReservationDetailContent({ reservation, onClose, onSave, isSaving, dialogRef }: ReservationDetailContentProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [form, setForm] = useState<FormState>(() => formFromReservation(reservation))
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -131,6 +133,7 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
   if (!isEditing) {
     return (
       <dialog
+        ref={dialogRef}
         open
         aria-modal="true"
         aria-labelledby="reservation-detail-title"
@@ -146,6 +149,7 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
           </div>
           <button
             type="button"
+            data-autofocus
             aria-label="예약 상세 닫기"
             onClick={onClose}
             className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-[#3f3a31] shadow-[0_8px_20px_rgba(48,33,10,0.08)] transition hover:text-[#d6452f]"
@@ -214,6 +218,7 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
 
   return (
     <dialog
+      ref={dialogRef}
       open
       aria-modal="true"
       aria-label="예약 정보 수정"
@@ -227,6 +232,7 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
         </div>
         <button
           type="button"
+          data-autofocus
           aria-label="예약 상세 닫기"
           onClick={onClose}
           className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-[#3f3a31] shadow-[0_8px_20px_rgba(48,33,10,0.08)] transition hover:text-[#d6452f]"
@@ -374,6 +380,7 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving }: Re
 }
 
 export default function ReservationDetailModal({ reservation, onClose, onSave, isSaving }: ReservationDetailModalProps) {
+  const dialogRef = useModalFocusTrap(Boolean(reservation))
   useEffect(() => {
     if (!reservation) {
       return
@@ -409,6 +416,7 @@ export default function ReservationDetailModal({ reservation, onClose, onSave, i
         onClose={onClose}
         onSave={onSave}
         isSaving={isSaving}
+        dialogRef={dialogRef}
       />
     </div>
   )
