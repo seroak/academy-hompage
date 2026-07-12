@@ -10,7 +10,7 @@ export interface CookieResponse {
 }
 
 export interface ClearCookieResponse {
-  clearCookie: (name: string, options: Pick<AuthCookieOptions, 'path'>) => void;
+  clearCookie: (name: string, options: Omit<AuthCookieOptions, 'maxAge'>) => void;
 }
 
 interface AuthCookieOptions {
@@ -42,12 +42,20 @@ function cookieOptions(): AuthCookieOptions {
   };
 }
 
+// Must mirror cookieOptions() (minus maxAge) so the clearing cookie's
+// Domain/Path/SameSite/Secure match what the browser stored — otherwise
+// the browser treats it as a different cookie and never deletes the session.
+function clearCookieOptions(): Omit<AuthCookieOptions, 'maxAge'> {
+  const { maxAge: _maxAge, ...rest } = cookieOptions();
+  return rest;
+}
+
 export function setAuthCookie(response: CookieResponse, kind: AuthKind, token: string) {
   response.cookie(cookieName(kind), token, cookieOptions());
 }
 
 export function clearAuthCookie(response: ClearCookieResponse, kind: AuthKind) {
-  response.clearCookie(cookieName(kind), { path: '/' });
+  response.clearCookie(cookieName(kind), clearCookieOptions());
 }
 
 export function authCookieExtractor(name: string) {

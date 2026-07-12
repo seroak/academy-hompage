@@ -58,7 +58,7 @@ describe('auth cookies', () => {
     expect(options.domain).toBeUndefined();
   });
 
-  it('clears auth cookies with matching paths', () => {
+  it('clears auth cookies with matching path and other set-cookie options', () => {
     const response = { clearCookie: jest.fn() };
 
     clearAuthCookie(response, 'admin');
@@ -66,11 +66,38 @@ describe('auth cookies', () => {
 
     expect(response.clearCookie).toHaveBeenCalledWith(
       ADMIN_AUTH_COOKIE,
-      expect.objectContaining({ path: '/' }),
+      expect.objectContaining({ httpOnly: true, sameSite: 'lax', path: '/' }),
     );
     expect(response.clearCookie).toHaveBeenCalledWith(
       PARENT_AUTH_COOKIE,
-      expect.objectContaining({ path: '/' }),
+      expect.objectContaining({ httpOnly: true, sameSite: 'lax', path: '/' }),
+    );
+  });
+
+  it('omits the domain option when clearing cookies without COOKIE_DOMAIN set', () => {
+    delete process.env.COOKIE_DOMAIN;
+    const response = { clearCookie: jest.fn() };
+
+    clearAuthCookie(response, 'admin');
+
+    const [, options] = response.clearCookie.mock.calls[0];
+    expect(options.domain).toBeUndefined();
+  });
+
+  it('applies COOKIE_DOMAIN when clearing auth cookies, matching the domain used to set them', () => {
+    process.env.COOKIE_DOMAIN = 'openmath.io.kr';
+    const response = { clearCookie: jest.fn() };
+
+    clearAuthCookie(response, 'admin');
+    clearAuthCookie(response, 'parent');
+
+    expect(response.clearCookie).toHaveBeenCalledWith(
+      ADMIN_AUTH_COOKIE,
+      expect.objectContaining({ domain: 'openmath.io.kr' }),
+    );
+    expect(response.clearCookie).toHaveBeenCalledWith(
+      PARENT_AUTH_COOKIE,
+      expect.objectContaining({ domain: 'openmath.io.kr' }),
     );
   });
 
