@@ -1,7 +1,9 @@
 import { fetchPublicNotices } from '../../api/public.api'
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from '../../lib/seo'
 
-export const revalidate = 300
+// 빌드 시 백엔드가 일시적으로 닿지 않아도 빈 피드가 정적 산출물로 고정되지 않도록
+// 첫 실제 요청에서 공지를 조회한다. 응답 캐시는 아래 Cache-Control로 제어한다.
+export const dynamic = 'force-dynamic'
 
 function escapeXml(value: string): string {
   return value
