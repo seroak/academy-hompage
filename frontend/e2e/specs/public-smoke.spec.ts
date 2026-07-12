@@ -111,7 +111,26 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page.getByText(pinned.content)).toBeVisible()
   })
 
-  test('네이버 검색로봇용 사이트맵과 RSS를 제공한다', async ({ request }) => {
+  test('네이버 검색로봇용 소유 확인, robots, 사이트맵과 RSS를 제공한다', async ({ request, page }) => {
+    await page.goto('/')
+    await expect(page.locator('meta[name="naver-site-verification"]')).toHaveAttribute(
+      'content',
+      'naver-e2e-verification',
+    )
+    await expect(page.locator('link[rel="alternate"][type="application/rss+xml"]')).toHaveAttribute(
+      'href',
+      'http://localhost:3410/rss.xml',
+    )
+
+    const robots = await request.get('/robots.txt')
+    await expect(robots).toBeOK()
+    expect(robots.headers()['content-type']).toContain('text/plain')
+    const robotsText = await robots.text()
+    expect(robotsText).toContain('User-Agent: *')
+    expect(robotsText).toContain('Allow: /')
+    expect(robotsText).toContain('Disallow: /admin')
+    expect(robotsText).toContain('Sitemap: http://localhost:3410/sitemap.xml')
+
     const sitemap = await request.get('/sitemap.xml')
     await expect(sitemap).toBeOK()
     const sitemapXml = await sitemap.text()
@@ -134,5 +153,71 @@ test.describe('공개 페이지 스모크', () => {
     expect(rssXml).toContain(
       '2026년 상반기 신규 수강생 모집을 시작합니다. 많은 관심 부탁드립니다.',
     )
+  })
+
+  test('검색 의도별 지역 수학 페이지가 고유 SEO 정보를 제공한다', async ({ page }) => {
+    const seoPages = [
+      {
+        path: '/courses/young-children-math',
+        title: /흥덕 유아 수학/,
+        heading: '흥덕 유아 수학, 놀이에서 시작하는 첫 수학',
+      },
+      {
+        path: '/courses/thinking-math',
+        title: /흥덕 사고력 수학/,
+        heading: '흥덕 사고력 수학, 생각하는 힘을 기르는 수업',
+      },
+      {
+        path: '/courses/elementary-lower-grades',
+        title: /초등 저학년 수학/,
+        heading: '초등 저학년 수학, 개념과 사고력을 함께',
+      },
+    ]
+
+    for (const seoPage of seoPages) {
+      await page.goto(seoPage.path)
+
+      await expect(page).toHaveTitle(seoPage.title)
+      await expect(page.getByRole('heading', { name: seoPage.heading, level: 1 })).toBeVisible()
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        'href',
+        `http://localhost:3410${seoPage.path}`,
+      )
+      await expect(page.getByRole('link', { name: '전체 교육과정 보기' })).toHaveAttribute(
+        'href',
+        '/courses',
+      )
+      await expect(page.getByRole('link', { name: '수업 상담 신청하기' })).toHaveAttribute(
+        'href',
+        '/apply',
+      )
+
+      const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents()
+      const structuredData = jsonLd.map((value) => JSON.parse(value) as Record<string, unknown>)
+      expect(structuredData.some((value) => value['@type'] === 'Course')).toBe(true)
+      expect(structuredData.some((value) => value['@type'] === 'BreadcrumbList')).toBe(true)
+      expect(jsonLd.join(' ')).toContain('https://map.naver.com/p/entry/place/1536785087')
+
+      const robotsMeta = page.locator('meta[name="robots"]')
+      const robotsContent = (await robotsMeta.count()) > 0
+        ? await robotsMeta.getAttribute('content')
+        : null
+      expect(robotsContent ?? '').not.toMatch(/noindex|nofollow/i)
+    }
+  })
+
+  test('홈과 교육과정에서 지역 교육 페이지를 표준 링크로 연결한다', async ({ page }) => {
+    const paths = [
+      '/courses/young-children-math',
+      '/courses/thinking-math',
+      '/courses/elementary-lower-grades',
+    ]
+
+    for (const sourcePath of ['/', '/courses']) {
+      await page.goto(sourcePath)
+      for (const path of paths) {
+        await expect(page.locator(`a[href="${path}"]`).first()).toBeVisible()
+      }
+    }
   })
 })

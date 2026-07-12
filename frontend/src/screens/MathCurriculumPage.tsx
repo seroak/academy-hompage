@@ -3,6 +3,7 @@ import GrowthTimeline from '../components/math-curriculum/GrowthTimeline'
 import MathHero from '../components/math-curriculum/MathHero'
 import ProgramCards from '../components/math-curriculum/ProgramCards'
 import RecommendationCta from '../components/math-curriculum/RecommendationCta'
+import SeoLandingLinks from '../components/seo-landing/SeoLandingLinks'
 
 export default function MathCurriculumPage() {
   return (
@@ -11,6 +12,7 @@ export default function MathCurriculumPage() {
       <div className="mt-5"><GrowthTimeline /></div>
       <ComparisonTable />
       <ProgramCards />
+      <SeoLandingLinks />
       <RecommendationCta />
     </div>
   )

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Badge from '../../components/Badge'
 import Layout from '../../components/Layout'
 import { fetchPublicNotices } from '../../api/public.api'
-import { baseOpenGraph, siteUrl } from '../../lib/seo'
+import { baseOpenGraph, rssAlternate, siteUrl } from '../../lib/seo'
 import type { Notice } from '../../api/schemas/notice.schema'
 
 export const revalidate = 300
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: '공지사항',
   description: '용인 흥덕 유치부·초등 저학년 수학학원, 생각을 여는 수학의 최신 공지사항과 안내를 확인해 보세요.',
   keywords: ['용인 수학학원', '흥덕 수학학원'],
-  alternates: { canonical: siteUrl('/notices') },
+  alternates: { canonical: siteUrl('/notices'), ...rssAlternate() },
   openGraph: {
     ...baseOpenGraph(),
     title: '공지사항 | 생각을 여는 수학',

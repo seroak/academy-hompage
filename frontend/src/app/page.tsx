@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import Layout from '../components/Layout'
 import HomePage from '../screens/HomePage'
-import { SITE_DESCRIPTION, SITE_NAME, baseOpenGraph, buildOrganizationJsonLd, siteUrl } from '../lib/seo'
+import { SITE_DESCRIPTION, SITE_NAME, baseOpenGraph, buildOrganizationJsonLd, rssAlternate, siteUrl } from '../lib/seo'
 
 export const metadata: Metadata = {
   title: SITE_NAME,
   description: SITE_DESCRIPTION,
-  alternates: { canonical: siteUrl('/') },
+  alternates: { canonical: siteUrl('/'), ...rssAlternate() },
   openGraph: {
     ...baseOpenGraph(),
     title: SITE_NAME,

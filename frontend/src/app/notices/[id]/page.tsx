@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Badge from '../../../components/Badge'
 import Layout from '../../../components/Layout'
 import { fetchPublicNotice } from '../../../api/public.api'
-import { baseOpenGraph, siteUrl, truncateDescription } from '../../../lib/seo'
+import { baseOpenGraph, rssAlternate, siteUrl, truncateDescription } from '../../../lib/seo'
 
 export const revalidate = 300
 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: notice.title,
     description,
-    alternates: { canonical: siteUrl(`/notices/${notice.id}`) },
+    alternates: { canonical: siteUrl(`/notices/${notice.id}`), ...rssAlternate() },
     openGraph: {
       ...baseOpenGraph(),
       title: `${notice.title} | 생각을 여는 수학`,

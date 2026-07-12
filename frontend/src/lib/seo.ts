@@ -39,6 +39,12 @@ export function siteUrl(path = '/'): string {
   return new URL(path, baseUrl).toString()
 }
 
+export function rssAlternate() {
+  return {
+    types: { 'application/rss+xml': siteUrl('/rss.xml') },
+  }
+}
+
 // Next.js는 openGraph를 layout과 page 사이에서 딥머지하지 않고 통째로 덮어쓴다.
 // 자체 openGraph를 정의하는 모든 페이지는 이 헬퍼로 공통 필드(type/locale/siteName/images)를
 // 함께 스프레드해야 layout에서 설정한 값이 페이지에서 사라지지 않는다.
@@ -110,6 +116,56 @@ export function buildCoursesJsonLd(programs: CourseProgramLike[]) {
         '@type': 'EducationalAudience',
         educationalRole: program.age,
       },
+    })),
+  }
+}
+
+interface CourseLandingLike {
+  title: string
+  description: string
+  slug: string
+  programs: string[]
+}
+
+export function buildCourseLandingJsonLd(content: CourseLandingLike) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: content.title,
+    description: content.description,
+    url: siteUrl(`/courses/${content.slug}`),
+    provider: {
+      '@type': 'EducationalOrganization',
+      name: SITE_NAME,
+      url: siteUrl('/'),
+      telephone: BUSINESS_PHONE,
+      address: {
+        '@type': 'PostalAddress',
+        addressCountry: 'KR',
+        addressRegion: BUSINESS_REGION,
+        addressLocality: BUSINESS_LOCALITY,
+        streetAddress: BUSINESS_ADDRESS,
+      },
+      ...(NAVER_PLACE_URL ? { sameAs: [NAVER_PLACE_URL] } : {}),
+    },
+    about: content.programs,
+  }
+}
+
+interface BreadcrumbItem {
+  name: string
+  path: string
+}
+
+export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: siteUrl(item.path),
     })),
   }
 }
