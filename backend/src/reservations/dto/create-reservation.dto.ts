@@ -72,7 +72,4 @@ export class CreateReservationDto {
   @IsString()
   requestedGroupId?: string;
 
-  @IsOptional()
-  @IsString()
-  levelTestResultId?: string;
 }
