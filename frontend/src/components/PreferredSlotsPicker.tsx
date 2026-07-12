@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useRef } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import {
   DAY_OF_WEEK_LABELS,
   DAY_OF_WEEK_OPTIONS,
@@ -11,6 +11,7 @@ import {
   type PreferredSlot,
 } from "../api/schemas/reservation.schema";
 import type { ConfirmedSlot, JoinableGroup } from "../api/schemas/reservation-group.schema";
+import { useIsNarrow } from "../hooks/useIsNarrow";
 import { usePreferredSlotsSelection } from "./preferred-slots/usePreferredSlotsSelection";
 import { PreferredSlotCell } from "./preferred-slots/PreferredSlotCell";
 import { SelectedSlotsList } from "./preferred-slots/SelectedSlotsList";
@@ -38,6 +39,8 @@ export default function PreferredSlotsPicker({
   childAge,
 }: PreferredSlotsPickerProps) {
   const gridRef = useRef<HTMLDivElement>(null);
+  const isNarrow = useIsNarrow();
+  const [activeDay, setActiveDay] = useState<(typeof DAY_OF_WEEK_OPTIONS)[number]>(DAY_OF_WEEK_OPTIONS[0]);
 
   function joinableGroupsAt(dayOfWeek: (typeof DAY_OF_WEEK_OPTIONS)[number], minute: number): JoinableGroup[] {
     return joinableGroups.filter((group) => {
@@ -109,13 +112,24 @@ export default function PreferredSlotsPicker({
     cancelSlotsInRange,
     updateFromPoint,
     handleCellPointerDown,
+    handleCellTap,
     commitSlot,
     clearSelectionDraft,
     setHovered,
     setIsDragging,
     buildSlotFromAnchor,
     isBlockedAt,
-  } = usePreferredSlotsSelection(value, onChange, disabledSlots);
+  } = usePreferredSlotsSelection(value, onChange, disabledSlots, isNarrow);
+
+  const visibleDays = isNarrow ? [activeDay] : DAY_OF_WEEK_OPTIONS;
+
+  function handleDayTabChange(day: (typeof DAY_OF_WEEK_OPTIONS)[number]) {
+    if (day === activeDay) return;
+    setActiveDay(day);
+    // anchor는 특정 요일에 묶여 있으므로, 다른 요일 탭으로 넘어가면 진행 중인
+    // 선택 초안을 비워 숨겨진 요일에 dangling anchor가 남지 않게 한다.
+    clearSelectionDraft();
+  }
 
   function remainingSeatsFor(joinable: JoinableGroup[]) {
     if (joinable.length === 0) return undefined;
@@ -152,6 +166,7 @@ export default function PreferredSlotsPicker({
         isDragging={isDragging}
         hasAnchor={Boolean(anchor)}
         onPointerDown={handleCellPointerDown}
+        onTap={handleCellTap}
         onPointerEnter={(nextAnchor) => setHovered(nextAnchor)}
         onEnter={(_anchor, _selectedSlot) => {
           if (_selectedSlot) {
@@ -202,10 +217,32 @@ export default function PreferredSlotsPicker({
         </div>
       </div>
 
+      {isNarrow && (
+        <div data-testid="preferred-slots-day-tabs" className="mb-2 flex gap-1">
+          {DAY_OF_WEEK_OPTIONS.map((day) => (
+            <button
+              key={day}
+              type="button"
+              onClick={() => handleDayTabChange(day)}
+              aria-pressed={activeDay === day}
+              className={`h-11 flex-1 rounded-md border text-xs font-semibold transition ${
+                activeDay === day
+                  ? "border-brand-700 bg-brand-600 text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-brand-300"
+              }`}
+            >
+              {DAY_OF_WEEK_LABELS[day]}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div data-testid="preferred-slots-scroll" className="min-w-0 max-w-full overflow-x-auto">
         <div
           ref={gridRef}
-          className="grid min-w-[720px] grid-cols-[64px_repeat(5,minmax(92px,1fr))] gap-1"
+          className={`grid gap-1 ${
+            isNarrow ? "grid-cols-[64px_1fr]" : "min-w-[720px] grid-cols-[64px_repeat(5,minmax(92px,1fr))]"
+          }`}
           onPointerMove={(event) => {
             if (isDragging) {
               updateFromPoint(event.clientX, event.clientY);
@@ -230,7 +267,7 @@ export default function PreferredSlotsPicker({
           }}
         >
           <div />
-          {DAY_OF_WEEK_OPTIONS.map((day) => (
+          {visibleDays.map((day) => (
             <div key={day} className="px-2 py-1 text-center text-xs font-semibold text-slate-600">
               {DAY_OF_WEEK_LABELS[day]}
             </div>
@@ -244,7 +281,7 @@ export default function PreferredSlotsPicker({
                   </span>
                 ) : null}
               </div>
-              {DAY_OF_WEEK_OPTIONS.map((day) => renderCell(day, minute))}
+              {visibleDays.map((day) => renderCell(day, minute))}
             </Fragment>
           ))}
         </div>

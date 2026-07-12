@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import {
   DAY_OF_WEEK_LABELS,
   SLOT_STEP_MINUTES,
@@ -7,6 +8,10 @@ import {
 } from '../../api/schemas/reservation.schema'
 import type { JoinableGroup } from '../../api/schemas/reservation-group.schema'
 import type { Anchor } from './usePreferredSlotsSelection'
+
+// 터치를 "탭"으로 인정할 최대 이동 거리(px). 이보다 더 움직이면 스크롤 의도로 보고
+// 아무 것도 커밋하지 않는다.
+const TAP_MOVE_THRESHOLD_PX = 10
 
 interface PreferredSlotCellProps {
   day: (typeof DAY_OF_WEEK_OPTIONS)[number]
@@ -23,6 +28,7 @@ interface PreferredSlotCellProps {
   onPointerDown: (anchor: Anchor) => void
   onPointerEnter: (anchor: Anchor) => void
   onEnter: (anchor: Anchor, selectedSlot?: PreferredSlot) => void
+  onTap: (anchor: Anchor) => void
 }
 
 export function PreferredSlotCell({
@@ -40,9 +46,11 @@ export function PreferredSlotCell({
   onPointerDown,
   onPointerEnter,
   onEnter,
+  onTap,
 }: PreferredSlotCellProps) {
   const isJoinable = joinableGroups.length > 0
   const selected = Boolean(selectedSlot)
+  const touchStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null)
 
   return (
     <button
@@ -65,8 +73,36 @@ export function PreferredSlotCell({
         blocked ? ' (신청 불가)' : alreadyApplied ? ' (이미 신청한 시간)' : isJoinable ? ' (모집중인 반 있음)' : ''
       }`}
       onPointerDown={(event) => {
-        event.currentTarget.setPointerCapture(event.pointerId)
-        onPointerDown({ dayOfWeek: day, minute })
+        if (event.pointerType === 'mouse') {
+          event.currentTarget.setPointerCapture(event.pointerId)
+          onPointerDown({ dayOfWeek: day, minute })
+          return
+        }
+
+        // 터치/펜: 캡처하지 않아야 손가락을 세로로 끌 때 브라우저 스크롤이
+        // 정상 동작한다(캡처하면 스크롤 제스처가 막힌다). 탭 여부는 릴리즈 시 판정한다.
+        touchStartRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
+      }}
+      onPointerUp={(event) => {
+        if (event.pointerType === 'mouse') {
+          return
+        }
+
+        const start = touchStartRef.current
+        touchStartRef.current = null
+        if (!start || start.pointerId !== event.pointerId) {
+          return
+        }
+
+        const movedDistance = Math.hypot(event.clientX - start.x, event.clientY - start.y)
+        if (movedDistance <= TAP_MOVE_THRESHOLD_PX) {
+          onTap({ dayOfWeek: day, minute })
+        }
+      }}
+      onPointerCancel={(event) => {
+        if (event.pointerType !== 'mouse') {
+          touchStartRef.current = null
+        }
       }}
       onPointerEnter={() => {
         if (isDragging || hasAnchor) {

@@ -53,10 +53,27 @@ export function buildSlot(anchor: Anchor, target: Anchor, existingSlots: Preferr
   return { dayOfWeek: anchor.dayOfWeek, startMinute, endMinute }
 }
 
+// 두 지점(anchor~target) 사이의 요일·시간 범위를 계산하는 순수 함수.
+// 훅 상태(anchor/hovered)에 의존하지 않아 "터치 탭 확정" 시점에 즉시 계산할 수 있다
+// (setHovered 직후 같은 틱에서 읽으면 리렌더 전이라 값이 stale할 수 있어 이 방식을 쓴다).
+export function computeRange(a: Anchor, h: Anchor): PreferredSlot | null {
+  if (a.dayOfWeek !== h.dayOfWeek) {
+    return null
+  }
+
+  return {
+    dayOfWeek: a.dayOfWeek,
+    startMinute: Math.min(a.minute, h.minute),
+    endMinute: Math.max(a.minute, h.minute) + SLOT_STEP_MINUTES,
+  }
+}
+
 export function usePreferredSlotsSelection(
   value: PreferredSlot[],
   onChange: (slots: PreferredSlot[]) => void,
   blockedSlots: PreferredSlot[] = [],
+  // 좁은 화면(터치)에서는 "끌거나" 같은 드래그 안내 대신 탭 중심 문구를 쓴다.
+  compactHint = false,
 ) {
   const didDragRef = useRef(false)
   const dragModeRef = useRef<DragMode>('select')
@@ -126,15 +143,11 @@ export function usePreferredSlotsSelection(
   }
 
   function dragRange(): (PreferredSlot & { dayOfWeek: Anchor['dayOfWeek'] }) | null {
-    if (!anchor || !hovered || anchor.dayOfWeek !== hovered.dayOfWeek) {
+    if (!anchor || !hovered) {
       return null
     }
 
-    return {
-      dayOfWeek: anchor.dayOfWeek,
-      startMinute: Math.min(anchor.minute, hovered.minute),
-      endMinute: Math.max(anchor.minute, hovered.minute) + SLOT_STEP_MINUTES,
-    }
+    return computeRange(anchor, hovered)
   }
 
   function slotOverlapsRange(slot: PreferredSlot, range: PreferredSlot): boolean {
@@ -145,8 +158,7 @@ export function usePreferredSlotsSelection(
     )
   }
 
-  function cancelSlotsInRange() {
-    const range = dragRange()
+  function cancelSlotsInRange(range: PreferredSlot | null = dragRange()) {
     if (!range) {
       clearSelectionDraft()
       return
@@ -225,6 +237,38 @@ export function usePreferredSlotsSelection(
     beginDrag(nextAnchor, 'select')
   }
 
+  // 터치(coarse pointer) 전용 "탭 2번" 확정 경로. 세로로 긴 그리드에서 시작 탭과
+  // 종료 탭 사이에 페이지 스크롤이 필요하므로, pointerdown 즉시 커밋하는
+  // handleCellPointerDown과 달리 이 함수는 셀에서 "이동 없는 탭(release)"이
+  // 확인된 시점에만 호출된다(호출부는 PreferredSlotCell 참고).
+  function handleCellTap(nextAnchor: Anchor) {
+    if (isBlockedAt(nextAnchor.dayOfWeek, nextAnchor.minute)) {
+      return
+    }
+
+    if (anchor) {
+      if (dragModeRef.current === 'cancel') {
+        cancelSlotsInRange(computeRange(anchor, nextAnchor))
+      } else {
+        commitSlot(buildSlot(anchor, nextAnchor, obstacles))
+      }
+      return
+    }
+
+    const selectedSlot = slotAt(nextAnchor.dayOfWeek, nextAnchor.minute)
+    if (selectedSlot) {
+      // 이미 선택된 슬롯을 탭하면 마우스로 드래그 없이 클릭했을 때와 동일하게
+      // 그 자리에서 바로 취소한다(2번째 탭을 기다리지 않음).
+      cancelSlotsInRange(computeRange(nextAnchor, nextAnchor))
+      return
+    }
+
+    dragModeRef.current = 'select'
+    setDragMode('select')
+    setAnchor(nextAnchor)
+    setHovered(nextAnchor)
+  }
+
   const cancelRange = dragMode === 'cancel' ? dragRange() : null
   const cancelCount = cancelRange ? value.filter((slot) => slotOverlapsRange(slot, cancelRange)).length : 0
   const previewLabel = preview
@@ -232,8 +276,12 @@ export function usePreferredSlotsSelection(
     : cancelRange
       ? `취소할 시간 ${cancelCount}개`
     : anchor
-      ? '같은 요일 안에서 종료 시각을 선택해 주세요'
-      : '시작 시각을 누른 뒤 끌거나 종료 시각을 한 번 더 눌러 주세요'
+      ? compactHint
+        ? '종료 시각을 한 번 더 탭하세요'
+        : '같은 요일 안에서 종료 시각을 선택해 주세요'
+      : compactHint
+        ? '시작 시각을 탭한 뒤 종료 시각을 한 번 더 탭하세요'
+        : '시작 시각을 누른 뒤 끌거나 종료 시각을 한 번 더 눌러 주세요'
 
   return {
     anchor,
@@ -251,6 +299,7 @@ export function usePreferredSlotsSelection(
     cancelSlotsInRange,
     updateFromPoint,
     handleCellPointerDown,
+    handleCellTap,
     commitSlot,
     clearSelectionDraft,
     setHovered,
