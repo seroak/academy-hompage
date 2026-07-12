@@ -50,7 +50,7 @@ jobs:
             cd ~/academy-hompage
             git pull origin main
 
-            COMPOSE="docker compose -f docker-compose.prod.yml -f docker-compose.override.yml --env-file .env.production --profile green"
+            COMPOSE="docker compose -f docker-compose.prod.yml --env-file .env.production --profile green"
 
             ACTIVE=""
             for c in blue green; do
