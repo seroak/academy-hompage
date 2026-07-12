@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { ReservationsService } from './reservations.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NotificationService } from '../notifications/notification.service.js';
@@ -22,7 +22,7 @@ describe('ReservationsService', () => {
   beforeEach(async () => {
     prisma = {
       reservation: {
-        findMany: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
         findUnique: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
@@ -203,6 +203,82 @@ describe('ReservationsService', () => {
 
       await expect(service.create(dto, 'parent-1')).resolves.toBe(created);
       expect(prisma.reservation.create).toHaveBeenCalled();
+    });
+
+    it('같은 자녀가 같은 요일·시간대에 겹치는 신청이 이미 있으면 ConflictException을 던지고 생성하지 않는다', async () => {
+      prisma.parentUser.findUnique.mockResolvedValue({
+        id: 'parent-1',
+        name: '김엄마',
+        email: 'parent@example.com',
+      });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
+      prisma.reservation.findMany.mockResolvedValue([
+        {
+          id: 'existing-1',
+          childId: 'child-1',
+          status: 'WAITING',
+          preferredSlots: [{ dayOfWeek: 'MON', startMinute: 750, endMinute: 800 }],
+        },
+      ]);
+
+      await expect(service.create(dto, 'parent-1')).rejects.toThrow(ConflictException);
+      expect(prisma.reservation.create).not.toHaveBeenCalled();
+    });
+
+    it('같은 자녀의 기존 신청이 있어도 시간이 겹치지 않으면 정상 생성한다', async () => {
+      const created = { id: '1', ...dto, status: 'WAITING' };
+      prisma.parentUser.findUnique.mockResolvedValue({
+        id: 'parent-1',
+        name: '김엄마',
+        email: 'parent@example.com',
+      });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
+      prisma.reservation.findMany.mockResolvedValue([
+        {
+          id: 'existing-1',
+          childId: 'child-1',
+          status: 'WAITING',
+          preferredSlots: [{ dayOfWeek: 'TUE', startMinute: 780, endMinute: 850 }],
+        },
+      ]);
+      prisma.reservation.create.mockResolvedValue(created);
+
+      await expect(service.create(dto, 'parent-1')).resolves.toBe(created);
+      expect(prisma.reservation.create).toHaveBeenCalled();
+    });
+
+    it('중복 조회는 childId와 취소 제외 조건으로 범위를 좁힌다(다른 자녀는 이 조건에서 자동 제외됨)', async () => {
+      const created = { id: '1', ...dto, status: 'WAITING' };
+      prisma.parentUser.findUnique.mockResolvedValue({
+        id: 'parent-1',
+        name: '김엄마',
+        email: 'parent@example.com',
+      });
+      prisma.child.findFirst.mockResolvedValue({ id: 'child-1', parentUserId: 'parent-1', name: '민준', age: 5 });
+      prisma.reservation.create.mockResolvedValue(created);
+
+      await service.create(dto, 'parent-1');
+
+      expect(prisma.reservation.findMany).toHaveBeenCalledWith({
+        where: { childId: 'child-1', status: { not: 'CANCELLED' } },
+        include: { preferredSlots: true },
+      });
+    });
+  });
+
+  describe('findMine', () => {
+    it('학부모 본인의 취소되지 않은 신청을 최신순으로 반환한다', async () => {
+      const reservations = [{ id: '1', childId: 'child-1' }];
+      prisma.reservation.findMany.mockResolvedValue(reservations);
+
+      const result = await service.findMine('parent-1');
+
+      expect(result).toBe(reservations);
+      expect(prisma.reservation.findMany).toHaveBeenCalledWith({
+        where: { parentUserId: 'parent-1', status: { not: 'CANCELLED' } },
+        include: { preferredSlots: true },
+        orderBy: { createdAt: 'desc' },
+      });
     });
   });
 

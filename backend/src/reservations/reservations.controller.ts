@@ -35,6 +35,12 @@ export class ReservationsController {
     return this.reservationsService.findAll(query);
   }
 
+  @UseGuards(ParentJwtGuard)
+  @Get('mine')
+  findMine(@Req() request: ParentRequest) {
+    return this.reservationsService.findMine(request.user.parentUserId);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {

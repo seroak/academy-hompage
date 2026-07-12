@@ -7,6 +7,7 @@ describe('ReservationsController', () => {
   let service: {
     findAll: jest.Mock;
     findOne: jest.Mock;
+    findMine: jest.Mock;
     create: jest.Mock;
     createWalkInReservation: jest.Mock;
     update: jest.Mock;
@@ -17,6 +18,7 @@ describe('ReservationsController', () => {
     service = {
       findAll: jest.fn(),
       findOne: jest.fn(),
+      findMine: jest.fn(),
       create: jest.fn(),
       createWalkInReservation: jest.fn(),
       update: jest.fn(),
@@ -43,6 +45,15 @@ describe('ReservationsController', () => {
 
     await expect(controller.findOne('1')).resolves.toBe('reservation');
     expect(service.findOne).toHaveBeenCalledWith('1');
+  });
+
+  it('delegates findMine to the service with parent user principal', async () => {
+    service.findMine.mockResolvedValue(['reservation']);
+
+    await expect(
+      controller.findMine({ user: { parentUserId: 'parent-1' } }),
+    ).resolves.toEqual(['reservation']);
+    expect(service.findMine).toHaveBeenCalledWith('parent-1');
   });
 
   it('delegates create to the service with parent user principal', async () => {

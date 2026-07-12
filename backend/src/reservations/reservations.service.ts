@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NotificationService } from '../notifications/notification.service.js';
@@ -67,6 +67,21 @@ export class ReservationsService {
       throw new NotFoundException(`Child ${dto.childId} not found`);
     }
 
+    const existingReservations = await this.prisma.reservation.findMany({
+      where: { childId: dto.childId, status: { not: 'CANCELLED' } },
+      include: { preferredSlots: true },
+    });
+
+    const hasOverlap = existingReservations.some((existing) =>
+      existing.preferredSlots.some((existingSlot) =>
+        dto.preferredSlots.some((newSlot) => this.slotsOverlap(newSlot, existingSlot)),
+      ),
+    );
+
+    if (hasOverlap) {
+      throw new ConflictException('이미 같은 시간에 신청한 내역이 있습니다.');
+    }
+
     const { preferredSlots, ...reservationData } = dto;
 
     const reservation = await this.prisma.reservation.create({
@@ -79,6 +94,14 @@ export class ReservationsService {
     });
     await this.notification.sendReservationReceived(reservation);
     return reservation;
+  }
+
+  findMine(parentUserId: string) {
+    return this.prisma.reservation.findMany({
+      where: { parentUserId, status: { not: 'CANCELLED' } },
+      include: { preferredSlots: true },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async createWalkInReservation(dto: CreateWalkInReservationDto) {
@@ -128,6 +151,13 @@ export class ReservationsService {
       }
       throw error;
     }
+  }
+
+  private slotsOverlap(
+    a: { dayOfWeek: string; startMinute: number; endMinute: number },
+    b: { dayOfWeek: string; startMinute: number; endMinute: number },
+  ): boolean {
+    return a.dayOfWeek === b.dayOfWeek && a.startMinute < b.endMinute && a.endMinute > b.startMinute;
   }
 
   private isNotFoundError(error: unknown): boolean {
