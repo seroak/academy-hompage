@@ -111,7 +111,6 @@ export const CreateReservationInputSchema = z.object({
   preferredSlots: z.array(PreferredSlotSchema).min(1, '가능한 시간을 1개 이상 선택해 주세요'),
   note: z.string().optional(),
   requestedGroupId: z.string().optional(),
-  levelTestResultId: z.string().optional(),
 })
 
 export type CreateReservationInput = z.infer<typeof CreateReservationInputSchema>

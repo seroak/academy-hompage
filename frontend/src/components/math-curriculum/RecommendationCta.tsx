@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, CalendarCheck, ClipboardCheck } from 'lucide-react'
+import { ArrowRight, CalendarCheck } from 'lucide-react'
 import { recommendations, toneClasses } from './data'
 
 export default function RecommendationCta() {
@@ -37,11 +37,10 @@ export default function RecommendationCta() {
         <div className="relative">
           <p className="text-xs font-bold tracking-[0.06em] text-[#dc7200]">1:1 MATH CONSULTING</p>
           <h2 className="mt-2 text-xl font-bold tracking-[-0.045em] text-[#292317] sm:text-2xl">우리 아이는 어떤 과정이 맞을까요?</h2>
-          <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-[#625845]">전문 선생님의 1:1 상담과 레벨 테스트로 아이에게 꼭 맞는 수학 교육을 제안해드립니다.</p>
+          <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-[#625845]">전문 선생님의 1:1 상담으로 아이에게 꼭 맞는 수학 교육을 제안해드립니다.</p>
         </div>
-        <div className="relative mt-5 grid gap-2.5 sm:grid-cols-2 lg:mt-0 lg:grid-cols-1">
+        <div className="relative mt-5 lg:mt-0">
           <Link href="/apply" className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#ff9f00] px-6 text-sm font-bold text-[#2c2518] shadow-[0_8px_16px_rgba(202,130,0,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f08e00]"><CalendarCheck size={17} strokeWidth={2.6} />상담 예약하기<ArrowRight size={16} strokeWidth={2.8} /></Link>
-          <Link href="/level-test" className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#e8a319] bg-[#fffaf0] px-6 text-sm font-bold text-[#70500b] transition hover:-translate-y-0.5 hover:bg-white"><ClipboardCheck size={17} strokeWidth={2.5} />무료 레벨 테스트 신청</Link>
         </div>
       </div>
     </section>

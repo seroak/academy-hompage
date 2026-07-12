@@ -9,7 +9,6 @@ import { useApplyReservationMutation } from "./hooks/useApplyReservationMutation
 import { useJoinableGroupsQuery } from "./hooks/useJoinableGroupsQuery";
 import { useConfirmedSlotsQuery } from "./hooks/useConfirmedSlotsQuery";
 import PreferredSlotsPicker from "../components/PreferredSlotsPicker";
-import LevelTestSection from "../components/LevelTestSection";
 import { useChildrenQuery } from "../queries/useChildrenQuery";
 import {
   CreateReservationInputSchema,
@@ -28,7 +27,6 @@ const emptyForm: CreateReservationInput = {
   preferredSlots: [],
   note: "",
   requestedGroupId: undefined,
-  levelTestResultId: undefined,
 };
 
 const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
@@ -92,7 +90,6 @@ export default function ApplyPage({
       childAge: child.age,
       requestedGroupId: undefined,
       preferredSlots: [],
-      levelTestResultId: undefined,
     }));
     clearFieldError("childId");
   }
@@ -173,7 +170,7 @@ export default function ApplyPage({
           onClick={applyAgain}
           className="mt-6 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
-          다시 신청하기
+          확인
         </button>
       </div>
     );
@@ -281,17 +278,6 @@ export default function ApplyPage({
           />
           {fieldErrors.parentPhone && <span className="text-xs text-red-600">{fieldErrors.parentPhone}</span>}
         </label>
-
-        {form.childId && (
-          <LevelTestSection
-            key={form.childAge}
-            childId={form.childId}
-            childName={form.childName}
-            childAge={form.childAge}
-            completedResultId={form.levelTestResultId ?? null}
-            onCompleted={(resultId) => setForm((current) => ({ ...current, levelTestResultId: resultId }))}
-          />
-        )}
 
         {matchingGroups.length > 0 && (
           <div className="col-span-full rounded-lg border border-emerald-200 bg-emerald-50 p-4">
