@@ -19,10 +19,12 @@ function getServerSnapshot(): boolean {
 }
 
 /**
- * Tailwind `sm` 브레이크포인트(640px)와 맞춘 좁은 화면 판별 훅.
- * matchMedia 구독을 useSyncExternalStore로 감싸, SSR에서는 고정 스냅샷(false)을
- * 쓰고 클라이언트 첫 렌더부터 실제 값을 동기적으로 읽는다 — useState+useEffect
- * 조합과 달리 하이드레이션 이후 추가 리렌더(깜빡임) 없이 값이 확정된다.
+ * Tailwind `sm` 브레이크포인트(640px)에 맞춘 좁은 화면 판별 훅.
+ *
+ * `matchMedia`의 변경 이벤트를 `useSyncExternalStore`로 구독한다.
+ * SSR과 hydration 시에는 `false`를 사용하여 서버와 클라이언트의
+ * 초기 렌더 결과를 일치시키고, hydration 이후 실제 브라우저의
+ * 미디어 쿼리 결과와 다르면 React가 다시 렌더링한다.
  */
 export function useIsNarrow(): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
