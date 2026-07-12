@@ -31,7 +31,6 @@ model ParentUser {
   socialAccounts   ParentSocialAccount[]
   authSessions     ParentAuthSession[]
   reservations     Reservation[]
-  levelTestResults LevelTestResult[]
   children         Child[]
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
@@ -44,7 +43,6 @@ model Child {
   name             String
   age              Int
   reservations     Reservation[]
-  levelTestResults LevelTestResult[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
@@ -125,8 +123,6 @@ model Reservation {
   requestedGroupId  String?
   parentUser        ParentUser?                @relation(fields: [parentUserId], references: [id])
   parentUserId      String?
-  levelTestResult   LevelTestResult?           @relation(fields: [levelTestResultId], references: [id])
-  levelTestResultId String?
   createdAt         DateTime                   @default(now())
   updatedAt         DateTime                   @updatedAt
 }
@@ -172,47 +168,4 @@ model ReservationGroupSlot {
 
   @@index([groupId])
   @@index([dayOfWeek, startMinute, endMinute])
-}
-
-enum LevelTestQuestionType {
-  MULTIPLE_CHOICE
-  SHORT_ANSWER
-}
-
-model LevelTestQuestion {
-  id                 String                @id @default(cuid())
-  age                Int
-  type               LevelTestQuestionType
-  prompt             String
-  promptImageUrl     String?
-  choices            String[]              @default([])
-  correctChoiceIndex Int?
-  active             Boolean               @default(true)
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
-
-  @@index([age, active])
-}
-
-model LevelTestAgeConfig {
-  age       Int      @id
-  drawCount Int      @default(5)
-  updatedAt DateTime @updatedAt
-}
-
-model LevelTestResult {
-  id            String        @id @default(cuid())
-  parentUser    ParentUser    @relation(fields: [parentUserId], references: [id], onDelete: Cascade)
-  parentUserId  String
-  childName     String
-  childAge      Int
-  child         Child?       @relation(fields: [childId], references: [id], onDelete: SetNull)
-  childId       String?
-  answers       Json
-  score         Int?
-  scorableCount Int?
-  reservations  Reservation[]
-  createdAt     DateTime      @default(now())
-
-  @@index([parentUserId])
 }

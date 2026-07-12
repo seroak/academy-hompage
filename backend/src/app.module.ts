@@ -9,7 +9,6 @@ import { NotificationModule } from './notifications/notification.module.js';
 import { ReservationsModule } from './reservations/reservations.module.js';
 import { ReservationGroupsModule } from './reservation-groups/reservation-groups.module.js';
 import { MembersModule } from './members/members.module.js';
-import { LevelTestsModule } from './level-tests/level-tests.module.js';
 import { ChildrenModule } from './children/children.module.js';
 
 @Module({
@@ -24,7 +23,6 @@ import { ChildrenModule } from './children/children.module.js';
     ReservationsModule,
     ReservationGroupsModule,
     MembersModule,
-    LevelTestsModule,
     ChildrenModule,
   ],
   controllers: [AppController],

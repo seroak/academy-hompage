@@ -23,6 +23,12 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  it('/level-tests/quiz (GET)는 제거되어 404를 반환한다', () => {
+    return request(app.getHttpServer())
+      .get('/level-tests/quiz?age=5')
+      .expect(404);
+  });
+
   afterEach(async () => {
     await app.close();
   });
