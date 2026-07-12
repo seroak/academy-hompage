@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion'
 import { BookMarked, Brain, MessageCircleHeart, Shapes } from 'lucide-react'
-import SeoLandingLinks from './seo-landing/SeoLandingLinks'
 
 const courses = [
   {
@@ -33,7 +32,6 @@ const courses = [
 
 export default function CourseSection() {
   return (
-    <>
     <section className="mx-auto max-w-[1120px] px-5 pb-8 pt-24 sm:px-8">
       <div className="grid gap-8 lg:grid-cols-[0.86fr_1.14fr] lg:items-end">
         <div>
@@ -72,7 +70,5 @@ export default function CourseSection() {
         })}
       </div>
     </section>
-    <SeoLandingLinks compact />
-    </>
   )
 }

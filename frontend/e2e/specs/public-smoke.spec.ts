@@ -206,7 +206,7 @@ test.describe('공개 페이지 스모크', () => {
     }
   })
 
-  test('홈과 교육과정에서 지역 교육 페이지를 표준 링크로 연결한다', async ({ page }) => {
+  test('홈과 교육과정에 별도 지역 교육 링크 섹션을 노출하지 않는다', async ({ page }) => {
     const paths = [
       '/courses/young-children-math',
       '/courses/thinking-math',
@@ -216,7 +216,7 @@ test.describe('공개 페이지 스모크', () => {
     for (const sourcePath of ['/', '/courses']) {
       await page.goto(sourcePath)
       for (const path of paths) {
-        await expect(page.locator(`a[href="${path}"]`).first()).toBeVisible()
+        await expect(page.locator(`a[href="${path}"]`)).toHaveCount(0)
       }
     }
   })
