@@ -119,7 +119,7 @@ npx playwright install chromium   # 최초 1회
 npx playwright test               # 전체 스위트 실행 (3410/4310 전용 포트, 실백엔드 3000/평소 dev 3001과 무관)
 ```
 
-- **SSR과 클라이언트 요청은 목킹 방식이 다르다**: 공개 페이지(`app/**`)의 서버 컴포넌트 fetch는 브라우저 `page.route()`로 못 잡는다 — `e2e/mock-server/server.ts`(독립 Node 서버, `NEXT_PUBLIC_API_BASE_URL`로 연결)가 응답한다. `/apply`, `/level-test`, `/admin/*`처럼 클라이언트(TanStack Query)에서 나가는 요청은 각 spec의 `page.route()`로 시나리오별 제어한다.
+- **SSR과 클라이언트 요청은 목킹 방식이 다르다**: 공개 페이지(`app/**`)의 서버 컴포넌트 fetch는 브라우저 `page.route()`로 못 잡는다 — `e2e/mock-server/server.ts`(독립 Node 서버, `NEXT_PUBLIC_API_BASE_URL`로 연결)가 응답한다. `/apply`, `/admin/*`처럼 클라이언트(TanStack Query)에서 나가는 요청은 각 spec의 `page.route()`로 시나리오별 제어한다.
 - **`page.route()` 패턴은 반드시 API origin에 앵커링**: 느슨한 정규식(`/\/courses$/` 등)은 `/admin/courses` 같은 페이지 자체 내비게이션까지 가로채 버린다(실제로 겪은 버그 — 브라우저가 JSON을 그대로 렌더링). `e2e/helpers/intercept.ts`의 `apiPattern()`으로 목 API origin까지 통째로 앵커링해서 쓴다.
 - **`next dev`는 프로젝트 디렉토리당 1개만 허용**(포트가 달라도 동시 실행 시 잠금 충돌). `next.config.ts`에 `NEXT_E2E=1`일 때 `distDir: '.next-e2e'`로 분리해 평소 dev 서버(3001, `.next`)와 공존시킨다.
 - **Next의 fetch 데이터 캐시(`next: {revalidate}`)는 디스크에 영구 저장**(`.next-e2e/dev/cache/fetch-cache`)돼 dev 서버를 껐다 켜도 살아남는다. `playwright.config.ts`의 webServer 커맨드가 기동 전 이 캐시를 지운다 — 목 서버 응답을 시나리오별로 바꾸는 테스트를 새로 추가할 때 이 점을 놓치면 항상 첫 실행 데이터만 보인다.
