@@ -1,6 +1,6 @@
 'use client'
 
-import { type MouseEvent, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { CalendarCheck, ChevronDown, LogIn, LogOut, Menu, Shield, X } from 'lucide-react'
@@ -12,7 +12,6 @@ import LogoMark from './LogoMark'
 
 const navItems = [
   { to: '/', label: '학원 소개' },
-  { to: '/#programs', label: '프로그램' },
   { to: '/courses', label: '교육과정' },
   { to: '/schedule', label: '수업일정' },
   { to: '/notices', label: '커뮤니티' },
@@ -161,17 +160,8 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
     router.push('/apply')
   }
 
-  function handleNavItemClick(event: MouseEvent<HTMLAnchorElement>, to: string) {
+  function handleNavItemClick() {
     setIsOpen(false)
-    if (to === '/#programs' && pathname === '/') {
-      event.preventDefault()
-      window.history.replaceState(null, '', '#programs')
-      requestAnimationFrame(() => {
-        const programs = document.getElementById('programs')
-        programs?.scrollIntoView({ block: 'start' })
-        programs?.focus({ preventScroll: true })
-      })
-    }
   }
 
   function closeLoginModal() {
@@ -214,7 +204,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
               <Link
                 key={item.to}
                 href={item.to}
-                onClick={(event) => handleNavItemClick(event, item.to)}
+                onClick={handleNavItemClick}
                 className={navLinkClass(pathname === item.to)}
               >
                 {item.label}
@@ -290,7 +280,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                   key={item.to}
                   href={item.to}
                   className={navLinkClass(pathname === item.to)}
-                  onClick={(event) => handleNavItemClick(event, item.to)}
+                  onClick={handleNavItemClick}
                 >
                   {item.label}
                 </Link>
