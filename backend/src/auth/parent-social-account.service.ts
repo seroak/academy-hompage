@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { OAuthProvider } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProviderProfile } from './oauth-providers/oauth-provider.interface.js';
+import { normalizeEmail } from './normalize-email.js';
 
 @Injectable()
 export class ParentSocialAccountService {
@@ -9,6 +10,7 @@ export class ParentSocialAccountService {
 
   async upsertParentUser(providerName: string, profile: ProviderProfile) {
     const providerEnum = this.toProviderEnum(providerName);
+    const normalizedEmail = profile.email ? normalizeEmail(profile.email) : null;
     const existingAccount = await this.prisma.parentSocialAccount.findUnique({
       where: {
         provider_providerAccountId: {
@@ -27,17 +29,17 @@ export class ParentSocialAccountService {
 
       return this.prisma.parentUser.update({
         where: { id: existingAccount.parentUserId },
-        data: { email: profile.email ?? existingAccount.parentUser.email, name: profile.name ?? existingAccount.parentUser.name },
+        data: { email: normalizedEmail ?? existingAccount.parentUser.email, name: profile.name ?? existingAccount.parentUser.name },
       });
     }
 
-    let parentUser = profile.email
-      ? await this.prisma.parentUser.findUnique({ where: { email: profile.email } })
+    let parentUser = normalizedEmail
+      ? await this.prisma.parentUser.findUnique({ where: { email: normalizedEmail } })
       : null;
 
     if (!parentUser) {
       parentUser = await this.prisma.parentUser.create({
-        data: { email: profile.email, name: profile.name },
+        data: { email: normalizedEmail, name: profile.name },
       });
     } else if (profile.name && !parentUser.name) {
       parentUser = await this.prisma.parentUser.update({

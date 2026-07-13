@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NotificationService } from '../notifications/notification.service.js';
 import { ParentSignupDto } from './dto/parent-signup.dto.js';
+import { normalizeEmail } from './normalize-email.js';
 
 const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -38,7 +39,7 @@ export class AuthService {
   }
 
   async signupParent(dto: ParentSignupDto) {
-    const email = this.normalizeEmail(dto.email);
+    const email = normalizeEmail(dto.email);
     const existingParent = await this.prisma.parentUser.findUnique({ where: { email } });
 
     if (existingParent?.passwordHash) {
@@ -116,7 +117,7 @@ export class AuthService {
 
   async loginParent(email: string, password: string) {
     const parent = await this.prisma.parentUser.findUnique({
-      where: { email: this.normalizeEmail(email) },
+      where: { email: normalizeEmail(email) },
     });
 
     if (!parent?.passwordHash || !(await bcrypt.compare(password, parent.passwordHash))) {
@@ -140,10 +141,6 @@ export class AuthService {
     });
 
     return { accessToken, parent: profile };
-  }
-
-  private normalizeEmail(email: string) {
-    return email.trim().toLowerCase();
   }
 
   private frontendUrl() {
