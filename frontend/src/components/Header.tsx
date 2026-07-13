@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { type MouseEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { CalendarCheck, ChevronDown, LogIn, LogOut, Menu, Shield, X } from 'lucide-react'
@@ -161,11 +161,15 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
     router.push('/apply')
   }
 
-  function handleNavItemClick(to: string) {
+  function handleNavItemClick(event: MouseEvent<HTMLAnchorElement>, to: string) {
     setIsOpen(false)
     if (to === '/#programs' && pathname === '/') {
+      event.preventDefault()
+      window.history.replaceState(null, '', '#programs')
       requestAnimationFrame(() => {
-        document.getElementById('programs')?.focus({ preventScroll: true })
+        const programs = document.getElementById('programs')
+        programs?.scrollIntoView({ block: 'start' })
+        programs?.focus({ preventScroll: true })
       })
     }
   }
@@ -210,7 +214,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
               <Link
                 key={item.to}
                 href={item.to}
-                onClick={() => handleNavItemClick(item.to)}
+                onClick={(event) => handleNavItemClick(event, item.to)}
                 className={navLinkClass(pathname === item.to)}
               >
                 {item.label}
@@ -286,7 +290,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                   key={item.to}
                   href={item.to}
                   className={navLinkClass(pathname === item.to)}
-                  onClick={() => handleNavItemClick(item.to)}
+                  onClick={(event) => handleNavItemClick(event, item.to)}
                 >
                   {item.label}
                 </Link>

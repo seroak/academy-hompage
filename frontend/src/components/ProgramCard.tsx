@@ -44,7 +44,7 @@ export default function ProgramCard() {
       ref={sectionRef}
       id="programs"
       tabIndex={-1}
-      className="relative z-20 mx-auto -mt-36 w-[calc(100%-32px)] max-w-[1120px] rounded-[28px] bg-white px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.08)] sm:w-[calc(100%-80px)] sm:px-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd66b]"
+      className="relative z-20 mx-auto -mt-36 w-[calc(100%-32px)] max-w-[1120px] scroll-mt-28 rounded-[28px] bg-white px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.08)] sm:w-[calc(100%-80px)] sm:px-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd66b]"
     >
       <div className="grid gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
         {programs.map((program, index) => {
