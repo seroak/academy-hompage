@@ -1,5 +1,18 @@
 # 개발 워크플로 가이드
 
+## 워크트리 생성
+
+새 작업용 워크트리는 프로젝트 루트에서 다음 명령으로만 만든다.
+
+```bash
+./scripts/create-worktree.sh <작업명>
+```
+
+- 작업명 `feature-name`은 `.worktrees/feature-name` 경로와 `codex/feature-name` 브랜치에 사용된다.
+- 명령은 백엔드·프론트엔드 `.env`를 메인 체크아웃의 파일에 심볼릭 링크하고, 양쪽 `npm ci`와 백엔드 Prisma Client 생성을 실행한다.
+- 메인 체크아웃에 `backend/.env` 또는 `frontend/.env`가 없으면 생성 전에 중단한다. 시크릿을 임의로 만들거나 출력하지 않는다.
+- 수동 `git worktree add`는 환경 파일과 생성 의존성이 누락되므로 사용하지 않는다.
+
 - 작업 시작 전 `git status`, 관련 파일, 최근 `git log --oneline`과 브랜치를 확인한다. 다른 세션·브랜치의 진행 중 작업과 충돌하지 않는다.
 - 백엔드 기능은 `*.spec.ts`를 먼저 작성해 RED를 확인한 뒤 최소 구현으로 GREEN을 만든다.
 - lint·정적 분석 경고를 해결할 때 임계값 상향, 규칙 비활성화, 예외 추가는 사용자 승인 없이 사용하지 않는다.
