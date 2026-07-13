@@ -24,7 +24,7 @@
 
 **Interfaces:**
 - Consumes: `monthColor(index: number): string`가 반환하는 Tailwind 배경·테두리 클래스
-- Produces: 첫 번째 월은 `bg-[#f0e5ff] border-[#a879d6]`, 두 번째 월은 `bg-[#d7f4f0] border-[#4ca99f]`를 사용하는 일정 도구와 달력 셀
+- Produces: 첫 번째 월은 `bg-[#f0e5ff] border-[#c3a1e5]`, 두 번째 월은 `bg-[#d7f4f0] border-[#9bc5bf]`를 사용하는 일정 도구와 달력 셀
 
 - [ ] **Step 1: 실패하는 Playwright 명세를 작성한다**
 
@@ -51,8 +51,8 @@
 
   ```ts
   const monthColors = [
-    'bg-[#f0e5ff] border-[#a879d6]',
-    'bg-[#d7f4f0] border-[#4ca99f]',
+    'bg-[#f0e5ff] border-[#c3a1e5]',
+    'bg-[#d7f4f0] border-[#9bc5bf]',
     'bg-[#dff3a8] border-[#acd85d]',
     'bg-[#ffeaa1] border-[#f1c84b]',
     'bg-[#ffd5c2] border-[#efaa8c]',
