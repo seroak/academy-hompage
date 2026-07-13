@@ -9,6 +9,24 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page).toHaveTitle(/생각을 여는 수학|academy/i)
   })
 
+  test('프로그램 링크를 다시 눌러도 대상 위치로 이동하고 포커스한다', async ({ page }) => {
+    await page.goto('/')
+
+    const programs = page.locator('#programs')
+    const programLink = page.locator('header').getByRole('link', { name: '프로그램' })
+
+    await programLink.click()
+    await expect(programs).toBeFocused()
+    await expect(programs).toBeInViewport()
+
+    await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight }))
+    await expect(programs).not.toBeInViewport()
+
+    await programLink.click()
+    await expect(programs).toBeFocused()
+    await expect(programs).toBeInViewport()
+  })
+
   test('홈 핵심 콘텐츠는 클라이언트 애니메이션 없이 즉시 렌더된다', async ({ page }) => {
     await page.goto('/')
 
