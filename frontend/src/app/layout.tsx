@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   alternates: rssAlternate(),
   icons: {
     icon: '/favicon.svg',
-    apple: '/favicon-theme.png',
+    apple: '/apple-touch-icon.png',
   },
   openGraph: baseOpenGraph(),
   twitter: {
