@@ -133,7 +133,7 @@ export class NotificationService {
   ): Promise<void> {
     await this.sendMail(
       email,
-      '[학원] 이메일 인증을 완료해 주세요',
+      '[생각을 여는 수학] 이메일 인증을 완료해 주세요',
       `${name}님, 아래 링크를 눌러 이메일 인증을 완료하고 회원가입을 마쳐 주세요.\n${verifyUrl}\n\n본인이 요청하지 않았다면 이 메일을 무시해 주세요.`,
       parentEmailVerificationEmail({ name, verifyUrl }),
     );
