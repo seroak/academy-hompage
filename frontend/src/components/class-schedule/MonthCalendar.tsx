@@ -1,7 +1,7 @@
 import type { ClassScheduleDay } from '../../api/schemas/class-schedule.schema'
 import { buildMonthGrid } from './calendar'
 
-const monthColors = ['bg-[#eadcff] border-[#bda2ef]', 'bg-[#c9ecff] border-[#78c9ef]', 'bg-[#dff3a8] border-[#acd85d]', 'bg-[#ffeaa1] border-[#f1c84b]', 'bg-[#ffd5c2] border-[#efaa8c]']
+const monthColors = ['bg-[#f0e5ff] border-[#7e3fb2]', 'bg-[#d7f4f0] border-[#16877b]', 'bg-[#dff3a8] border-[#acd85d]', 'bg-[#ffeaa1] border-[#f1c84b]', 'bg-[#ffd5c2] border-[#efaa8c]']
 export function monthColor(index: number) { return monthColors[index] ?? monthColors[1] }
 
 export default function MonthCalendar({ year, month, classMonths, days, onDateClick, onDatePointerStart, onDatePointerEnter, selectedDate }: {

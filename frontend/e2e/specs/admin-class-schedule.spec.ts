@@ -81,9 +81,17 @@ test.describe('관리자 수업 일정', () => {
     await page.mouse.up()
 
     for (const day of [first, middle, last]) {
-      await expect(day).toHaveClass(/bg-\[#c9ecff\]/)
+      await expect(day).toHaveClass(/bg-\[#d7f4f0\]/)
     }
     await expect(page.getByText('저장하지 않은 변경사항')).toBeVisible()
+  })
+
+  test('월별 도구에 서로 구분되는 색상을 사용한다', async ({ page }) => {
+    await page.goto('/admin/schedules')
+    const toolbar = page.getByRole('toolbar', { name: '드래그 도구' })
+
+    await expect(toolbar.getByRole('button', { name: '6월분' })).toHaveClass(/bg-\[#f0e5ff\].*border-\[#7e3fb2\]/)
+    await expect(toolbar.getByRole('button', { name: '7월분' })).toHaveClass(/bg-\[#d7f4f0\].*border-\[#16877b\]/)
   })
 
   test('전월·다음월 도구를 표시하고 전월 마지막 주를 드래그 지정한다', async ({ page }) => {
@@ -107,7 +115,7 @@ test.describe('관리자 수업 일정', () => {
     await page.mouse.move(lastBox.x + lastBox.width / 2, lastBox.y + lastBox.height / 2, { steps: 10 })
     await page.mouse.up()
 
-    await expect(last).toHaveClass(/bg-\[#eadcff\]/)
+    await expect(last).toHaveClass(/bg-\[#f0e5ff\]/)
   })
 
   test('일정을 삭제하면 목록에서 제거한다', async ({ page }) => {
