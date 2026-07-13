@@ -3,6 +3,7 @@ export interface SeoLandingContent {
   title: string
   metaTitle: string
   description: string
+  ogImage: string
   keywords: string[]
   eyebrow: string
   intro: string
@@ -19,6 +20,7 @@ export const seoLandingPages: SeoLandingContent[] = [
     metaTitle: '흥덕 유아 수학 | 놀이·교구로 시작하는 첫 수학',
     description:
       '용인 흥덕 유아 수학 수업. 플레이팩토와 요리수 수학의 놀이·교구 활동으로 수와 도형을 즐겁게 만나고 생각을 말하는 힘을 키웁니다.',
+    ogImage: '/images/og/young-children-math.webp',
     keywords: ['흥덕 유아 수학', '용인 유아 수학', '유치부 수학학원', '플레이팩토', '요리수 수학'],
     eyebrow: '유아의 첫 수학 경험',
     intro:
@@ -42,6 +44,7 @@ export const seoLandingPages: SeoLandingContent[] = [
     metaTitle: '흥덕 사고력 수학 | 관찰·비교·설명 중심 수업',
     description:
       '용인 흥덕 사고력 수학 수업. 플레이팩토, 요리수 수학, 씨투엠으로 관찰하고 비교하며 여러 해결 방법을 설명하는 힘을 기릅니다.',
+    ogImage: '/images/og/thinking-math.webp',
     keywords: ['흥덕 사고력 수학', '용인 사고력 수학', '기흥 사고력 수학', '플레이팩토', '씨투엠'],
     eyebrow: '답보다 과정을 보는 수학',
     intro:
@@ -65,6 +68,7 @@ export const seoLandingPages: SeoLandingContent[] = [
     metaTitle: '흥덕 초등 저학년 수학학원 | 개념·사고력 수업',
     description:
       '용인 흥덕 초등 저학년 수학 수업. 씨투엠과 교구 활동으로 개념을 이해하고 사고력 문제와 교과 학습까지 자연스럽게 연결합니다.',
+    ogImage: '/images/og/elementary-lower-grades.webp',
     keywords: ['흥덕 초등 수학', '초등 저학년 수학학원', '용인 초등 수학', '기흥 수학학원', '씨투엠'],
     eyebrow: '초등 수학의 단단한 시작',
     intro:

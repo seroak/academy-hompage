@@ -21,6 +21,7 @@ dist-ssr
 /test-results
 /playwright-report
 /blob-report
+/.lighthouseci
 
 # Editor directories and files
 .vscode/*

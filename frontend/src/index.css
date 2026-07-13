@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "pretendard/dist/web/variable/pretendardvariable.css";
 
 @theme {
   --color-brand-50: #fff7e8;
@@ -11,7 +10,7 @@
   --color-brand-800: #9f4d00;
   --color-brand-950: #3b2506;
 
-  --font-sans: "Pretendard Variable", system-ui, "Segoe UI", sans-serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 :root {

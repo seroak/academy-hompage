@@ -1,30 +1,22 @@
-'use client'
-
-import { motion } from 'framer-motion'
-import { ClipboardCheck, FileHeart, ShieldCheck, UsersRound } from 'lucide-react'
+import { ClipboardCheck, FileHeart, UsersRound } from "lucide-react";
 
 const trustItems = [
   {
-    title: '소수정예 수업',
-    description: '아이마다 말하고 시도할 시간이 충분한 밀도 있는 수업',
+    title: "소수정예 수업",
+    description: "아이마다 말하고 시도할 시간이 충분한 밀도 있는 수업",
     icon: UsersRound,
   },
   {
-    title: '개별 성장 기록',
-    description: '수업 태도, 이해도, 표현 변화를 꾸준히 관찰',
+    title: "개별 성장 기록",
+    description: "수업 태도, 이해도, 표현 변화를 꾸준히 관찰",
     icon: ClipboardCheck,
   },
   {
-    title: '안전한 등하원 관리',
-    description: '출결과 귀가 상황을 꼼꼼하게 확인하는 운영',
-    icon: ShieldCheck,
-  },
-  {
-    title: '상담 리포트 제공',
-    description: '부모님이 이해하기 쉬운 주기별 성장 리포트',
+    title: "상담 리포트 제공",
+    description: "부모님이 이해하기 쉬운 주기별 성장 리포트",
     icon: FileHeart,
   },
-]
+];
 
 export default function TrustSection() {
   return (
@@ -48,15 +40,11 @@ export default function TrustSection() {
         </div>
 
         <div className="relative z-10 mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {trustItems.map((item, index) => {
-            const Icon = item.icon
+          {trustItems.map((item) => {
+            const Icon = item.icon;
             return (
-              <motion.article
+              <article
                 key={item.title}
-                initial={{ opacity: 0, y: 22 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ delay: index * 0.06, duration: 0.45, ease: 'easeOut' }}
                 className="rounded-[24px] border border-[#f2e4c9] bg-[#fff9ec] p-5"
               >
                 <span className="grid size-12 place-items-center rounded-full bg-white text-[#ff8a1f] shadow-[0_10px_24px_rgba(255,138,31,0.12)]">
@@ -64,11 +52,11 @@ export default function TrustSection() {
                 </span>
                 <h3 className="mt-4 text-base font-black text-[#222222]">{item.title}</h3>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#666666]">{item.description}</p>
-              </motion.article>
-            )
+              </article>
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }

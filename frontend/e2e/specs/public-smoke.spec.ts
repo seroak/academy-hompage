@@ -9,6 +9,34 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page).toHaveTitle(/생각을 여는 수학|academy/i)
   })
 
+  test('홈 핵심 콘텐츠는 클라이언트 애니메이션 없이 즉시 렌더된다', async ({ page }) => {
+    await page.goto('/')
+
+    const heading = page.getByRole('heading', {
+      name: '아이의 오늘이 미래의 꿈이 됩니다',
+      level: 1,
+    })
+    await expect(heading).not.toHaveAttribute('style')
+    await expect(page.getByRole('link', { name: '상담 신청하기' })).toHaveAttribute('href', '/apply')
+  })
+
+  test('홈의 모바일 비표시 이미지는 초기 네트워크 우선순위를 차지하지 않는다', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+
+    const heroImage = page.locator('img[alt="책상 앞에서 웃고 있는 어린이들"]')
+    await expect(heroImage).toHaveAttribute('width', '1536')
+    await expect(heroImage).toHaveAttribute('height', '1024')
+    await expect(heroImage).toHaveAttribute(
+      'sizes',
+      '(min-width: 1024px) 520px, (min-width: 640px) 420px, 180px',
+    )
+    await expect(heroImage).not.toHaveAttribute('fetchpriority', 'high')
+    await expect(heroImage).toHaveAttribute('loading', 'lazy')
+    await expect(heroImage).toHaveAttribute('decoding', 'sync')
+    await expect(heroImage).toBeHidden()
+  })
+
   test('로그인 모달을 열면 포커스가 모달 안에서 시작한다', async ({ page }) => {
     await page.goto('/?login=1')
 
@@ -28,6 +56,7 @@ test.describe('공개 페이지 스모크', () => {
   test('홈에서 수업 신청 절차를 순서대로 안내한다', async ({ page }) => {
     const pages = new PublicPages(page)
     await pages.gotoHome()
+    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
 
     await expect(page.getByRole('heading', { name: '수업 신청, 이렇게 진행돼요' })).toBeVisible()
     await expect(page.getByRole('heading', { name: '자녀 선택' })).toBeVisible()
@@ -38,6 +67,7 @@ test.describe('공개 페이지 스모크', () => {
   test('홈의 수업 신청 버튼이 신청 페이지로 연결된다', async ({ page }) => {
     const pages = new PublicPages(page)
     await pages.gotoHome()
+    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
 
     await expect(page.getByRole('link', { name: '수업 신청하기' })).toHaveAttribute('href', '/apply')
   })
@@ -45,6 +75,7 @@ test.describe('공개 페이지 스모크', () => {
   test('홈에서 신청 방법을 보여주는 세 개의 실시간 미리보기를 제공한다', async ({ page }) => {
     const pages = new PublicPages(page)
     await pages.gotoHome()
+    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
 
     for (const step of ['child-select', 'time-select', 'application-complete']) {
       const animation = page.getByTestId(`application-guide-animation-${step}`)
@@ -56,6 +87,7 @@ test.describe('공개 페이지 스모크', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     const pages = new PublicPages(page)
     await pages.gotoHome()
+    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
 
     for (const step of ['child-select', 'time-select', 'application-complete']) {
       const animation = page.getByTestId(`application-guide-animation-${step}`)
@@ -67,6 +99,7 @@ test.describe('공개 페이지 스모크', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     const pages = new PublicPages(page)
     await pages.gotoHome()
+    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
 
     const firstStep = page.getByRole('heading', { name: '자녀 선택' })
     const secondStep = page.getByRole('heading', { name: '희망 시간 선택' })
@@ -97,6 +130,31 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page).toHaveTitle(/수학교육 과정/)
     await expect(page.getByRole('heading', { name: '플레이팩토' })).toBeVisible()
     await expect(page.getByText('놀이로 수학을 좋아하게 만드는 프로그램')).toBeVisible()
+  })
+
+  test('교육과정의 모바일 비표시 이미지는 초기 네트워크 우선순위를 차지하지 않는다', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/courses')
+
+    const heroImage = page.locator('img[alt="교구로 수학 활동을 하는 어린이들"]')
+    await expect(heroImage).toHaveAttribute('width', '1672')
+    await expect(heroImage).toHaveAttribute('height', '941')
+    await expect(heroImage).toHaveAttribute(
+      'sizes',
+      '(min-width: 1024px) 560px, (min-width: 640px) 420px, 220px',
+    )
+    await expect(heroImage).not.toHaveAttribute('fetchpriority', 'high')
+    await expect(heroImage).toHaveAttribute('loading', 'lazy')
+    await expect(heroImage).toHaveAttribute('decoding', 'sync')
+    await expect(heroImage).toBeHidden()
+
+    for (const alt of [
+      '플레이팩토 수업 활동',
+      '요리수 수학 수업 활동',
+      '씨투엠(C2M) 수업 활동',
+    ]) {
+      await expect(page.locator(`img[alt="${alt}"]`)).toBeHidden()
+    }
   })
 
   test('공지 목록/상세에 목 데이터가 렌더된다', async ({ page }) => {
@@ -136,12 +194,23 @@ test.describe('공개 페이지 스모크', () => {
     const sitemapXml = await sitemap.text()
 
     for (const path of [
+      '/',
+      '/courses',
       '/courses/young-children-math',
       '/courses/thinking-math',
       '/courses/elementary-lower-grades',
     ]) {
       expect(sitemapXml).toContain(`http://localhost:3410${path}`)
+
+      const escapedUrl = `http://localhost:3410${path}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const urlEntry = sitemapXml.match(new RegExp(`<url>\\s*<loc>${escapedUrl}</loc>([\\s\\S]*?)</url>`))
+      expect(urlEntry?.[1] ?? '').not.toContain('<lastmod>')
     }
+
+    const noticeEntry = sitemapXml.match(
+      /<url>\s*<loc>http:\/\/localhost:3410\/notices\/notice-1<\/loc>([\s\S]*?)<\/url>/,
+    )
+    expect(noticeEntry?.[1] ?? '').toContain('<lastmod>')
 
     const rss = await request.get('/rss.xml')
     await expect(rss).toBeOK()
@@ -206,18 +275,68 @@ test.describe('공개 페이지 스모크', () => {
     }
   })
 
-  test('홈과 교육과정에 별도 지역 교육 링크 섹션을 노출하지 않는다', async ({ page }) => {
-    const paths = [
-      '/courses/young-children-math',
-      '/courses/thinking-math',
-      '/courses/elementary-lower-grades',
-    ]
+  test('홈과 교육과정의 기존 카드에서 지역 교육 페이지를 표준 링크로 연결한다', async ({ page }) => {
+    const homeLinks = [
+      ['유치부 과정', '/courses/young-children-math'],
+      ['초등 저학년 과정', '/courses/elementary-lower-grades'],
+      ['창의 사고 과정', '/courses/thinking-math'],
+    ] as const
 
-    for (const sourcePath of ['/', '/courses']) {
-      await page.goto(sourcePath)
-      for (const path of paths) {
-        await expect(page.locator(`a[href="${path}"]`)).toHaveCount(0)
-      }
+    await page.goto('/')
+    for (const [label, path] of homeLinks) {
+      const link = page.getByRole('link', { name: `${label} 자세히 보기` })
+      await expect(link).toHaveAttribute('href', path)
+      await expect(link).toContainText(label)
+    }
+
+    const courseLinks = [
+      ['플레이팩토', '/courses/thinking-math'],
+      ['요리수 수학', '/courses/young-children-math'],
+      ['씨투엠(C2M)', '/courses/elementary-lower-grades'],
+    ] as const
+
+    await page.goto('/courses')
+    for (const [label, path] of courseLinks) {
+      const link = page.getByRole('link', { name: `${label} 과정 자세히 보기` })
+      await expect(link).toHaveAttribute('href', path)
+      await expect(link).toContainText(label)
+    }
+  })
+
+  test('초기 렌더링에서 경량 SVG 파비콘을 사용한다', async ({ page, request }) => {
+    await page.goto('/')
+    await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/favicon.svg')
+
+    const favicon = await request.get('/favicon.svg')
+    await expect(favicon).toBeOK()
+    expect(favicon.headers()['content-type']).toContain('image/svg+xml')
+    expect((await favicon.body()).byteLength).toBeLessThanOrEqual(20 * 1024)
+  })
+
+  test('핵심 공개 페이지가 용량 제한을 지킨 고유 소셜 이미지를 제공한다', async ({ page, request }) => {
+    const pages = [
+      ['/', '/images/og/home.webp'],
+      ['/courses', '/images/og/courses.webp'],
+      ['/courses/young-children-math', '/images/og/young-children-math.webp'],
+      ['/courses/thinking-math', '/images/og/thinking-math.webp'],
+      ['/courses/elementary-lower-grades', '/images/og/elementary-lower-grades.webp'],
+    ] as const
+
+    for (const [path, imagePath] of pages) {
+      await page.goto(path)
+      await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+        'content',
+        `http://localhost:3410${imagePath}`,
+      )
+      await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+        'content',
+        `http://localhost:3410${imagePath}`,
+      )
+
+      const image = await request.get(imagePath)
+      await expect(image).toBeOK()
+      expect(image.headers()['content-type']).toContain('image/webp')
+      expect((await image.body()).byteLength).toBeLessThanOrEqual(300 * 1024)
     }
   })
 })

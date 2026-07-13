@@ -4,25 +4,23 @@ import { useEffect, useState } from 'react'
 
 /**
  * Cycles through `sceneCount` scenes on an interval, for looping decorative
- * previews. Mirrors the mount-gate pattern used for GIF/SVG fallback
- * previously: `reduceMotion` from framer-motion's `useReducedMotion()` is
- * `null` during SSR/first paint, so we don't trust it until after mount to
- * avoid a hydration mismatch — until then scenes still cycle normally.
- *
- * When reduced motion is confirmed, playback freezes on the final scene and
- * `isStatic` becomes true so callers can skip mount/unmount enter animations.
+ * previews. Reduced-motion users see the final state without loading an
+ * animation runtime.
  */
 export function useGuideScene(
   sceneCount: number,
   intervalMs: number,
-  reduceMotion: boolean | null,
 ): { scene: number; isStatic: boolean } {
-  const [isMounted, setIsMounted] = useState(false)
   const [scene, setScene] = useState(0)
-  const isStatic = isMounted && Boolean(reduceMotion)
+  const [isStatic, setIsStatic] = useState(false)
 
   useEffect(() => {
-    setIsMounted(true)
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const updatePreference = () => setIsStatic(mediaQuery.matches)
+
+    updatePreference()
+    mediaQuery.addEventListener('change', updatePreference)
+    return () => mediaQuery.removeEventListener('change', updatePreference)
   }, [])
 
   useEffect(() => {

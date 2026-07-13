@@ -1,38 +1,37 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { CalendarDays, ChevronRight, MailCheck, UserRoundPen } from 'lucide-react'
-import { motion } from 'framer-motion'
-import ChildSelectPreview from './application-guide/ChildSelectPreview'
-import TimeSelectPreview from './application-guide/TimeSelectPreview'
-import ResultPreview from './application-guide/ResultPreview'
+import Link from "next/link";
+import { CalendarDays, ChevronRight, MailCheck, UserRoundPen } from "lucide-react";
+import ChildSelectPreview from "./application-guide/ChildSelectPreview";
+import TimeSelectPreview from "./application-guide/TimeSelectPreview";
+import ResultPreview from "./application-guide/ResultPreview";
 
 const steps = [
   {
-    number: '01',
-    title: '자녀 선택',
-    description: '신청할 자녀를 선택해요.',
+    number: "01",
+    title: "자녀 선택",
+    description: "신청할 자녀를 선택해요.",
     icon: UserRoundPen,
-    color: 'bg-[#fff0e4] text-[#e86f00]',
+    color: "bg-[#fff0e4] text-[#e86f00]",
     Preview: ChildSelectPreview,
   },
   {
-    number: '02',
-    title: '희망 시간 선택',
-    description: '가능한 요일과 시간을 골라요.',
+    number: "02",
+    title: "희망 시간 선택(복수 신청 가능)",
+    description: "가능한 요일과 시간을 골라요.",
     icon: CalendarDays,
-    color: 'bg-[#eaf5ff] text-[#438cc9]',
+    color: "bg-[#eaf5ff] text-[#438cc9]",
     Preview: TimeSelectPreview,
   },
   {
-    number: '03',
-    title: '편성 결과 안내',
-    description: '편성 결과는 이메일로 안내해 드려요.',
+    number: "03",
+    title: "편성 결과 안내",
+    description: "편성 결과는 메시지로 안내해 드려요.",
     icon: MailCheck,
-    color: 'bg-[#eaf8eb] text-[#499e58]',
+    color: "bg-[#eaf8eb] text-[#499e58]",
     Preview: ResultPreview,
   },
-]
+];
 
 export default function ApplicationGuideSection() {
   return (
@@ -52,17 +51,13 @@ export default function ApplicationGuideSection() {
         </div>
 
         <ol className="relative z-10 mt-10 grid gap-4 lg:grid-cols-3 lg:gap-5">
-          {steps.map((step, index) => {
-            const Icon = step.icon
-            const Preview = step.Preview
+          {steps.map((step) => {
+            const Icon = step.icon;
+            const Preview = step.Preview;
 
             return (
-              <motion.li
+              <li
                 key={step.number}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ delay: index * 0.08, duration: 0.4, ease: 'easeOut' }}
                 className="relative rounded-[26px] border border-[#f2dfb9] bg-[#fffdf7] p-6"
               >
                 <Preview />
@@ -74,13 +69,15 @@ export default function ApplicationGuideSection() {
                 </div>
                 <h3 className="mt-4 text-lg font-black text-[#222222]">{step.title}</h3>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#625845]">{step.description}</p>
-              </motion.li>
-            )
+              </li>
+            );
           })}
         </ol>
 
         <div className="relative z-10 mt-10 flex flex-col gap-4 border-t border-[#ead8af] pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold leading-6 text-[#625845]">지금 모집 중인 반이 있다면 바로 합류도 신청할 수 있어요.</p>
+          <p className="text-sm font-semibold leading-6 text-[#625845]">
+            지금 모집 중인 반이 있다면 바로 합류도 신청할 수 있어요.
+          </p>
           <Link
             href="/apply"
             className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-[#ff8a1f] px-6 text-sm font-black text-white shadow-[0_14px_28px_rgba(255,138,31,0.24)] transition duration-250 hover:-translate-y-0.5 hover:bg-[#f07800] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e86f00]"
@@ -91,5 +88,5 @@ export default function ApplicationGuideSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -48,16 +48,25 @@ export function rssAlternate() {
 // Next.js는 openGraph를 layout과 page 사이에서 딥머지하지 않고 통째로 덮어쓴다.
 // 자체 openGraph를 정의하는 모든 페이지는 이 헬퍼로 공통 필드(type/locale/siteName/images)를
 // 함께 스프레드해야 layout에서 설정한 값이 페이지에서 사라지지 않는다.
-export function siteOgImage(): string {
-  return siteUrl('/images/math/hero-math-activity.png')
+export function siteOgImage(path = '/images/og/home.webp'): string {
+  return siteUrl(path)
 }
 
-export function baseOpenGraph() {
+export function baseOpenGraph(imagePath = '/images/og/home.webp') {
   return {
     type: 'website' as const,
     locale: 'ko_KR' as const,
     siteName: SITE_NAME,
-    images: [{ url: siteOgImage() }],
+    images: [{ url: siteOgImage(imagePath), width: 1200, height: 630 }],
+  }
+}
+
+export function pageTwitter(title: string, description: string, imagePath: string) {
+  return {
+    card: 'summary_large_image' as const,
+    title,
+    description,
+    images: [siteOgImage(imagePath)],
   }
 }
 

@@ -1,7 +1,6 @@
 'use client'
 
 import { Fragment } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import PreviewFrame from './PreviewFrame'
 import { useGuideScene } from './useGuideScene'
 
@@ -15,8 +14,7 @@ const SCENE_COUNT = 3
 const SCENE_DURATION_MS = 1700
 
 export default function TimeSelectPreview() {
-  const reduceMotion = useReducedMotion()
-  const { scene, isStatic } = useGuideScene(SCENE_COUNT, SCENE_DURATION_MS, reduceMotion)
+  const { scene } = useGuideScene(SCENE_COUNT, SCENE_DURATION_MS)
   const filledRows = scene === 0 ? 0 : scene === 1 ? 1 : 2
 
   return (
@@ -56,19 +54,11 @@ export default function TimeSelectPreview() {
       </div>
 
       <div className="mt-2 min-h-[26px]">
-        <AnimatePresence>
-          {scene === 2 && (
-            <motion.p
-              initial={isStatic ? false : { opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              transition={{ duration: 0.25 }}
-              className="w-fit rounded-full bg-brand-100 px-2.5 py-1 text-[10px] font-bold text-brand-800"
-            >
-              화요일 14:00~15:00
-            </motion.p>
-          )}
-        </AnimatePresence>
+        {scene === 2 && (
+          <p className="w-fit rounded-full bg-brand-100 px-2.5 py-1 text-[10px] font-bold text-brand-800">
+            화요일 14:00~15:00
+          </p>
+        )}
       </div>
     </PreviewFrame>
   )

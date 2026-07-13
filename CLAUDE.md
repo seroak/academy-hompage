@@ -29,11 +29,14 @@ cd frontend
 npm run dev
 npx tsc --noEmit
 npx playwright test
+npm run build
+npm run seo:audit
 ```
 
 - 새 워크트리는 수동 `git worktree add` 대신 반드시 `./scripts/create-worktree.sh <작업명>`으로 만든다. 이 명령이 `.env` 링크, 양쪽 `npm ci`, Prisma Client 생성을 함께 처리한다.
 - 백엔드 테스트는 ESM 설정 때문에 반드시 `npm test`로 실행한다.
 - 프론트엔드에는 별도 단위 테스트 러너가 없다. 타입 검사는 `npx tsc --noEmit`, 동작 검증은 Playwright E2E를 사용한다.
+- SEO·공개 페이지 성능 변경은 production build 후 `npm run seo:audit`으로 핵심 URL 게이트를 확인한다.
 - 새 dev 서버 전 포트 3000·3001 점유와 기존 서버의 최신 watch 상태를 확인한다.
 
 ## 변경 전 읽을 가이드

@@ -1,5 +1,5 @@
-import ApplicationGuideSection from '../components/ApplicationGuideSection'
 import CourseSection from '../components/CourseSection'
+import DeferredApplicationGuide from '../components/DeferredApplicationGuide'
 import Hero from '../components/Hero'
 import ProgramCard from '../components/ProgramCard'
 import TrustSection from '../components/TrustSection'
@@ -10,7 +10,7 @@ export default function HomePage() {
       <Hero />
       <ProgramCard />
       <CourseSection />
-      <ApplicationGuideSection />
+      <DeferredApplicationGuide />
       <TrustSection />
     </div>
   )

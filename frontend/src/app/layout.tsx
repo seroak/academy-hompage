@@ -1,13 +1,17 @@
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import type { ReactNode } from 'react'
 import './globals.css'
-import AgentationDev from '../components/AgentationDev'
 import Providers from './providers'
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, baseOpenGraph, rssAlternate, siteOgImage } from '../lib/seo'
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001'
 const naverVerification = process.env.NAVER_SITE_VERIFICATION
 const googleVerification = process.env.GOOGLE_SITE_VERIFICATION
+const AgentationDev =
+  process.env.NODE_ENV === 'development'
+    ? dynamic(() => import('../components/AgentationDev'))
+    : null
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -19,7 +23,7 @@ export const metadata: Metadata = {
   keywords: SITE_KEYWORDS,
   alternates: rssAlternate(),
   icons: {
-    icon: '/favicon-theme.png',
+    icon: '/favicon.svg',
     apple: '/favicon-theme.png',
   },
   openGraph: baseOpenGraph(),
@@ -40,7 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="ko" data-scroll-behavior="smooth">
       <body>
         <Providers>{children}</Providers>
-        <AgentationDev />
+        {AgentationDev ? <AgentationDev /> : null}
       </body>
     </html>
   )

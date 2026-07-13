@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import SeoLandingPage from '../../../components/seo-landing/SeoLandingPage'
 import { getSeoLandingContent } from '../../../components/seo-landing/data'
-import { baseOpenGraph, buildBreadcrumbJsonLd, buildCourseLandingJsonLd, rssAlternate, siteUrl } from '../../../lib/seo'
+import { baseOpenGraph, buildBreadcrumbJsonLd, buildCourseLandingJsonLd, pageTwitter, rssAlternate, siteUrl } from '../../../lib/seo'
 
 const content = getSeoLandingContent('elementary-lower-grades')
 
@@ -10,7 +10,8 @@ export const metadata: Metadata = {
   description: content.description,
   keywords: content.keywords,
   alternates: { canonical: siteUrl(`/courses/${content.slug}`), ...rssAlternate() },
-  openGraph: { ...baseOpenGraph(), title: content.metaTitle, description: content.description, url: siteUrl(`/courses/${content.slug}`) },
+  openGraph: { ...baseOpenGraph(content.ogImage), title: content.metaTitle, description: content.description, url: siteUrl(`/courses/${content.slug}`) },
+  twitter: pageTwitter(content.metaTitle, content.description, content.ogImage),
 }
 
 export default function ElementaryLowerGradesPage() {

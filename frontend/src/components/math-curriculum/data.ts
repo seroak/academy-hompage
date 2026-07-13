@@ -1,4 +1,8 @@
 export type ProgramTone = 'orange' | 'mint' | 'blue'
+export type MathSeoPath =
+  | '/courses/young-children-math'
+  | '/courses/thinking-math'
+  | '/courses/elementary-lower-grades'
 
 export interface MathProgram {
   name: string
@@ -16,6 +20,7 @@ export interface MathProgram {
   benefits: string[]
   age: string
   imageSrc: string
+  seoPath: MathSeoPath
   materialScore: number
   curriculumScore: number
   thinkingScore: number
@@ -39,6 +44,7 @@ export const programs: MathProgram[] = [
     benefits: ['개념 이해와 흥미 향상', '협력하며 배우는 즐거움', '교구 조작으로 손끝 감각 발달'],
     age: '만 3세 ~ 초등 4학년',
     imageSrc: '/images/math/playfacto-activity.png',
+    seoPath: '/courses/thinking-math',
     materialScore: 4,
     curriculumScore: 3,
     thinkingScore: 5,
@@ -60,6 +66,7 @@ export const programs: MathProgram[] = [
     benefits: ['수학 입문과 흥미 유발', '스스로 생각하고 표현하는 시간', '수학에 대한 긍정적인 첫인상'],
     age: '유아 ~ 초등 저학년',
     imageSrc: '/images/math/yorisu-activity.png',
+    seoPath: '/courses/young-children-math',
     materialScore: 4,
     curriculumScore: 3,
     thinkingScore: 3,
@@ -81,6 +88,7 @@ export const programs: MathProgram[] = [
     benefits: ['사고력 향상과 교과 실력 강화', '문제를 끝까지 해결하는 힘', '초등 이후 연산과 문장제 기반'],
     age: '5세 ~ 초등학생',
     imageSrc: '/images/math/c2m-activity.png',
+    seoPath: '/courses/elementary-lower-grades',
     materialScore: 4,
     curriculumScore: 5,
     thinkingScore: 5,

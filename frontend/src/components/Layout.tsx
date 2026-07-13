@@ -20,7 +20,7 @@ export default async function Layout({
 
   return (
     <div className="flex min-h-screen flex-col bg-[#fff9ec] text-[#222222]">
-      <Suspense fallback={null}>
+      <Suspense fallback={<div className="h-[84px]" aria-hidden="true" />}>
         <Header initialAuth={auth} />
       </Suspense>
 
