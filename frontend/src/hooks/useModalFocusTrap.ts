@@ -35,6 +35,7 @@ export function useModalFocusTrap(isOpen: boolean) {
 
     function trapFocus(event: KeyboardEvent) {
       if (event.key !== 'Tab') return
+      if (event.isComposing) return
 
       const focusables = focusableElements(dialogElement)
       if (focusables.length === 0) {
