@@ -93,6 +93,43 @@ model Notice {
   updatedAt DateTime @updatedAt
 }
 
+enum ScheduleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ScheduleDayKind {
+  CLASS
+  HOLIDAY
+  CLOSED
+}
+
+model ClassSchedule {
+  id          String             @id @default(cuid())
+  year        Int
+  quarter     Int
+  status      ScheduleStatus     @default(DRAFT)
+  publishedAt DateTime?
+  days        ClassScheduleDay[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([year, quarter])
+}
+
+model ClassScheduleDay {
+  id          String          @id @default(cuid())
+  schedule    ClassSchedule   @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  scheduleId  String
+  date        String
+  kind        ScheduleDayKind
+  classMonth  String?
+  note        String?
+
+  @@unique([scheduleId, date])
+  @@index([scheduleId])
+}
+
 enum ReservationStatus {
   WAITING
   GROUPED

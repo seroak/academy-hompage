@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { logoutAdmin } from '../../api/auth.api'
 const adminNavItems = [
+  { to: '/admin/schedules', label: '수업 일정 관리' },
   { to: '/admin/notices', label: '공지 관리' },
   { to: '/admin/reservations', label: '예약 관리' },
   { to: '/admin/reservations/groups', label: '수업 관리' },

@@ -5,6 +5,7 @@ import {
   type ConfirmedSlot,
   type JoinableGroup,
 } from './schemas/reservation-group.schema'
+import { ClassScheduleListSchema, ClassScheduleSchema, type ClassSchedule } from './schemas/class-schedule.schema'
 
 export const PUBLIC_REVALIDATE_SECONDS = 300
 
@@ -45,6 +46,14 @@ async function publicApiFetchFresh(path: string): Promise<unknown> {
 export async function fetchPublicNotices(): Promise<Notice[]> {
   const raw = await publicApiFetch('/notices')
   return NoticeListSchema.parse(raw)
+}
+
+export async function fetchPublishedClassSchedules(): Promise<ClassSchedule[]> {
+  return ClassScheduleListSchema.parse(await publicApiFetch('/class-schedules/published'))
+}
+
+export async function fetchPublishedClassSchedule(year: number, quarter: number): Promise<ClassSchedule> {
+  return ClassScheduleSchema.parse(await publicApiFetch(`/class-schedules/published/${year}/${quarter}`))
 }
 
 export async function fetchPublicNotice(id: string): Promise<Notice | null> {

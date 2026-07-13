@@ -10,6 +10,7 @@ import { ReservationsModule } from './reservations/reservations.module.js';
 import { ReservationGroupsModule } from './reservation-groups/reservation-groups.module.js';
 import { MembersModule } from './members/members.module.js';
 import { ChildrenModule } from './children/children.module.js';
+import { ClassSchedulesModule } from './class-schedules/class-schedules.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ChildrenModule } from './children/children.module.js';
     ReservationGroupsModule,
     MembersModule,
     ChildrenModule,
+    ClassSchedulesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -33,4 +33,8 @@ export const queryKeys = {
   adminMe: {
     all: ['adminMe'] as const,
   },
+  classSchedules: {
+    all: ['classSchedules'] as const,
+    published: ['classSchedules', 'published'] as const,
+  },
 }

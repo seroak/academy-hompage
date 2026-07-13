@@ -14,6 +14,7 @@ const navItems = [
   { to: '/', label: '학원 소개' },
   { to: '/#programs', label: '프로그램' },
   { to: '/courses', label: '교육과정' },
+  { to: '/schedule', label: '수업일정' },
   { to: '/notices', label: '커뮤니티' },
 ]
 

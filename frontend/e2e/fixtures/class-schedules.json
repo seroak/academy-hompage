@@ -1,0 +1,31 @@
+[
+  {
+    "id": "schedule-2026-q3",
+    "year": 2026,
+    "quarter": 3,
+    "status": "PUBLISHED",
+    "publishedAt": "2026-06-20T00:00:00.000Z",
+    "createdAt": "2026-06-01T00:00:00.000Z",
+    "updatedAt": "2026-06-20T00:00:00.000Z",
+    "days": [
+      { "id": "day-1", "date": "2026-06-29", "kind": "CLASS", "classMonth": "2026-07", "note": null },
+      { "id": "day-2", "date": "2026-07-30", "kind": "CLASS", "classMonth": "2026-08", "note": null },
+      { "id": "day-3", "date": "2026-08-17", "kind": "HOLIDAY", "classMonth": null, "note": "대체공휴일" },
+      { "id": "day-4", "date": "2026-08-27", "kind": "CLASS", "classMonth": "2026-09", "note": null }
+    ]
+  },
+  {
+    "id": "schedule-2026-q2",
+    "year": 2026,
+    "quarter": 2,
+    "status": "PUBLISHED",
+    "publishedAt": "2026-03-20T00:00:00.000Z",
+    "createdAt": "2026-03-01T00:00:00.000Z",
+    "updatedAt": "2026-03-20T00:00:00.000Z",
+    "days": [
+      { "id": "day-5", "date": "2026-03-29", "kind": "CLASS", "classMonth": "2026-03", "note": null },
+      { "id": "day-6", "date": "2026-05-01", "kind": "CLASS", "classMonth": "2026-05", "note": null },
+      { "id": "day-7", "date": "2026-07-04", "kind": "CLASS", "classMonth": "2026-07", "note": null }
+    ]
+  }
+]

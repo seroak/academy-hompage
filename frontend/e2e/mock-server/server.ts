@@ -22,6 +22,7 @@ interface FixtureItem {
 }
 
 const notices = loadFixture<FixtureItem[]>('notices.json')
+const classSchedules = loadFixture<FixtureItem[]>('class-schedules.json')
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body)
@@ -44,6 +45,20 @@ const server = createServer((req, res) => {
 
   if (pathname === '/notices' && method === 'GET') {
     sendJson(res, 200, notices)
+    return
+  }
+
+  if (pathname === '/class-schedules/published' && method === 'GET') {
+    sendJson(res, 200, classSchedules)
+    return
+  }
+
+  const publishedScheduleMatch = pathname.match(/^\/class-schedules\/published\/(\d{4})\/([1-4])$/)
+  if (publishedScheduleMatch && method === 'GET') {
+    const found = classSchedules.find(
+      (schedule) => schedule.year === Number(publishedScheduleMatch[1]) && schedule.quarter === Number(publishedScheduleMatch[2]),
+    )
+    sendJson(res, found ? 200 : 404, found ?? { message: 'not found' })
     return
   }
 
