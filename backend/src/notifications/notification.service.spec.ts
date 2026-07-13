@@ -69,7 +69,11 @@ describe('NotificationService', () => {
 
       expect(sendMail).toHaveBeenCalledTimes(1);
       expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'parent@example.com' }),
+        expect.objectContaining({
+          to: 'parent@example.com',
+          text: expect.stringContaining('민준'),
+          html: expect.stringContaining('수업 신청이 잘 접수되었어요'),
+        }),
       );
     });
 
@@ -77,14 +81,22 @@ describe('NotificationService', () => {
       const service = await createService();
 
       await service.sendGroupConfirmed(
-        { childName: '민준', parentName: '김엄마', parentEmail: 'parent@example.com' },
+        {
+          childName: '민준',
+          parentName: '김엄마',
+          parentEmail: 'parent@example.com',
+        },
         { label: '월수금 12시반' },
         [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 790 }],
       );
 
       expect(sendMail).toHaveBeenCalledTimes(1);
       expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'parent@example.com' }),
+        expect.objectContaining({
+          to: 'parent@example.com',
+          text: expect.stringContaining('월 12:00~13:10'),
+          html: expect.stringMatching(/월수금 12시반[\s\S]*월 12:00~13:10/),
+        }),
       );
     });
 
@@ -92,13 +104,23 @@ describe('NotificationService', () => {
       const service = await createService();
 
       await service.sendGroupMemberRemoved(
-        { childName: '민준', parentName: '김엄마', parentEmail: 'parent@example.com' },
+        {
+          childName: '민준',
+          parentName: '김엄마',
+          parentEmail: 'parent@example.com',
+        },
         { label: '월수금 12시반' },
       );
 
       expect(sendMail).toHaveBeenCalledTimes(1);
       expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'parent@example.com' }),
+        expect.objectContaining({
+          to: 'parent@example.com',
+          text: expect.stringContaining('다시 대기 상태로 변경되었습니다'),
+          html: expect.stringMatching(
+            /그룹 편성이 변경되었어요[\s\S]*대기 상태/,
+          ),
+        }),
       );
     });
 
@@ -145,6 +167,7 @@ describe('NotificationService', () => {
           text: expect.stringContaining(
             'http://localhost:3001/auth/verify-email?token=abc123',
           ),
+          html: expect.stringMatching(/이메일 인증하기[\s\S]*token=abc123/),
         }),
       );
     });
