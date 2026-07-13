@@ -7,7 +7,10 @@ import {
 
 describe('email templates', () => {
   it('신청 접수 메일에 브랜드와 개인화 정보를 포함한다', () => {
-    const html = reservationReceivedEmail({ parentName: '김엄마', childName: '민준' });
+    const html = reservationReceivedEmail({
+      parentName: '김엄마',
+      childName: '민준',
+    });
 
     expect(html).toContain('생각을 여는 수학');
     expect(html).toContain('수업 신청이 잘 접수되었어요');
@@ -46,7 +49,8 @@ describe('email templates', () => {
   it('인증 메일에 안전한 CTA와 원문 URL을 포함한다', () => {
     const html = parentEmailVerificationEmail({
       name: '김엄마',
-      verifyUrl: 'https://academy.example/auth/verify-email?token=a&next=<home>',
+      verifyUrl:
+        'https://academy.example/auth/verify-email?token=a&next=<home>',
     });
 
     expect(html).toContain('이메일 인증을 완료해 주세요');

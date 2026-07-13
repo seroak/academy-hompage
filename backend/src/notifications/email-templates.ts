@@ -38,7 +38,10 @@ function escapeHtml(value: string): string {
     "'": '&#39;',
   };
 
-  return value.replace(/[&<>"']/g, (character) => entities[character] ?? character);
+  return value.replace(
+    /[&<>"']/g,
+    (character) => entities[character] ?? character,
+  );
 }
 
 function informationBox(label: string, content: string): string {
@@ -132,7 +135,9 @@ export function groupMemberRemovedEmail(data: GroupRemovedEmailData): string {
   );
 }
 
-export function parentEmailVerificationEmail(data: VerificationEmailData): string {
+export function parentEmailVerificationEmail(
+  data: VerificationEmailData,
+): string {
   const name = escapeHtml(data.name);
   const verifyUrl = escapeHtml(data.verifyUrl);
 
