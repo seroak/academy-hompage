@@ -35,6 +35,7 @@ export default function MathHero() {
             width={1672}
             height={941}
             sizes="(min-width: 1024px) 560px, (min-width: 640px) 420px, 220px"
+            priority
             decoding="sync"
             className="relative z-10 mx-auto h-auto w-full max-w-[220px] rounded-[28px] object-cover shadow-[0_20px_24px_rgba(82,56,13,0.12)] sm:max-w-[420px] lg:max-w-[560px]"
           />

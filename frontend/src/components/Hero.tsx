@@ -1,71 +1,48 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Cloud, Pencil, Rocket, Star } from "lucide-react";
 
 const childrenImagePath = "/images/children_cutout.png";
 
-function Rainbow() {
-  return (
-    <div className="relative h-16 w-28">
-      <div className="absolute inset-x-0 bottom-0 h-14 rounded-t-full border-[10px] border-b-0 border-[#ffd66b]" />
-      <div className="absolute inset-x-4 bottom-0 h-10 rounded-t-full border-[10px] border-b-0 border-[#5dadec]" />
-      <div className="absolute inset-x-8 bottom-0 h-6 rounded-t-full border-[10px] border-b-0 border-[#6bcb77]" />
-      <Cloud className="absolute -bottom-1 -left-2 text-white drop-shadow-sm" size={30} fill="currentColor" />
-      <Cloud className="absolute -bottom-1 -right-2 text-white drop-shadow-sm" size={30} fill="currentColor" />
-    </div>
-  );
-}
-
 export default function Hero() {
   return (
-    <section className="relative min-h-[640px] overflow-hidden rounded-[36px] bg-[linear-gradient(135deg,#fff9ec_0%,#fff5dc_50%,#fff0c7_100%)] px-6 pt-16 shadow-[0_24px_80px_rgba(127,88,22,0.08)] sm:min-h-[850px] sm:px-10 lg:min-h-[640px] lg:px-16">
-      <div className="absolute -bottom-10 -left-16 h-32 w-56 rounded-full bg-[#6bcb77]" />
-      <div className="absolute -bottom-4 left-10 h-24 w-44 rounded-full bg-[#7fd98a]" />
-      <div className="absolute bottom-0 left-0 right-0 h-24 rounded-t-[80%] bg-[#ffe8a1]" />
-      <div className="absolute bottom-0 left-0 h-28 w-[38%] rounded-tr-full bg-[#6bcb77]" />
-      <div className="absolute bottom-0 right-0 h-24 w-[34%] rounded-tl-full bg-[#ffe08a]" />
+    <section className="relative min-h-[600px] overflow-hidden rounded-panel bg-[#fff5dc] px-6 pt-16 shadow-hero sm:min-h-[780px] sm:px-10 lg:min-h-[600px] lg:px-16">
+      <div className="absolute -bottom-16 -left-10 h-64 w-64 rounded-full bg-[#ffe8a1]" />
+      <div className="absolute bottom-0 right-0 h-40 w-[42%] rounded-tl-[64%] bg-[#6bcb77]/90" />
 
-      <div className="absolute left-[58%] top-28 hidden lg:block">
-        <Rainbow />
-      </div>
-      <Rocket className="absolute right-[13%] top-24 hidden rotate-45 text-[#ff8a1f] lg:block" size={58} />
-      <Star className="absolute right-16 top-52 hidden text-[#ffd66b] lg:block" size={26} fill="currentColor" />
-      <Star className="absolute left-[48%] top-20 hidden text-[#ffd66b] md:block" size={20} fill="currentColor" />
-      <BookOpen className="absolute bottom-40 left-[7%] hidden text-[#5dadec] md:block" size={38} />
-      <Pencil className="absolute bottom-44 right-[9%] hidden -rotate-12 text-[#6bcb77] md:block" size={42} />
-
-      <div className="relative z-10 grid min-h-[560px] items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="relative z-10 grid min-h-[520px] items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="max-w-[560px] pb-28 pt-2 lg:pb-20">
-          <p className="mb-5 inline-flex rounded-full bg-white/80 px-4 py-2 text-sm font-black text-[#e86f00] shadow-[0_10px_24px_rgba(255,138,31,0.12)]">
+          <p className="mb-5 inline-flex items-center gap-2 text-sm font-bold tracking-[0.08em] text-brand-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-600" aria-hidden="true" />
             유치부부터 초등 저학년까지
           </p>
-          <h1 className="text-[clamp(2.25rem,5vw,3.75rem)] font-black leading-[1.18] tracking-[-0.02em] text-[#222222]">
+          <h1 className="text-[clamp(2.5rem,5.5vw,4.25rem)] font-extrabold leading-[1.14] tracking-[-0.03em] text-ink-900">
             아이의 오늘이
             <br />
-            <span className="text-[#ff8a1f]">미래의 꿈</span>이 됩니다
+            <span className="text-brand-600">미래의 꿈</span>이 됩니다
           </h1>
-          <p className="mt-6 max-w-md text-base font-semibold leading-8 text-[#555555] sm:text-lg">
-            유치부부터 초등 저학년까지,
+          <p className="mt-6 max-w-md text-lg leading-8 text-ink-700">
+            유치부부터 초등 저학년까지, 재미있는 배움으로
             <br />
-            재미있는 배움으로 바른 성장을 돕습니다.
+            바른 성장을 돕습니다.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-9 flex flex-wrap gap-3">
             <Link
               href="/apply"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-[#ff8a1f] px-6 text-sm font-black text-white shadow-[0_16px_30px_rgba(255,138,31,0.28)] transition duration-250 hover:-translate-y-0.5 hover:bg-[#f07800]"
+              className="inline-flex h-13 items-center justify-center rounded-full bg-brand-600 px-7 text-base font-bold text-white shadow-[0_16px_30px_rgba(255,138,31,0.28)] transition duration-200 hover:-translate-y-0.5 hover:bg-brand-700"
             >
               상담 신청하기
             </Link>
           </div>
         </div>
 
-        <div className="relative hidden self-end pb-24 sm:block lg:pb-30">
+        <div className="relative hidden self-end pb-20 sm:block lg:pb-26">
           <Image
             src={childrenImagePath}
             alt="책상 앞에서 웃고 있는 어린이들"
             width={1536}
             height={1024}
             sizes="(min-width: 1024px) 520px, (min-width: 640px) 420px, 180px"
+            priority
             decoding="sync"
             className="relative z-10 mx-auto h-auto w-full max-w-[180px] object-contain drop-shadow-[0_28px_36px_rgba(77,52,17,0.16)] sm:max-w-[420px] lg:max-w-[520px]"
           />

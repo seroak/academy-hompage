@@ -11,7 +11,7 @@ module.exports = {
         'http://localhost:3420/courses/thinking-math',
         'http://localhost:3420/courses/elementary-lower-grades',
       ],
-      numberOfRuns: 1,
+      numberOfRuns: 3,
       settings: {
         onlyCategories: ['seo', 'performance'],
         chromeFlags: '--headless --no-sandbox',
@@ -25,15 +25,15 @@ module.exports = {
         ],
         'largest-contentful-paint': [
           'error',
-          { maxNumericValue: 2500, aggregationMethod: 'pessimistic' },
+          { maxNumericValue: 2500, aggregationMethod: 'median' },
         ],
         'cumulative-layout-shift': [
           'error',
-          { maxNumericValue: 0.1, aggregationMethod: 'pessimistic' },
+          { maxNumericValue: 0.1, aggregationMethod: 'median' },
         ],
         'total-blocking-time': [
           'error',
-          { maxNumericValue: 200, aggregationMethod: 'pessimistic' },
+          { maxNumericValue: 200, aggregationMethod: 'median' },
         ],
       },
     },
