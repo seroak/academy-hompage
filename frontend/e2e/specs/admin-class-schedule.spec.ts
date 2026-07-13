@@ -90,17 +90,17 @@ test.describe('관리자 수업 일정', () => {
     await page.goto('/admin/schedules')
     const toolbar = page.getByRole('toolbar', { name: '드래그 도구' })
 
-    await expect(toolbar.getByRole('button', { name: '6월분' })).toHaveClass(/bg-\[#f0e5ff\].*border-\[#a879d6\]/)
-    await expect(toolbar.getByRole('button', { name: '7월분' })).toHaveClass(/bg-\[#d7f4f0\].*border-\[#4ca99f\]/)
+    await expect(toolbar.getByRole('button', { name: '6월분' })).toHaveClass(/bg-\[#f0e5ff\].*border-\[#c3a1e5\]/)
+    await expect(toolbar.getByRole('button', { name: '7월분' })).toHaveClass(/bg-\[#d7f4f0\].*border-\[#9bc5bf\]/)
 
     const day = page.getByRole('table', { name: '2026년 7월' }).getByRole('cell', { name: /^2026-07-01/ }).getByRole('button')
     await toolbar.getByRole('button', { name: '6월분' }).click()
     await day.click()
-    await expect(day).toHaveCSS('border-top-color', 'rgb(168, 121, 214)')
+    await expect(day).toHaveCSS('border-top-color', 'rgb(195, 161, 229)')
 
     await toolbar.getByRole('button', { name: '7월분' }).click()
     await day.click()
-    await expect(day).toHaveCSS('border-top-color', 'rgb(76, 169, 159)')
+    await expect(day).toHaveCSS('border-top-color', 'rgb(155, 197, 191)')
   })
 
   test('전월·다음월 도구를 표시하고 전월 마지막 주를 드래그 지정한다', async ({ page }) => {
