@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { logoutAdmin } from '../../api/auth.api'
+import NotificationBell from './NotificationBell'
 const adminNavItems = [
   { to: '/admin/schedules', label: '수업 일정 관리' },
   { to: '/admin/notices', label: '공지 관리' },
@@ -62,6 +63,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             >
               메인 화면
             </Link>
+            <NotificationBell />
             <button
               type="button"
               onClick={handleLogout}

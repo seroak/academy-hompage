@@ -29,6 +29,22 @@ describe('NotificationService', () => {
     );
   }
 
+  describe('SMTP transporter 생성', () => {
+    it('연결이 응답 없이 걸리지 않도록 연결/소켓/인사 타임아웃을 설정한다', async () => {
+      configValues.SMTP_HOST = 'smtp.example.com';
+
+      await createService();
+
+      expect(createTransport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          connectionTimeout: expect.any(Number),
+          socketTimeout: expect.any(Number),
+          greetingTimeout: expect.any(Number),
+        }),
+      );
+    });
+  });
+
   describe('SMTP 미설정', () => {
     beforeEach(() => {
       delete configValues.SMTP_HOST;
@@ -171,6 +187,48 @@ describe('NotificationService', () => {
         }),
       );
     });
+
+    it('ADMIN_NOTIFICATION_EMAIL이 설정되어 있으면 관리자에게 신규 신청 알림 메일을 보낸다', async () => {
+      configValues.ADMIN_NOTIFICATION_EMAIL = 'admin@academy.com';
+      const service = await createService();
+
+      await service.sendAdminReservationReceived({
+        childName: '민준',
+        childAge: 5,
+        parentName: '김엄마',
+        parentEmail: 'parent@example.com',
+        parentPhone: '010-1234-5678',
+        preferredSlots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 790 }],
+      });
+
+      expect(sendMail).toHaveBeenCalledTimes(1);
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'admin@academy.com',
+          text: expect.stringContaining('민준'),
+          html: expect.stringMatching(/새 수업 신청이 접수되었어요[\s\S]*민준/),
+        }),
+      );
+    });
+
+    it('ADMIN_NOTIFICATION_EMAIL이 콤마로 구분된 여러 주소면 모두에게 보낸다', async () => {
+      configValues.ADMIN_NOTIFICATION_EMAIL = 'admin1@academy.com,admin2@academy.com';
+      const service = await createService();
+
+      await service.sendAdminReservationReceived({
+        childName: '민준',
+        childAge: 5,
+        parentName: '김엄마',
+        parentEmail: 'parent@example.com',
+        preferredSlots: [],
+      });
+
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'admin1@academy.com,admin2@academy.com',
+        }),
+      );
+    });
   });
 
   describe('SMTP 미설정 - 인증 메일', () => {
@@ -187,6 +245,29 @@ describe('NotificationService', () => {
           '김엄마',
           'http://localhost:3001/auth/verify-email?token=abc123',
         ),
+      ).resolves.not.toThrow();
+
+      expect(sendMail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ADMIN_NOTIFICATION_EMAIL 미설정', () => {
+    beforeEach(() => {
+      configValues.SMTP_HOST = 'smtp.example.com';
+      delete configValues.ADMIN_NOTIFICATION_EMAIL;
+    });
+
+    it('관리자 알림 메일을 시도하지 않고 예외를 던지지 않는다', async () => {
+      const service = await createService();
+
+      await expect(
+        service.sendAdminReservationReceived({
+          childName: '민준',
+          childAge: 5,
+          parentName: '김엄마',
+          parentEmail: 'parent@example.com',
+          preferredSlots: [],
+        }),
       ).resolves.not.toThrow();
 
       expect(sendMail).not.toHaveBeenCalled();

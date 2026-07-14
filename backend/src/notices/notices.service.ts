@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateNoticeDto } from './dto/create-notice.dto.js';
 import { UpdateNoticeDto } from './dto/update-notice.dto.js';
+import { isPrismaNotFoundError } from '../common/prisma-errors.js';
 
 @Injectable()
 export class NoticesService {
@@ -31,7 +32,7 @@ export class NoticesService {
     try {
       return await this.prisma.notice.update({ where: { id }, data: dto });
     } catch (error) {
-      if (this.isNotFoundError(error)) {
+      if (isPrismaNotFoundError(error)) {
         throw new NotFoundException(`Notice ${id} not found`);
       }
       throw error;
@@ -42,14 +43,10 @@ export class NoticesService {
     try {
       await this.prisma.notice.delete({ where: { id } });
     } catch (error) {
-      if (this.isNotFoundError(error)) {
+      if (isPrismaNotFoundError(error)) {
         throw new NotFoundException(`Notice ${id} not found`);
       }
       throw error;
     }
-  }
-
-  private isNotFoundError(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && (error as { code?: string }).code === 'P2025';
   }
 }

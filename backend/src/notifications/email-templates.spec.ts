@@ -2,6 +2,7 @@ import {
   groupConfirmedEmail,
   groupMemberRemovedEmail,
   parentEmailVerificationEmail,
+  reservationReceivedAdminEmail,
   reservationReceivedEmail,
 } from './email-templates.js';
 
@@ -59,5 +60,21 @@ describe('email templates', () => {
       'https://academy.example/auth/verify-email?token=a&amp;next=&lt;home&gt;',
     );
     expect(html).not.toContain('next=<home>');
+  });
+
+  it('관리자용 신청 접수 메일에 아이·보호자·희망 시간 정보를 포함한다', () => {
+    const html = reservationReceivedAdminEmail({
+      parentName: '김엄마',
+      childName: '민준',
+      childAge: 5,
+      parentPhone: '010-1234-5678',
+      scheduleText: '월 12:00~13:10, 수 15:00~16:10',
+    });
+
+    expect(html).toContain('새 수업 신청이 접수되었어요');
+    expect(html).toContain('민준');
+    expect(html).toContain('김엄마');
+    expect(html).toContain('010-1234-5678');
+    expect(html).toContain('월 12:00~13:10, 수 15:00~16:10');
   });
 });

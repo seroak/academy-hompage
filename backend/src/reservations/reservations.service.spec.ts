@@ -4,6 +4,7 @@ import { ReservationsService } from './reservations.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NotificationService } from '../notifications/notification.service.js';
 import { ReservationsTransactionService } from './reservations-transaction.service.js';
+import { AdminNotificationsService } from '../admin-notifications/admin-notifications.service.js';
 
 describe('ReservationsService', () => {
   let service: ReservationsService;
@@ -20,6 +21,7 @@ describe('ReservationsService', () => {
   };
   let notification: { sendReservationReceived: jest.Mock };
   let transaction: { run: jest.Mock };
+  let adminNotifications: { notifyReservationCreated: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -39,6 +41,9 @@ describe('ReservationsService', () => {
     transaction = {
       run: jest.fn((operation) => operation(prisma)),
     };
+    adminNotifications = {
+      notifyReservationCreated: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -46,6 +51,7 @@ describe('ReservationsService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: NotificationService, useValue: notification },
         { provide: ReservationsTransactionService, useValue: transaction },
+        { provide: AdminNotificationsService, useValue: adminNotifications },
       ],
     }).compile();
 
@@ -146,6 +152,9 @@ describe('ReservationsService', () => {
         include: { preferredSlots: true },
       });
       expect(notification.sendReservationReceived).toHaveBeenCalledWith(
+        created,
+      );
+      expect(adminNotifications.notifyReservationCreated).toHaveBeenCalledWith(
         created,
       );
     });
@@ -367,6 +376,7 @@ describe('ReservationsService', () => {
         include: { preferredSlots: true },
       });
       expect(notification.sendReservationReceived).not.toHaveBeenCalled();
+      expect(adminNotifications.notifyReservationCreated).not.toHaveBeenCalled();
       expect(prisma.parentUser.findUnique).not.toHaveBeenCalled();
     });
 

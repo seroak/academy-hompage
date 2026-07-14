@@ -206,3 +206,16 @@ model ReservationGroupSlot {
   @@index([groupId])
   @@index([dayOfWeek, startMinute, endMinute])
 }
+
+model AdminNotification {
+  id            String    @id @default(cuid())
+  type          String
+  title         String
+  body          String
+  reservationId String?
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([readAt])
+  @@index([createdAt])
+}

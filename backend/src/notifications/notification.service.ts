@@ -5,6 +5,7 @@ import {
   groupConfirmedEmail,
   groupMemberRemovedEmail,
   parentEmailVerificationEmail,
+  reservationReceivedAdminEmail,
   reservationReceivedEmail,
 } from './email-templates.js';
 
@@ -22,6 +23,14 @@ interface SlotLike {
   dayOfWeek: string;
   startMinute: number;
   endMinute: number;
+}
+
+interface AdminReservationLike {
+  childName: string;
+  childAge: number;
+  parentName: string;
+  parentPhone?: string | null;
+  preferredSlots: SlotLike[];
 }
 
 const DAY_LABELS: Record<string, string> = {
@@ -70,6 +79,12 @@ export class NotificationService {
               pass: this.configService.get<string>('SMTP_PASS'),
             }
           : undefined,
+        // 미설정 시 OS 기본 TCP 타임아웃(수십~백여 초)에 의존하게 되어, 메일 서버가
+        // 응답 없이 지연되면 이 발송을 await하는 요청(예: POST /reservations)이 그만큼
+        // 멈춘다. 상한을 명시해 최악의 경우에도 빠르게 실패하도록 한다.
+        connectionTimeout: 10_000,
+        socketTimeout: 10_000,
+        greetingTimeout: 10_000,
       });
     }
 
@@ -136,6 +151,29 @@ export class NotificationService {
       '[생각을 여는 수학] 이메일 인증을 완료해 주세요',
       `${name}님, 아래 링크를 눌러 이메일 인증을 완료하고 회원가입을 마쳐 주세요.\n${verifyUrl}\n\n본인이 요청하지 않았다면 이 메일을 무시해 주세요.`,
       parentEmailVerificationEmail({ name, verifyUrl }),
+    );
+  }
+
+  async sendAdminReservationReceived(
+    reservation: AdminReservationLike,
+  ): Promise<void> {
+    const adminEmail = this.configService.get<string>(
+      'ADMIN_NOTIFICATION_EMAIL',
+      '',
+    );
+    const scheduleText = reservation.preferredSlots.map(slotLabel).join(', ');
+
+    await this.sendMail(
+      adminEmail,
+      '[학원] 새 수업 신청이 접수되었습니다',
+      `${reservation.childName}(${reservation.childAge}세) 어린이의 새 수업 신청이 접수되었습니다. 보호자: ${reservation.parentName}, 희망 시간: ${scheduleText || '미입력'}`,
+      reservationReceivedAdminEmail({
+        parentName: reservation.parentName,
+        childName: reservation.childName,
+        childAge: reservation.childAge,
+        parentPhone: reservation.parentPhone,
+        scheduleText,
+      }),
     );
   }
 
