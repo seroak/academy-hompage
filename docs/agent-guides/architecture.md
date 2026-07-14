@@ -24,7 +24,7 @@
 - `AgentationDev.tsx`는 개발 환경에서만 루트 레이아웃에 렌더링한다.
 - props·store·query 값 변경을 이유로 같은 컴포넌트 state를 `useEffect`에서 보정하지 않는다. `key` 재마운트 또는 렌더 중 이전 값 비교를 사용한다.
 - `useEffect`는 네트워크 구독, DOM 조작, 타이머 같은 실제 사이드 이펙트에만 사용한다.
-- `<dialog open>` 모달은 `useModalFocusTrap`과 `data-autofocus`로 포커스 격리를 제공한다. Tailwind preflight 중앙정렬은 기존 모달 방식을 복제한다.
+- `<dialog open>` 모달은 `useModalFocusTrap`과 `data-autofocus`로 포커스 격리를 제공한다. Tailwind preflight 중앙정렬은 기존 모달 방식을 복제한다. 이 훅의 키보드 핸들러는 `event.isComposing`을 확인한다 — 한글 등 조합 입력 중 Tab을 누르면 조합 미확정 상태로 트랩 처리가 꼬이는 레이스 컨디션이 있었던 걸 막기 위함이라, 이 체크는 지우지 않는다(여러 모달이 이 훅을 공유한다).
 - 폼 오류 이동은 `scrollIntoView({ block: 'start' })`, `scroll-mt-*`, `tabIndex={-1}`을 사용한다.
 - 긴 시간표의 터치는 드래그 캡처 대신 이동 임계값을 둔 탭 방식으로 분기한다. 반응형은 `useIsNarrow`를 재사용하고 마운트 후 전환을 E2E에서 기다린다.
 
@@ -36,11 +36,16 @@
 - 관리자 세션과 보호자 세션은 독립적이다. `/apply`는 관리자 프리뷰를 허용하지만 보호자 세션 없이는 제출을 막는다.
 - 서브도메인 배포는 `COOKIE_DOMAIN`을 설정한다.
 - 보호자 가입은 대기 레코드를 upsert한 뒤 매직 링크 인증에서만 계정을 만들고 쿠키를 발급한다. 소셜 전용 계정 병합은 `AuthService.verifyParentEmail` 흐름을 따른다.
+- 실사용자 이메일로 가입·인증 플로우를 검증하기 전에는 그 이메일이 기존 `ParentUser`와 겹치는지 먼저 조회한다 — 특히 소셜 로그인 전용(비밀번호 없음) 계정에 검증용 비밀번호가 실수로 설정될 수 있다.
 
 ## 변경 전파와 알림
 
 - 예약·강좌처럼 공유 필드를 바꾸면 Prisma schema → migration → 양쪽 DTO → service/controller spec → seed → 프론트 schema·API·screen 순으로 점검한다.
 - 알림 발송 실패는 API 요청 실패로 전파하지 않는다. SMTP 미설정 폴백 로그에는 subject와 text 본문을 함께 남긴다.
+
+## 예약 생성
+
+- 같은 시간대 중복 신청 판단은 요일·분 단위 overlap 비교로 하고, 판단 범위는 `childId` 단위다 — 형제자매(부모는 같지만 childId가 다름)는 서로 독립적으로 같은 시간에 신청할 수 있다.
 
 ## 예약 그룹
 

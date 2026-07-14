@@ -6,6 +6,7 @@
 - 버그 수정 뒤에는 동일 경로 회귀 테스트를 실행한다. 조건부 분기는 각 경우를 최소 한 번 실행한다.
 - 기존 dev 서버로 E2E 하기 전 watch 상태와 최근 변경 반영 여부를 확인한다.
 - E2E·빌드 전후 `git status`와 diff를 확인한다. `next-env.d.ts`, `tsconfig.tsbuildinfo` 등 생성 파일은 세션 시작 상태를 확인한 뒤 기능 변경이 아니면 정리한다.
+- `npm run seo:audit`(로컬 Lighthouse) 실행 전 `uptime`으로 시스템 부하를 확인한다. load average가 높으면(예: CPU 코어 수 이상) LCP·TBT 수치가 실제보다 크게 나빠질 수 있어, 그 상태로 측정한 결과만으로 회귀를 단정하지 않는다.
 
 ## Frontend Playwright
 
@@ -30,3 +31,4 @@ npx playwright test
 - 예약 도메인 E2E 데이터는 `POST /reservations/walk-in`으로 `WAITING` 예약을 만들고, 그 ID를 `POST /reservation-groups`의 slot `reservationId`로 참조해 확정 그룹을 만든다.
 - 공유 개발 DB에 생성한 테스트 데이터는 식별자와 삭제 여부를 보고한다. 전용 임시 DB는 계획대로 폐기하고 사실만 보고한다.
 - `nest start --watch` 재기동 전 기존 프로세스를 정리하고 curl로 최신 라우트·응답이 실제 반영됐는지 확인한다.
+- 포트 3000·3001을 점유한 프로세스가 여러 개 겹쳐 있을 수 있다(예: 옛 PID와 실제 서비스 PID가 동시에 남아있는 경우). `lsof -i :포트`로 실제로 그 포트를 점유 중인 PID를 먼저 특정한 뒤에만 재시작·종료 대상으로 삼는다.

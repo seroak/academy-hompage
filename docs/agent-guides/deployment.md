@@ -4,6 +4,7 @@
 - Caddy는 `API_DOMAIN` 도메인만 처리한다. frontend 프록시 블록은 대응 컨테이너가 없어 제거했다(프론트는 Vercel이 직접 서빙) — 되살리지 않는다.
 - compose의 `--env-file`은 YAML 파일 자체의 `${VAR}` 치환에만 쓰이고, 컨테이너 내부 환경변수로 자동 전달되지 않는다. Caddyfile의 `{$API_DOMAIN}` 같은 런타임 플레이스홀더가 해석되려면 해당 서비스에 `environment: API_DOMAIN: ${API_DOMAIN}`을 명시해야 한다 — 이게 빠져 있어서 서버에 도메인이 하드코딩된 Caddyfile이 로컬 수정으로 남아있던 적이 있었다(2026-07-12 발견, `caddy` 서비스에 `environment` 추가로 수정).
 - `main`에 `backend/**`가 push되면 GitHub Actions가 GHCR 이미지 빌드와 서버 배포를 수행한다. 프론트는 Vercel에서 별도 재배포한다.
+- `backend/package.json`이 바뀌면 GHA의 `npm ci` 레이어 캐시가 무효화되어 의존성이 통째로 재다운로드된다(1회성 비용, 수백MB 규모일 수 있음) — 이 경우 배포가 평소보다 느려 보여도 재조사 없이 원인으로 판단할 수 있다.
 - production compose는 항상 `--env-file .env.production`을 명시한다.
 - Dockerfile은 `NODE_ENV=production`보다 먼저 `npm ci`를 실행한다. seed를 위해 `src/generated`와 필요한 `src` 소스를 러너 이미지에 포함한다.
 - SSR fetch는 `API_INTERNAL_URL`을 우선하고 `NEXT_PUBLIC_API_BASE_URL`로 폴백한다. SSR 목록이 비어 보이면 이 URL부터 확인한다.
