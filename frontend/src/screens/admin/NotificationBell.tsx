@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { useAdminNotificationsQuery } from './hooks/useAdminNotificationsQuery'
 import { useAdminNotificationUnreadCountQuery } from './hooks/useAdminNotificationUnreadCountQuery'
 import { useAdminNotificationMutations } from './hooks/useAdminNotificationMutations'
+import { useClickOutsideAndEscape } from '../../hooks/useClickOutsideAndEscape'
 import type { AdminNotification } from '../../api/schemas/adminNotification.schema'
 
 function formatNotificationTime(createdAt: string) {
@@ -19,43 +20,37 @@ function formatNotificationTime(createdAt: string) {
 
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  const { notifications, isLoading } = useAdminNotificationsQuery()
+  const { notifications, isLoading } = useAdminNotificationsQuery(isOpen)
   const { unreadCount } = useAdminNotificationUnreadCountQuery()
-  const { markRead, markAllRead, isMarkingAllRead } = useAdminNotificationMutations()
+  const { markRead, markAllRead, isMarkingRead, isMarkingAllRead } = useAdminNotificationMutations()
 
-  useEffect(() => {
-    if (!isOpen) return
-
-    function handlePointerDown(event: PointerEvent) {
-      if (containerRef.current && event.target instanceof Node && !containerRef.current.contains(event.target)) {
-        setIsOpen(false)
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isOpen])
+  useClickOutsideAndEscape(containerRef, isOpen, () => setIsOpen(false))
 
   async function handleNotificationClick(notification: AdminNotification) {
-    if (!notification.readAt) {
-      await markRead(notification.id)
+    setActionError(null)
+    try {
+      if (!notification.readAt) {
+        await markRead(notification.id)
+      }
+      if (notification.reservationId) {
+        setIsOpen(false)
+        router.push('/admin/reservations')
+      }
+    } catch {
+      setActionError('알림을 읽음 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.')
     }
-    if (notification.reservationId) {
-      setIsOpen(false)
-      router.push('/admin/reservations')
+  }
+
+  async function handleMarkAllRead() {
+    setActionError(null)
+    try {
+      await markAllRead()
+    } catch {
+      setActionError('알림을 모두 읽음 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.')
     }
   }
 
@@ -90,13 +85,19 @@ export default function NotificationBell() {
             <button
               type="button"
               data-testid="notification-mark-all-read"
-              onClick={() => markAllRead()}
+              onClick={handleMarkAllRead}
               disabled={isMarkingAllRead || unreadCount === 0}
               className="text-xs font-bold text-[#e86f00] hover:underline disabled:cursor-not-allowed disabled:text-[#c9bfab] disabled:no-underline"
             >
               모두 읽음
             </button>
           </div>
+
+          {actionError && (
+            <p data-testid="notification-action-error" className="mt-2 rounded-xl bg-[#fff0ed] px-3 py-2 text-xs font-bold text-[#d6452f]">
+              {actionError}
+            </p>
+          )}
 
           <div className="max-h-96 overflow-y-auto">
             {isLoading && (
@@ -111,7 +112,8 @@ export default function NotificationBell() {
                 type="button"
                 data-testid={`notification-item-${notification.id}`}
                 onClick={() => handleNotificationClick(notification)}
-                className={`w-full rounded-xl px-2 py-3 text-left transition ${
+                disabled={isMarkingRead}
+                className={`w-full rounded-xl px-2 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-40 ${
                   notification.readAt ? 'opacity-60' : 'bg-[#fff7e8]'
                 } hover:bg-[#fff0cf]`}
               >

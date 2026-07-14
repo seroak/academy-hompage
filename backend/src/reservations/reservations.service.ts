@@ -8,6 +8,7 @@ import { UpdateReservationDto } from './dto/update-reservation.dto.js';
 import { QueryReservationsDto } from './dto/query-reservations.dto.js';
 import { ReservationsTransactionService } from './reservations-transaction.service.js';
 import { AdminNotificationsService } from '../admin-notifications/admin-notifications.service.js';
+import { isPrismaNotFoundError } from '../common/prisma-errors.js';
 
 @Injectable()
 export class ReservationsService {
@@ -142,7 +143,7 @@ export class ReservationsService {
         include: { preferredSlots: true },
       });
     } catch (error) {
-      if (this.isNotFoundError(error)) {
+      if (isPrismaNotFoundError(error)) {
         throw new NotFoundException(`Reservation ${id} not found`);
       }
       throw error;
@@ -153,7 +154,7 @@ export class ReservationsService {
     try {
       await this.prisma.reservation.delete({ where: { id } });
     } catch (error) {
-      if (this.isNotFoundError(error)) {
+      if (isPrismaNotFoundError(error)) {
         throw new NotFoundException(`Reservation ${id} not found`);
       }
       throw error;
@@ -165,9 +166,5 @@ export class ReservationsService {
     b: { dayOfWeek: string; startMinute: number; endMinute: number },
   ): boolean {
     return a.dayOfWeek === b.dayOfWeek && a.startMinute < b.endMinute && a.endMinute > b.startMinute;
-  }
-
-  private isNotFoundError(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && (error as { code?: string }).code === 'P2025';
   }
 }

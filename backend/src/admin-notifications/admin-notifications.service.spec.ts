@@ -87,7 +87,7 @@ describe('AdminNotificationsService', () => {
   });
 
   describe('findAll', () => {
-    it('생성일 최신순으로 전체 알림을 반환한다', async () => {
+    it('생성일 최신순으로 최근 알림을 제한된 개수만 반환한다', async () => {
       const notifications = [{ id: 'n1' }];
       prisma.adminNotification.findMany.mockResolvedValue(notifications);
 
@@ -96,6 +96,7 @@ describe('AdminNotificationsService', () => {
       expect(result).toBe(notifications);
       expect(prisma.adminNotification.findMany).toHaveBeenCalledWith({
         orderBy: { createdAt: 'desc' },
+        take: 50,
       });
     });
   });

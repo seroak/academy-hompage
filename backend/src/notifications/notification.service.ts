@@ -79,6 +79,12 @@ export class NotificationService {
               pass: this.configService.get<string>('SMTP_PASS'),
             }
           : undefined,
+        // 미설정 시 OS 기본 TCP 타임아웃(수십~백여 초)에 의존하게 되어, 메일 서버가
+        // 응답 없이 지연되면 이 발송을 await하는 요청(예: POST /reservations)이 그만큼
+        // 멈춘다. 상한을 명시해 최악의 경우에도 빠르게 실패하도록 한다.
+        connectionTimeout: 10_000,
+        socketTimeout: 10_000,
+        greetingTimeout: 10_000,
       });
     }
 

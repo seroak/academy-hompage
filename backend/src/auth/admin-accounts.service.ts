@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateAdminDto } from './dto/create-admin.dto.js';
+import { isPrismaNotFoundError } from '../common/prisma-errors.js';
 
 @Injectable()
 export class AdminAccountsService {
@@ -42,14 +43,10 @@ export class AdminAccountsService {
     try {
       await this.prisma.admin.delete({ where: { id } });
     } catch (error) {
-      if (this.isNotFoundError(error)) {
+      if (isPrismaNotFoundError(error)) {
         throw new NotFoundException(`Admin ${id} not found`);
       }
       throw error;
     }
-  }
-
-  private isNotFoundError(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && (error as { code?: string }).code === 'P2025';
   }
 }

@@ -11,6 +11,7 @@ import {
   areScheduleDaysValid,
   quarterClassMonths,
 } from './dto/class-schedule-days.validator.js';
+import { hasPrismaErrorCode } from '../common/prisma-errors.js';
 
 const withDays = { days: { orderBy: { date: 'asc' as const } } };
 
@@ -56,7 +57,7 @@ export class ClassSchedulesService {
         include: withDays,
       });
     } catch (error) {
-      if (this.hasCode(error, 'P2002'))
+      if (hasPrismaErrorCode(error, 'P2002'))
         throw new ConflictException('이미 등록된 연도와 분기입니다.');
       throw error;
     }
@@ -84,7 +85,7 @@ export class ClassSchedulesService {
         include: withDays,
       });
     } catch (error) {
-      if (this.hasCode(error, 'P2025'))
+      if (hasPrismaErrorCode(error, 'P2025'))
         throw new NotFoundException('수업 일정을 찾을 수 없습니다.');
       throw error;
     }
@@ -119,7 +120,7 @@ export class ClassSchedulesService {
     try {
       await this.prisma.classSchedule.delete({ where: { id } });
     } catch (error) {
-      if (this.hasCode(error, 'P2025'))
+      if (hasPrismaErrorCode(error, 'P2025'))
         throw new NotFoundException('수업 일정을 찾을 수 없습니다.');
       throw error;
     }
@@ -131,13 +132,5 @@ export class ClassSchedulesService {
       classMonth: day.classMonth ?? null,
       note: day.note ?? null,
     }));
-  }
-
-  private hasCode(error: unknown, code: string) {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      (error as { code?: string }).code === code
-    );
   }
 }

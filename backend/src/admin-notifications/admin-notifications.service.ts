@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NotificationService } from '../notifications/notification.service.js';
+import { isPrismaNotFoundError } from '../common/prisma-errors.js';
 
 interface ReservationCreatedLike {
   id: string;
@@ -38,6 +39,10 @@ export class AdminNotificationsService {
       );
     }
 
+    // NotificationService.sendMail이 내부에서 모든 발송 오류를 삼키므로 이 catch는 오늘
+    // 기준으로는 도달하지 않는다. 그래도 이 메서드는 "예약 생성 흐름을 절대 막지 않는다"는
+    // 계약을 지켜야 하므로(호출부인 ReservationsService.create가 이를 그대로 신뢰한다),
+    // NotificationService의 내부 구현이 바뀌어도 안전하도록 방어적으로 남겨둔다.
     try {
       await this.notification.sendAdminReservationReceived(reservation);
     } catch (error) {
@@ -51,6 +56,7 @@ export class AdminNotificationsService {
   findAll() {
     return this.prisma.adminNotification.findMany({
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
   }
 
@@ -68,7 +74,7 @@ export class AdminNotificationsService {
         data: { readAt: new Date() },
       });
     } catch (error) {
-      if (this.isNotFoundError(error)) {
+      if (isPrismaNotFoundError(error)) {
         throw new NotFoundException(`AdminNotification ${id} not found`);
       }
       throw error;
@@ -80,9 +86,5 @@ export class AdminNotificationsService {
       where: { readAt: null },
       data: { readAt: new Date() },
     });
-  }
-
-  private isNotFoundError(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && (error as { code?: string }).code === 'P2025';
   }
 }

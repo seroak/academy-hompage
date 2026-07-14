@@ -74,4 +74,19 @@ test.describe('관리자 - 수업 신청 알림', () => {
 
     await expect(page.getByTestId('notification-bell-badge')).toHaveCount(0)
   })
+
+  test('읽음 처리가 실패하면 에러 메시지를 보여주고 예약 페이지로 이동하지 않는다', async ({ page }) => {
+    await page.route(apiPattern('/admin-notifications/notification-1/read$'), async (route) => {
+      await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: '서버 오류' }) })
+    })
+
+    await page.goto('/admin/notices')
+
+    await page.getByTestId('notification-bell-button').click()
+    await page.getByTestId('notification-item-notification-1').click()
+
+    await expect(page.getByTestId('notification-action-error')).toBeVisible()
+    await expect(page).toHaveURL(/\/admin\/notices$/)
+    await expect(page.getByTestId('notification-bell-badge')).toHaveText('1')
+  })
 })

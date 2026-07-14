@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { CalendarCheck, ChevronDown, LogIn, LogOut, Menu, Shield, X } from 'lucide-react'
 import type { ParentProfile } from '../api/schemas/auth.schema'
 import { logoutAdmin, logoutParent } from '../api/auth.api'
 import { useLoginModalStore } from '../stores/loginModalStore'
+import { useClickOutsideAndEscape } from '../hooks/useClickOutsideAndEscape'
 import AdminLoginModal from './AdminLoginModal'
 import LogoMark from './LogoMark'
 
@@ -40,28 +41,7 @@ function ParentProfileMenu({
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!isOpen) return
-
-    function handlePointerDown(event: PointerEvent) {
-      if (containerRef.current && event.target instanceof Node && !containerRef.current.contains(event.target)) {
-        setIsOpen(false)
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isOpen])
+  useClickOutsideAndEscape(containerRef, isOpen, () => setIsOpen(false))
 
   const displayName = parent.name?.trim() || parent.email?.trim() || '회원'
 

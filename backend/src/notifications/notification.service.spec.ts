@@ -29,6 +29,22 @@ describe('NotificationService', () => {
     );
   }
 
+  describe('SMTP transporter 생성', () => {
+    it('연결이 응답 없이 걸리지 않도록 연결/소켓/인사 타임아웃을 설정한다', async () => {
+      configValues.SMTP_HOST = 'smtp.example.com';
+
+      await createService();
+
+      expect(createTransport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          connectionTimeout: expect.any(Number),
+          socketTimeout: expect.any(Number),
+          greetingTimeout: expect.any(Number),
+        }),
+      );
+    });
+  });
+
   describe('SMTP 미설정', () => {
     beforeEach(() => {
       delete configValues.SMTP_HOST;
