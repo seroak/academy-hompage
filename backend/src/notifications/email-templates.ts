@@ -17,6 +17,12 @@ interface VerificationEmailData {
   verifyUrl: string;
 }
 
+interface AdminReservationEmailData extends ReservationEmailData {
+  childAge: number;
+  parentPhone?: string | null;
+  scheduleText: string;
+}
+
 const COLORS = {
   background: '#f4f2ed',
   brand50: '#fff7e8',
@@ -155,5 +161,22 @@ export function parentEmailVerificationEmail(
     <p style="margin:0 0 8px;color:${COLORS.muted};font-size:12px;line-height:1.7;">버튼이 열리지 않으면 아래 주소를 브라우저에 복사해 주세요.</p>
     <p style="margin:0;word-break:break-all;font-size:12px;line-height:1.7;"><a href="${verifyUrl}" style="color:${COLORS.brand700};">${verifyUrl}</a></p>
     <p style="margin:24px 0 0;color:${COLORS.muted};font-size:12px;line-height:1.7;">본인이 요청하지 않았다면 이 메일을 무시해 주세요.</p>`,
+  );
+}
+
+export function reservationReceivedAdminEmail(
+  data: AdminReservationEmailData,
+): string {
+  const parentName = escapeHtml(data.parentName);
+  const childName = escapeHtml(data.childName);
+  const parentPhone = escapeHtml(data.parentPhone ?? '미입력');
+  const scheduleText = escapeHtml(data.scheduleText || '미입력');
+
+  return emailLayout(
+    '새 수업 신청이 접수되었어요',
+    '관리자 페이지에서 신청 내역을 확인하고 그룹 편성을 진행해 주세요.',
+    `<p style="margin:0;">${childName} 어린이(${data.childAge}세)의 새 수업 신청이 접수되었습니다.</p>
+    ${informationBox('신청자 정보', `보호자: ${parentName}<br>연락처: ${parentPhone}`)}
+    ${informationBox('희망 시간', scheduleText)}`,
   );
 }

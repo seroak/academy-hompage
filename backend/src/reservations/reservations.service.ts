@@ -7,6 +7,7 @@ import { CreateWalkInReservationDto } from './dto/create-walk-in-reservation.dto
 import { UpdateReservationDto } from './dto/update-reservation.dto.js';
 import { QueryReservationsDto } from './dto/query-reservations.dto.js';
 import { ReservationsTransactionService } from './reservations-transaction.service.js';
+import { AdminNotificationsService } from '../admin-notifications/admin-notifications.service.js';
 
 @Injectable()
 export class ReservationsService {
@@ -14,6 +15,7 @@ export class ReservationsService {
     private readonly prisma: PrismaService,
     private readonly notification: NotificationService,
     private readonly transaction: ReservationsTransactionService,
+    private readonly adminNotifications: AdminNotificationsService,
   ) {}
 
   findAll(query: QueryReservationsDto) {
@@ -97,6 +99,7 @@ export class ReservationsService {
       });
     });
     await this.notification.sendReservationReceived(reservation);
+    await this.adminNotifications.notifyReservationCreated(reservation);
     return reservation;
   }
 

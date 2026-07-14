@@ -5,6 +5,7 @@ import {
   groupConfirmedEmail,
   groupMemberRemovedEmail,
   parentEmailVerificationEmail,
+  reservationReceivedAdminEmail,
   reservationReceivedEmail,
 } from './email-templates.js';
 
@@ -22,6 +23,14 @@ interface SlotLike {
   dayOfWeek: string;
   startMinute: number;
   endMinute: number;
+}
+
+interface AdminReservationLike {
+  childName: string;
+  childAge: number;
+  parentName: string;
+  parentPhone?: string | null;
+  preferredSlots: SlotLike[];
 }
 
 const DAY_LABELS: Record<string, string> = {
@@ -136,6 +145,29 @@ export class NotificationService {
       '[생각을 여는 수학] 이메일 인증을 완료해 주세요',
       `${name}님, 아래 링크를 눌러 이메일 인증을 완료하고 회원가입을 마쳐 주세요.\n${verifyUrl}\n\n본인이 요청하지 않았다면 이 메일을 무시해 주세요.`,
       parentEmailVerificationEmail({ name, verifyUrl }),
+    );
+  }
+
+  async sendAdminReservationReceived(
+    reservation: AdminReservationLike,
+  ): Promise<void> {
+    const adminEmail = this.configService.get<string>(
+      'ADMIN_NOTIFICATION_EMAIL',
+      '',
+    );
+    const scheduleText = reservation.preferredSlots.map(slotLabel).join(', ');
+
+    await this.sendMail(
+      adminEmail,
+      '[학원] 새 수업 신청이 접수되었습니다',
+      `${reservation.childName}(${reservation.childAge}세) 어린이의 새 수업 신청이 접수되었습니다. 보호자: ${reservation.parentName}, 희망 시간: ${scheduleText || '미입력'}`,
+      reservationReceivedAdminEmail({
+        parentName: reservation.parentName,
+        childName: reservation.childName,
+        childAge: reservation.childAge,
+        parentPhone: reservation.parentPhone,
+        scheduleText,
+      }),
     );
   }
 

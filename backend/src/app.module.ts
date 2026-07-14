@@ -11,6 +11,7 @@ import { ReservationGroupsModule } from './reservation-groups/reservation-groups
 import { MembersModule } from './members/members.module.js';
 import { ChildrenModule } from './children/children.module.js';
 import { ClassSchedulesModule } from './class-schedules/class-schedules.module.js';
+import { AdminNotificationsModule } from './admin-notifications/admin-notifications.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ClassSchedulesModule } from './class-schedules/class-schedules.module.j
     NotificationModule,
     NoticesModule,
     AuthModule,
+    AdminNotificationsModule,
     ReservationsModule,
     ReservationGroupsModule,
     MembersModule,

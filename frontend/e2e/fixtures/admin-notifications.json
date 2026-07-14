@@ -1,0 +1,20 @@
+[
+  {
+    "id": "notification-1",
+    "type": "RESERVATION_CREATED",
+    "title": "박아이 어린이의 수업 신청이 접수되었습니다",
+    "body": "박부모님이 박아이(5세) 어린이의 수업을 신청했습니다.",
+    "reservationId": "reservation-1",
+    "readAt": null,
+    "createdAt": "2026-01-15T00:00:00.000Z"
+  },
+  {
+    "id": "notification-2",
+    "type": "RESERVATION_CREATED",
+    "title": "김아이 어린이의 수업 신청이 접수되었습니다",
+    "body": "김부모님이 김아이(6세) 어린이의 수업을 신청했습니다.",
+    "reservationId": "reservation-2",
+    "readAt": "2026-01-14T09:00:00.000Z",
+    "createdAt": "2026-01-14T00:00:00.000Z"
+  }
+]
