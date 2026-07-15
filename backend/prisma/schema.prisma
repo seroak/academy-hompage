@@ -219,3 +219,103 @@ model AdminNotification {
   @@index([readAt])
   @@index([createdAt])
 }
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONSULTATION_BOOKED
+  VISITED
+  REGISTERED
+  NO_RESPONSE
+  DISQUALIFIED
+}
+
+enum ContactWindow {
+  H13_15
+  H15_18
+  H18_20
+}
+
+enum CommuteStatus {
+  AVAILABLE
+  DECIDE_AFTER_CONSULTATION
+}
+
+model Lead {
+  id                       String        @id @default(cuid())
+  guardianName             String
+  phone                    String
+  childAge                 Int
+  contactWindow            ContactWindow
+  commuteStatus            CommuteStatus
+  status                   LeadStatus    @default(NEW)
+  utmSource                String?
+  utmMedium                String?
+  utmCampaign              String?
+  utmContent               String?
+  utmTerm                  String?
+  fbclid                   String?
+  landingPath              String?
+  referrer                 String?
+  privacyConsentVersion    String
+  privacyConsentAt         DateTime
+  analyticsConsent         Boolean
+  marketingConsent         Boolean
+  adminNote                String?
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  @@index([phone, createdAt])
+  @@index([status, createdAt])
+  @@index([utmCampaign, utmContent, createdAt])
+}
+
+model MarketingEvent {
+  id           String   @id @default(cuid())
+  eventId      String   @unique
+  sessionId    String
+  name         String
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  utmContent   String?
+  utmTerm      String?
+  fbclid       String?
+  landingPath  String?
+  occurredAt   DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([occurredAt])
+  @@index([utmCampaign, utmContent, occurredAt])
+  @@index([name, sessionId, occurredAt])
+}
+
+model MetaAdDailyInsight {
+  id            String   @id @default(cuid())
+  date          String
+  accountId     String
+  campaignId    String
+  campaignName  String
+  adSetId       String
+  adSetName     String
+  adId          String
+  adName        String
+  spendWon      Int
+  impressions   Int
+  linkClicks    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([date, adId])
+  @@index([campaignId, date])
+}
+
+model MetaSyncState {
+  id            String    @id
+  isRunning     Boolean   @default(false)
+  lastStartedAt DateTime?
+  lastSuccessAt DateTime?
+  lastError     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}

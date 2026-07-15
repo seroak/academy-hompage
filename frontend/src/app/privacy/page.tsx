@@ -115,6 +115,9 @@ export default function PrivacyPage() {
             <p className={paragraphClass}>
               홈페이지는 Google Analytics 4(GA4)로 방문과 버튼 이용을 익명 통계로 확인하고, Meta Pixel로 광고 성과를 측정합니다. 상담 양식에 입력한 보호자 이름, 휴대전화, 자녀 정보는 분석·마케팅 이벤트로 전송하지 않습니다.
             </p>
+            <p className={paragraphClass}>
+              자체 광고 분석을 위해 익명 세션 ID, 광고 유입 정보(UTM), 홈페이지 행동과 발생 시각을 저장합니다. 익명 세션은 30분 동안 활동이 없으면 새로 발급되며 상담 양식의 개인정보와 결합해 외부 분석 서비스로 전송하지 않습니다.
+            </p>
           </section>
 
           <section id="transfer" className={sectionClass}>

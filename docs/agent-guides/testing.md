@@ -6,6 +6,7 @@
 - 버그 수정 뒤에는 동일 경로 회귀 테스트를 실행한다. 조건부 분기는 각 경우를 최소 한 번 실행한다.
 - 기존 dev 서버로 E2E 하기 전 watch 상태와 최근 변경 반영 여부를 확인한다.
 - E2E·빌드 전후 `git status`와 diff를 확인한다. `next-env.d.ts`, `tsconfig.tsbuildinfo` 등 생성 파일은 세션 시작 상태를 확인한 뒤 기능 변경이 아니면 정리한다.
+- 내비게이션·문구·색상·이미지 로딩 전략을 의도적으로 바꾸면 같은 변경에서 관련 E2E의 테스트 이름과 기대값도 현재 동작에 맞춰 갱신한다.
 - `npm run seo:audit`(로컬 Lighthouse) 실행 전 `uptime`으로 시스템 부하를 확인한다. load average가 높으면(예: CPU 코어 수 이상) LCP·TBT 수치가 실제보다 크게 나빠질 수 있어, 그 상태로 측정한 결과만으로 회귀를 단정하지 않는다.
 
 ## Frontend Playwright

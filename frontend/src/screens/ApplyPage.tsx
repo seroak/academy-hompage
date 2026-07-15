@@ -72,7 +72,7 @@ export default function ApplyPage({
       childName: child.name,
       childAge: child.age,
       requestedGroupId: undefined,
-      preferredSlots: [],
+      preferredSlots: current.requestedGroupId ? [] : current.preferredSlots,
     }));
   }
 
@@ -184,7 +184,7 @@ export default function ApplyPage({
         <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">먼저 자녀를 등록해 주세요</h2>
           <p className="mt-2 text-sm text-slate-600">
-            등록한 자녀 정보로 상담 신청과 레벨테스트를 편리하게 진행할 수 있습니다.
+            등록한 자녀 정보로 상담 신청을 편리하게 진행할 수 있습니다.
           </p>
           <button
             type="button"

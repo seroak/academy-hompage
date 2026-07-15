@@ -9,22 +9,15 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page).toHaveTitle(/생각을 여는 수학|academy/i)
   })
 
-  test('프로그램 링크를 다시 눌러도 대상 위치로 이동하고 포커스한다', async ({ page }) => {
+  test('헤더의 교육과정 링크로 교육과정 페이지를 연다', async ({ page }) => {
     await page.goto('/')
 
-    const programs = page.locator('#programs')
-    const programLink = page.locator('header').getByRole('link', { name: '프로그램' })
+    const courseLink = page.locator('header').getByRole('link', { name: '교육과정' })
 
-    await programLink.click()
-    await expect(programs).toBeFocused()
-    await expect(programs).toBeInViewport()
-
-    await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight }))
-    await expect(programs).not.toBeInViewport()
-
-    await programLink.click()
-    await expect(programs).toBeFocused()
-    await expect(programs).toBeInViewport()
+    await expect(courseLink).toHaveAttribute('href', '/courses')
+    await courseLink.click()
+    await expect(page).toHaveURL('/courses')
+    await expect(page.getByRole('heading', { level: 1, name: /생각을 여는 수학만의 교육/ })).toBeVisible()
   })
 
   test('홈 핵심 콘텐츠는 클라이언트 애니메이션 없이 즉시 렌더된다', async ({ page }) => {
@@ -38,7 +31,7 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page.getByRole('link', { name: '상담 신청하기' })).toHaveAttribute('href', '/apply')
   })
 
-  test('홈의 모바일 비표시 이미지는 초기 네트워크 우선순위를 차지하지 않는다', async ({ page }) => {
+  test('홈의 상단 이미지는 우선 요청하고 모바일에서는 숨긴다', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')
 
@@ -49,8 +42,7 @@ test.describe('공개 페이지 스모크', () => {
       'sizes',
       '(min-width: 1024px) 520px, (min-width: 640px) 420px, 180px',
     )
-    await expect(heroImage).not.toHaveAttribute('fetchpriority', 'high')
-    await expect(heroImage).toHaveAttribute('loading', 'lazy')
+    await expect(heroImage).not.toHaveAttribute('loading')
     await expect(heroImage).toHaveAttribute('decoding', 'sync')
     await expect(heroImage).toBeHidden()
   })
@@ -173,7 +165,7 @@ test.describe('공개 페이지 스모크', () => {
     await expect(page.getByText('놀이로 수학을 좋아하게 만드는 프로그램')).toBeVisible()
   })
 
-  test('교육과정의 모바일 비표시 이미지는 초기 네트워크 우선순위를 차지하지 않는다', async ({ page }) => {
+  test('교육과정 상단 이미지는 우선 요청하고 모바일에서는 숨긴다', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/courses')
 
@@ -184,8 +176,7 @@ test.describe('공개 페이지 스모크', () => {
       'sizes',
       '(min-width: 1024px) 560px, (min-width: 640px) 420px, 220px',
     )
-    await expect(heroImage).not.toHaveAttribute('fetchpriority', 'high')
-    await expect(heroImage).toHaveAttribute('loading', 'lazy')
+    await expect(heroImage).not.toHaveAttribute('loading')
     await expect(heroImage).toHaveAttribute('decoding', 'sync')
     await expect(heroImage).toBeHidden()
 

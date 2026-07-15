@@ -10,6 +10,8 @@ const adminNavItems = [
   { to: '/admin/notices', label: '공지 관리' },
   { to: '/admin/reservations', label: '예약 관리' },
   { to: '/admin/reservations/groups', label: '수업 관리' },
+  { to: '/admin/leads', label: '광고 상담' },
+  { to: '/admin/marketing', label: '광고 분석' },
   { to: '/admin/members', label: '회원 관리' },
   { to: '/admin/accounts', label: '관리자 계정' },
 ]

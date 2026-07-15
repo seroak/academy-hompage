@@ -53,6 +53,7 @@ export default defineConfig({
         NEXT_PUBLIC_SITE_URL: APP_BASE_URL,
         NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-E2ETEST',
         NEXT_PUBLIC_META_PIXEL_ID: '1234567890',
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
         NAVER_SITE_VERIFICATION: 'naver-e2e-verification',
         // next dev는 프로젝트 디렉토리당 인스턴스를 1개로 제한한다(포트가 달라도 잠금 충돌).
         // distDir을 분리해 평소 개발용 dev 서버(3001, .next)와 공존시킨다.

@@ -1,19 +1,17 @@
 'use client'
 
 import { useEffect } from 'react'
-import {
-  captureAttribution,
-  isTrackingEventName,
-  loadAnalyticsTracking,
-  loadMarketingTracking,
-  sendTrackingEvent,
-} from '../lib/marketing'
+import { loadAnalyticsTracking } from '../lib/marketing/analytics'
+import { captureAttribution } from '../lib/marketing/attribution'
+import { isTrackingEventName, sendTrackingEvent } from '../lib/marketing/events'
+import { initializeMetaPixel, trackInitialMetaPageView } from '../lib/marketing/metaPixel'
 
 export default function MarketingTracking() {
   useEffect(() => {
     captureAttribution(window.location, document.referrer)
     loadAnalyticsTracking(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
-    loadMarketingTracking(process.env.NEXT_PUBLIC_META_PIXEL_ID)
+    initializeMetaPixel(process.env.NEXT_PUBLIC_META_PIXEL_ID)
+    trackInitialMetaPageView()
   }, [])
 
   useEffect(() => {

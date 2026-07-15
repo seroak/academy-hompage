@@ -1,6 +1,11 @@
 'use client'
 
-import { Agentation } from 'agentation'
+import dynamic from 'next/dynamic'
+
+const Agentation = dynamic(
+  () => import('agentation').then((module) => module.Agentation),
+  { ssr: false },
+)
 
 export default function AgentationDev() {
   if (process.env.NODE_ENV !== 'development') {

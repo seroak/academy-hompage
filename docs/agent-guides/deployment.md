@@ -10,6 +10,10 @@
 - SSR fetch는 `API_INTERNAL_URL`을 우선하고 `NEXT_PUBLIC_API_BASE_URL`로 폴백한다. SSR 목록이 비어 보이면 이 URL부터 확인한다.
 - 도메인 변경 시 루트 `.env.production`, `backend/.env.production`, Vercel 환경변수와 Google OAuth 리디렉션 URI·출처를 함께 갱신한다.
 - Vercel Production에는 `NEXT_PUBLIC_SITE_URL`을 실제 프론트 도메인으로 설정하고 `NAVER_SITE_VERIFICATION`을 서치어드바이저가 발급한 값으로 설정한 뒤 재배포한다. 두 값은 metadata·사이트맵의 빌드 결과에 영향을 주므로 환경변수 저장만 하고 재배포를 생략하지 않는다.
+- 광고 측정 랜딩을 배포할 때 Vercel에는 `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`를 설정한다. 백엔드 운영 환경에는 같은 Turnstile 위젯의 `TURNSTILE_SECRET_KEY`와 리드 제한값(`LEAD_DEDUP_DAYS`, `LEAD_RATE_LIMIT`, `LEAD_RATE_WINDOW_SECONDS`)을 설정한다.
+- Turnstile 키는 운영 도메인 `openmath.io.kr`을 허용한 위젯의 한 쌍을 사용한다. 키를 바꾼 뒤에는 랜딩에서 실제 테스트 리드를 제출하고 관리자 `/admin/leads`에 저장되는지 확인한다.
+- Meta 광고 분석 자동 동기화는 백엔드 운영 환경의 `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`, `META_API_VERSION`, `META_SYNC_ENABLED=true`를 사용한다. 토큰은 `ads_read`만 가진 시스템 사용자 토큰으로 제한하고 프론트·로그·Compose 치환용 루트 환경파일에는 넣지 않는다.
+- 홈페이지 연결 광고의 URL 매개변수는 `utm_campaign={{campaign.id}}`, `utm_content={{ad.id}}`로 설정해야 Meta Insights와 리드가 자동 연결된다. 배포 후 `/admin/marketing`의 수동 동기화로 광고 관리자 수치와 일치하는지 확인한다.
 - 배포용 SSH 키는 전용 패스프레이즈 없는 키를 사용하고 시크릿으로 등록한다.
 
 ## 백엔드 무중단(블루-그린) 배포
