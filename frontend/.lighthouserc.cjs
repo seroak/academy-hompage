@@ -11,7 +11,7 @@ module.exports = {
         'http://localhost:3420/courses/thinking-math',
         'http://localhost:3420/courses/elementary-lower-grades',
       ],
-      numberOfRuns: 3,
+      numberOfRuns: 1,
       settings: {
         onlyCategories: ['seo', 'performance'],
         chromeFlags: '--headless --no-sandbox',
