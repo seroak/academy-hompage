@@ -31,7 +31,7 @@ test.describe('공개 수업 일정', () => {
     const julyCell = juneCalendar.getByRole('cell', { name: /^2026-07-04/ })
     await expect(marchCell).toContainText('3/29')
     await expect(julyCell).toContainText('7/4')
-    await expect(marchCell.locator('div')).toHaveClass(/bg-\[#eadcff\]/)
+    await expect(marchCell.locator('div')).toHaveClass(/bg-\[#f0e5ff\]/)
     await expect(julyCell.locator('div')).toHaveClass(/bg-\[#ffd5c2\]/)
     await expect(aprilCalendar.getByRole('cell', { name: /^2026-03-28/ })).toHaveCount(0)
     await expect(juneCalendar.getByRole('cell', { name: /^2026-07-05/ })).toHaveCount(0)

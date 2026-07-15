@@ -36,9 +36,10 @@ export default function PrivacyPage() {
             <li><a className="hover:text-[#e86f00]" href="#purpose">1. 개인정보의 처리 목적</a></li>
             <li><a className="hover:text-[#e86f00]" href="#items">2. 처리하는 개인정보와 보유기간</a></li>
             <li><a className="hover:text-[#e86f00]" href="#meta-lead">3. Meta 광고 상담 정보</a></li>
-            <li><a className="hover:text-[#e86f00]" href="#transfer">4. 제3자 제공 및 국외 이전</a></li>
-            <li><a className="hover:text-[#e86f00]" href="#destruction">5. 개인정보의 파기</a></li>
-            <li><a className="hover:text-[#e86f00]" href="#rights">6. 정보주체의 권리</a></li>
+            <li><a className="hover:text-[#e86f00]" href="#measurement">4. 분석·마케팅 측정</a></li>
+            <li><a className="hover:text-[#e86f00]" href="#transfer">5. 제3자 제공 및 국외 이전</a></li>
+            <li><a className="hover:text-[#e86f00]" href="#destruction">6. 개인정보의 파기</a></li>
+            <li><a className="hover:text-[#e86f00]" href="#rights">7. 정보주체의 권리</a></li>
           </ol>
         </nav>
 
@@ -106,6 +107,16 @@ export default function PrivacyPage() {
             <p className={paragraphClass}>
               상담 신청자는 개인정보 수집·이용에 동의하지 않을 수 있습니다. 다만 필수 항목 제공을 거부하면 전화 상담
               접수가 제한될 수 있습니다. 자녀 실명과 상세 시간표는 Meta 즉석 양식에서 수집하지 않습니다.
+            </p>
+          </section>
+
+          <section id="measurement" className={sectionClass}>
+            <h2 className={headingClass}>분석·마케팅 측정</h2>
+            <p className={paragraphClass}>
+              홈페이지는 Google Analytics 4(GA4)로 방문과 버튼 이용을 익명 통계로 확인하고, Meta Pixel로 광고 성과를 측정합니다. 상담 양식에 입력한 보호자 이름, 휴대전화, 자녀 정보는 분석·마케팅 이벤트로 전송하지 않습니다.
+            </p>
+            <p className={paragraphClass}>
+              자체 광고 분석을 위해 익명 세션 ID, 광고 유입 정보(UTM), 홈페이지 행동과 발생 시각을 저장합니다. 익명 세션은 30분 동안 활동이 없으면 새로 발급되며 상담 양식의 개인정보와 결합해 외부 분석 서비스로 전송하지 않습니다.
             </p>
           </section>
 

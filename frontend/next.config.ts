@@ -10,6 +10,7 @@ const isVercel = !!process.env.VERCEL
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: ['127.0.0.1'],
   ...(isVercel ? {} : { output: 'standalone', outputFileTracingRoot: root }),
   turbopack: {
     root,

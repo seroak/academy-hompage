@@ -12,6 +12,8 @@ import { MembersModule } from './members/members.module.js';
 import { ChildrenModule } from './children/children.module.js';
 import { ClassSchedulesModule } from './class-schedules/class-schedules.module.js';
 import { AdminNotificationsModule } from './admin-notifications/admin-notifications.module.js';
+import { LeadsModule } from './leads/leads.module.js';
+import { MarketingModule } from './marketing/marketing.module.js';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { AdminNotificationsModule } from './admin-notifications/admin-notificati
     MembersModule,
     ChildrenModule,
     ClassSchedulesModule,
+    LeadsModule,
+    MarketingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

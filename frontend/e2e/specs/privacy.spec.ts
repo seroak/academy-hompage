@@ -15,6 +15,7 @@ test.describe('개인정보처리방침', () => {
     await expect(page.getByText('상담 종료 후 3개월')).toBeVisible()
     await expect(page.getByRole('link', { name: '010-2976-0166' })).toHaveAttribute('href', 'tel:01029760166')
     await expect(page.getByText('시행일: 2026년 7월 15일')).toBeVisible()
+    await expect(page.getByText(/익명 세션 ID.*광고 유입 정보.*홈페이지 행동/)).toBeVisible()
   })
 
   test('개인정보 처리의 주요 항목과 권리 행사 방법을 공개한다', async ({ page }) => {

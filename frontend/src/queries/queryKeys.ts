@@ -42,4 +42,13 @@ export const queryKeys = {
     list: ['adminNotifications', 'list'] as const,
     unreadCount: ['adminNotifications', 'unreadCount'] as const,
   },
+  leads: {
+    all: ['leads'] as const,
+    list: (filters: unknown) => ['leads', 'list', filters] as const,
+    summary: (filters: unknown) => ['leads', 'summary', filters] as const,
+  },
+  marketing: {
+    all: ['marketing'] as const,
+    dashboard: (filters: unknown) => ['marketing', 'dashboard', filters] as const,
+  },
 }
