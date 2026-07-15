@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import Header from './Header'
 import { getServerAuth } from '../lib/serverAuth'
 
@@ -34,7 +35,15 @@ export default async function Layout({
               경기도 용인시 기흥구 흥덕2로65번길 12-15 · 문의 010-2976-0166
             </p>
           </div>
-          <p className="text-xs font-semibold text-[#8a7a61]">유치부부터 초등 저학년까지 함께합니다.</p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-[#8a7a61]">
+            <p>유치부부터 초등 저학년까지 함께합니다.</p>
+            <Link
+              href="/privacy"
+              className="underline decoration-[#c9ad79] underline-offset-4 transition hover:text-[#e86f00] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#e86f00]"
+            >
+              개인정보처리방침
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
