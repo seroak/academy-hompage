@@ -15,6 +15,7 @@ module.exports = {
       settings: {
         onlyCategories: ['seo', 'performance'],
         chromeFlags: '--headless --no-sandbox',
+        throttlingMethod: 'provided',
       },
     },
     assert: {
