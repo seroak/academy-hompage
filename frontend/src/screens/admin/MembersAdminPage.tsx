@@ -1,7 +1,8 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { Fragment, useState, type MouseEvent } from 'react'
 import { useMembersQuery } from './hooks/useMembersQuery'
+import { useMemberMutations } from './hooks/useMemberMutations'
 import {
   RESERVATION_STATUS_LABELS,
   timeRangeLabel,
@@ -9,6 +10,7 @@ import {
 } from '../../api/schemas/reservation.schema'
 import { OAUTH_PROVIDER_LABELS } from '../../api/schemas/member.schema'
 import type { Member } from '../../api/schemas/member.schema'
+import { ApiError } from '../../lib/apiClient'
 
 function loginMethodsLabel(member: Member): string {
   const methods: string[] = []
@@ -33,10 +35,21 @@ function childrenLabel(member: Member): string {
 
 export default function MembersAdminPage() {
   const { members, isLoading, error } = useMembersQuery()
+  const { deleteMember, isDeleting } = useMemberMutations()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   function toggleExpand(id: string) {
     setExpandedId((current) => (current === id ? null : id))
+  }
+
+  async function handleDelete(event: MouseEvent, id: string, name: string | null) {
+    event.stopPropagation()
+    if (!window.confirm(`'${name ?? '이름 없음'}' 회원을 삭제하시겠습니까? 신청 내역도 함께 삭제됩니다.`)) return
+    try {
+      await deleteMember(id)
+    } catch (cause) {
+      window.alert(cause instanceof ApiError ? cause.message : '회원을 삭제하지 못했습니다.')
+    }
   }
 
   return (
@@ -61,6 +74,7 @@ export default function MembersAdminPage() {
                 <th className="px-5 py-3">로그인 수단</th>
                 <th className="px-5 py-3">자녀</th>
                 <th className="px-5 py-3">신청 건수</th>
+                <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -82,10 +96,20 @@ export default function MembersAdminPage() {
                       <td className="px-5 py-4 text-slate-700">{loginMethodsLabel(member)}</td>
                       <td className="px-5 py-4 text-slate-700">{childrenLabel(member)}</td>
                       <td className="px-5 py-4 text-slate-700">{member.reservations.length}</td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          type="button"
+                          onClick={(event) => handleDelete(event, member.id, member.name)}
+                          disabled={isDeleting}
+                          className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-bold text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          삭제
+                        </button>
+                      </td>
                     </tr>
                     {isExpanded && (
                       <tr>
-                        <td colSpan={6} className="bg-slate-50 px-5 py-4">
+                        <td colSpan={7} className="bg-slate-50 px-5 py-4">
                           {member.reservations.length === 0 ? (
                             <p className="text-slate-500">신청 내역이 없습니다.</p>
                           ) : (

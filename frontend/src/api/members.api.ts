@@ -5,3 +5,7 @@ export async function fetchMembers(): Promise<Member[]> {
   const raw = await apiFetch('/members')
   return MemberListSchema.parse(raw)
 }
+
+export async function deleteMember(id: string): Promise<void> {
+  await apiFetch(`/members/${id}`, { method: 'DELETE' })
+}
