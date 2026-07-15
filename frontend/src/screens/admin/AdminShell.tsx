@@ -22,7 +22,7 @@ function navLinkClass(isActive: boolean) {
   }`
 }
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
 
