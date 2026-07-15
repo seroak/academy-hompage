@@ -47,9 +47,8 @@ test.describe('관리자 수업 일정', () => {
       await page.getByRole('table', { name: `2027년 ${month}월` }).getByRole('cell', { name: new RegExp(`^${date}`) }).click()
       await page.getByRole('region', { name: '선택 날짜 편집' }).getByRole('button', { name: label, exact: true }).click()
     }
-    await page.getByRole('button', { name: '임시저장' }).click()
-    await expect(page.getByText('저장했습니다.')).toBeVisible()
     await page.getByRole('button', { name: '게시하기' }).click()
+    await expect(page.getByText('게시했습니다.')).toBeVisible()
     await expect(page.getByText('게시 중')).toBeVisible()
   })
 
@@ -92,6 +91,8 @@ test.describe('관리자 수업 일정', () => {
 
     await expect(toolbar.getByRole('button', { name: '6월분' })).toHaveClass(/bg-\[#f0e5ff\].*border-\[#c3a1e5\]/)
     await expect(toolbar.getByRole('button', { name: '7월분' })).toHaveClass(/bg-\[#d7f4f0\].*border-\[#9bc5bf\]/)
+    await expect(toolbar.getByRole('button', { name: '8월분' })).toHaveClass(/bg-\[#dbe9ff\].*border-\[#8fb0e6\]/)
+    await expect(toolbar.getByRole('button', { name: '9월분' })).toHaveClass(/bg-\[#ffd9ec\].*border-\[#e8a0c4\]/)
 
     const day = page.getByRole('table', { name: '2026년 7월' }).getByRole('cell', { name: /^2026-07-01/ }).getByRole('button')
     await toolbar.getByRole('button', { name: '6월분' }).click()

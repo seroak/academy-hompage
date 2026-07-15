@@ -4,8 +4,8 @@ import { buildMonthGrid } from "./calendar";
 const monthColors = [
   "bg-[#f0e5ff] border-[#c3a1e5]",
   "bg-[#d7f4f0] border-[#9bc5bf]",
-  "bg-[#dff3a8] border-[#acd85d]",
-  "bg-[#ffeaa1] border-[#f1c84b]",
+  "bg-[#dbe9ff] border-[#8fb0e6]",
+  "bg-[#ffd9ec] border-[#e8a0c4]",
   "bg-[#ffd5c2] border-[#efaa8c]",
 ];
 export function monthColor(index: number) {

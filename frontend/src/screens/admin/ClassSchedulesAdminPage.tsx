@@ -87,8 +87,14 @@ function ScheduleEditor({ schedule, schedules, onSelect, onDeleted }: {
     } catch (cause) { setError(cause instanceof ApiError ? cause.message : '저장하지 못했습니다.') }
   }
   async function publish() {
-    try { await publishSchedule(schedule.id); setMessage('게시했습니다.'); setError(null) }
-    catch (cause) { setError(cause instanceof ApiError ? cause.message : '게시하지 못했습니다.') }
+    try {
+      if (dirty) {
+        const saved = await updateSchedule({ id: schedule.id, days: days.map(({ id: _id, ...day }) => day) })
+        setDays(saved.days); setDirty(false)
+      }
+      await publishSchedule(schedule.id)
+      setMessage('게시했습니다.'); setError(null)
+    } catch (cause) { setError(cause instanceof ApiError ? cause.message : '게시하지 못했습니다.') }
   }
   async function remove() {
     if (!window.confirm('이 수업 일정을 삭제하시겠습니까?')) return
@@ -104,7 +110,7 @@ function ScheduleEditor({ schedule, schedules, onSelect, onDeleted }: {
           <span className={`rounded-full px-3 py-2 text-xs font-black ${schedule.status === 'PUBLISHED' ? 'bg-[#e8f4c7] text-[#516b16]' : 'bg-[#f3eee4] text-[#6f6253]'}`}>{schedule.status === 'PUBLISHED' ? '게시 중' : '임시저장'}</span>
           {dirty && <span className="text-xs font-black text-[#d45c2f]">저장하지 않은 변경사항</span>}
           <button type="button" onClick={save} disabled={!dirty || isSaving} className="h-11 rounded-full bg-[#ffd66b] px-5 text-sm font-black disabled:opacity-50">임시저장</button>
-          <button type="button" onClick={publish} disabled={dirty || isPublishing} className="h-11 rounded-full bg-[#3f3a31] px-5 text-sm font-black text-white disabled:opacity-50">게시하기</button>
+          <button type="button" onClick={publish} disabled={isSaving || isPublishing} className="h-11 rounded-full bg-[#3f3a31] px-5 text-sm font-black text-white disabled:opacity-50">게시하기</button>
           <button type="button" onClick={remove} className="h-11 rounded-full border border-[#efb5a8] px-4 text-sm font-black text-[#bd402b]">일정 삭제</button>
         </div>
       </div>
