@@ -1,14 +1,7 @@
 'use client'
 
-export const CONSENT_STORAGE_KEY = 'openmath-consent-v1'
 export const ATTRIBUTION_STORAGE_KEY = 'openmath-attribution-v1'
 export const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000
-
-export type ConsentPreferences = {
-  analytics: boolean
-  marketing: boolean
-  updatedAt: string
-}
 
 export type Attribution = {
   utmSource?: string
@@ -33,27 +26,6 @@ export const TRACKING_EVENTS = [
 ] as const
 
 export type TrackingEventName = (typeof TRACKING_EVENTS)[number]
-
-export function readConsent(): ConsentPreferences | null {
-  const raw = window.localStorage.getItem(CONSENT_STORAGE_KEY)
-  if (!raw) return null
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<ConsentPreferences>
-    if (typeof parsed.analytics !== 'boolean' || typeof parsed.marketing !== 'boolean' || typeof parsed.updatedAt !== 'string') {
-      return null
-    }
-    return { analytics: parsed.analytics, marketing: parsed.marketing, updatedAt: parsed.updatedAt }
-  } catch {
-    return null
-  }
-}
-
-export function writeConsent(preferences: Omit<ConsentPreferences, 'updatedAt'>): ConsentPreferences {
-  const value: ConsentPreferences = { ...preferences, updatedAt: new Date().toISOString() }
-  window.localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(value))
-  return value
-}
 
 export function captureAttribution(location: Location, referrer: string): Attribution | null {
   const params = new URLSearchParams(location.search)
@@ -142,13 +114,9 @@ export function isTrackingEventName(value: unknown): value is TrackingEventName 
   return typeof value === 'string' && TRACKING_EVENTS.includes(value as TrackingEventName)
 }
 
-export function sendTrackingEvent(name: TrackingEventName, preferences: Pick<ConsentPreferences, 'analytics' | 'marketing'>) {
+export function sendTrackingEvent(name: TrackingEventName) {
   const trackingWindow = window as TrackingWindow
-  if (preferences.analytics) {
-    trackingWindow.gtag?.('event', name)
-  }
-  if (preferences.marketing) {
-    const metaEvent = name === 'generate_lead' ? 'Lead' : name === 'phone_click' ? 'Contact' : 'ViewContent'
-    trackingWindow.fbq?.('track', metaEvent)
-  }
+  trackingWindow.gtag?.('event', name)
+  const metaEvent = name === 'generate_lead' ? 'Lead' : name === 'phone_click' ? 'Contact' : 'ViewContent'
+  trackingWindow.fbq?.('track', metaEvent)
 }

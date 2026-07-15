@@ -3,13 +3,13 @@ import { expect, test } from '@playwright/test'
 const GA_SCRIPT = 'https://www.googletagmanager.com/gtag/js?id=G-E2ETEST'
 const META_SCRIPT = 'https://connect.facebook.net/en_US/fbevents.js'
 
-test.describe('분석 및 마케팅 동의', () => {
-  test('동의 전에는 GA4와 Meta Pixel 스크립트를 로드하지 않는다', async ({ page }) => {
+test.describe('분석 및 마케팅 측정', () => {
+  test('첫 방문에 GA4와 Meta Pixel 스크립트를 바로 로드하고 동의 대화상자를 보이지 않는다', async ({ page }) => {
     await page.goto('/?utm_source=meta&utm_medium=paid_social&utm_campaign=heungdeok-v1&fbclid=test-fbclid')
 
-    await expect(page.locator(`script[src="${GA_SCRIPT}"]`)).toHaveCount(0)
-    await expect(page.locator(`script[src="${META_SCRIPT}"]`)).toHaveCount(0)
-    await expect(page.getByRole('dialog', { name: '분석 및 마케팅 설정' })).toBeVisible()
+    await expect(page.locator(`script[src="${GA_SCRIPT}"]`)).toHaveCount(1)
+    await expect(page.locator(`script[src="${META_SCRIPT}"]`)).toHaveCount(1)
+    await expect(page.getByRole('dialog', { name: '분석 및 마케팅 설정' })).toHaveCount(0)
   })
 
   test('비직접 유입 정보는 30일간 저장하고 직접 방문에도 유지한다', async ({ page }) => {
@@ -25,15 +25,10 @@ test.describe('분석 및 마케팅 동의', () => {
     expect(attribution).toContain('"fbclid":"test-fbclid"')
   })
 
-  test('동의한 뒤 추적 이벤트는 개인정보 없이 전송한다', async ({ page }) => {
+  test('추적 이벤트는 개인정보 없이 전송한다', async ({ page }) => {
     await page.route('https://www.googletagmanager.com/**', (route) => route.fulfill({ status: 200, body: '' }))
     await page.route('https://connect.facebook.net/**', (route) => route.fulfill({ status: 200, body: '' }))
     await page.goto('/')
-
-    const dialog = page.getByRole('dialog', { name: '분석 및 마케팅 설정' })
-    await dialog.getByLabel('분석 쿠키').check()
-    await dialog.getByLabel('마케팅 쿠키').check()
-    await dialog.getByRole('button', { name: '선택 저장' }).click()
 
     await expect(page.locator(`script[src="${GA_SCRIPT}"]`)).toHaveCount(1)
     await expect(page.locator(`script[src="${META_SCRIPT}"]`)).toHaveCount(1)

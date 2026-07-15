@@ -36,7 +36,7 @@ export default function PrivacyPage() {
             <li><a className="hover:text-[#e86f00]" href="#purpose">1. 개인정보의 처리 목적</a></li>
             <li><a className="hover:text-[#e86f00]" href="#items">2. 처리하는 개인정보와 보유기간</a></li>
             <li><a className="hover:text-[#e86f00]" href="#meta-lead">3. Meta 광고 상담 정보</a></li>
-            <li><a className="hover:text-[#e86f00]" href="#measurement">4. 분석·마케팅 동의</a></li>
+            <li><a className="hover:text-[#e86f00]" href="#measurement">4. 분석·마케팅 측정</a></li>
             <li><a className="hover:text-[#e86f00]" href="#transfer">5. 제3자 제공 및 국외 이전</a></li>
             <li><a className="hover:text-[#e86f00]" href="#destruction">6. 개인정보의 파기</a></li>
             <li><a className="hover:text-[#e86f00]" href="#rights">7. 정보주체의 권리</a></li>
@@ -111,9 +111,9 @@ export default function PrivacyPage() {
           </section>
 
           <section id="measurement" className={sectionClass}>
-            <h2 className={headingClass}>분석·마케팅 동의</h2>
+            <h2 className={headingClass}>분석·마케팅 측정</h2>
             <p className={paragraphClass}>
-              홈페이지는 선택 동의한 경우에만 Google Analytics 4(GA4)로 방문과 버튼 이용을 익명 통계로 확인하고, Meta Pixel로 광고 성과를 측정합니다. 상담 양식에 입력한 보호자 이름, 휴대전화, 자녀 정보는 분석·마케팅 이벤트로 전송하지 않습니다. 푸터의 ‘분석 및 마케팅 설정’에서 언제든 동의를 변경하거나 철회할 수 있습니다.
+              홈페이지는 Google Analytics 4(GA4)로 방문과 버튼 이용을 익명 통계로 확인하고, Meta Pixel로 광고 성과를 측정합니다. 상담 양식에 입력한 보호자 이름, 휴대전화, 자녀 정보는 분석·마케팅 이벤트로 전송하지 않습니다.
             </p>
           </section>
 
