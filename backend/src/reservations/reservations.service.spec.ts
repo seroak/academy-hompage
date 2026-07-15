@@ -118,6 +118,7 @@ describe('ReservationsService', () => {
       childAge: 5,
       parentName: '김엄마',
       parentEmail: 'parent@example.com',
+      parentPhone: '010-1234-5678',
       preferredSlots: [
         { dayOfWeek: 'MON', startMinute: 720, endMinute: 790 },
         { dayOfWeek: 'WED', startMinute: 900, endMinute: 970 },
@@ -144,6 +145,7 @@ describe('ReservationsService', () => {
           childId: 'child-1',
           parentName: dto.parentName,
           parentEmail: dto.parentEmail,
+          parentPhone: dto.parentPhone,
           parentUserId: 'parent-1',
           preferredSlots: {
             create: dto.preferredSlots,
@@ -196,6 +198,7 @@ describe('ReservationsService', () => {
           childId: 'child-1',
           parentName: dto.parentName,
           parentEmail: dto.parentEmail,
+          parentPhone: dto.parentPhone,
           parentUserId: 'parent-1',
           requestedGroupId: 'g1',
           preferredSlots: {

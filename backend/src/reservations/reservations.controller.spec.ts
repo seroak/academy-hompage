@@ -51,23 +51,29 @@ describe('ReservationsController', () => {
     service.findMine.mockResolvedValue(['reservation']);
 
     await expect(
-      controller.findMine({ user: { parentUserId: 'parent-1' } }),
+      controller.findMine({
+        user: { parentUserId: 'parent-1', email: null, name: null },
+      }),
     ).resolves.toEqual(['reservation']);
     expect(service.findMine).toHaveBeenCalledWith('parent-1');
   });
 
   it('delegates create to the service with parent user principal', async () => {
     const dto = {
+      childId: 'child-1',
       childName: '민준',
       childAge: 5,
       parentName: '김엄마',
       parentEmail: 'parent@example.com',
+      parentPhone: '010-1234-5678',
       preferredSlots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 790 }],
     };
     service.create.mockResolvedValue('created');
 
     await expect(
-      controller.create(dto, { user: { parentUserId: 'parent-1' } }),
+      controller.create(dto, {
+        user: { parentUserId: 'parent-1', email: null, name: null },
+      }),
     ).resolves.toBe('created');
     expect(service.create).toHaveBeenCalledWith(dto, 'parent-1');
   });

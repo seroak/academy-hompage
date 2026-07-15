@@ -49,7 +49,6 @@ describe('JwtStrategy', () => {
     await expect(
       strategy.validate({
         sub: 'parent-1',
-        email: 'parent@example.com',
         tokenType: 'parent',
       }),
     ).rejects.toThrow(UnauthorizedException);

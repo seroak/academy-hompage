@@ -196,7 +196,6 @@ describe('NotificationService', () => {
         childName: '민준',
         childAge: 5,
         parentName: '김엄마',
-        parentEmail: 'parent@example.com',
         parentPhone: '010-1234-5678',
         preferredSlots: [{ dayOfWeek: 'MON', startMinute: 720, endMinute: 790 }],
       });
@@ -219,7 +218,6 @@ describe('NotificationService', () => {
         childName: '민준',
         childAge: 5,
         parentName: '김엄마',
-        parentEmail: 'parent@example.com',
         preferredSlots: [],
       });
 
@@ -265,7 +263,6 @@ describe('NotificationService', () => {
           childName: '민준',
           childAge: 5,
           parentName: '김엄마',
-          parentEmail: 'parent@example.com',
           preferredSlots: [],
         }),
       ).resolves.not.toThrow();

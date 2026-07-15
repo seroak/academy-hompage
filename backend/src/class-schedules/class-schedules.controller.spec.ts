@@ -1,4 +1,4 @@
-import { GUARDS_METADATA, HTTP_CODE_METADATA } from '@nestjs/common/constants';
+import { GUARDS_METADATA, HTTP_CODE_METADATA } from '@nestjs/common/constants.js';
 import { HttpStatus } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { ClassSchedulesController } from './class-schedules.controller.js';
