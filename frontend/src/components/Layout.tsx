@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import Header from './Header'
+import ConsentSettingsButton from './ConsentSettingsButton'
 import { getServerAuth } from '../lib/serverAuth'
 
 export default async function Layout({
@@ -43,6 +44,7 @@ export default async function Layout({
             >
               개인정보처리방침
             </Link>
+            <ConsentSettingsButton />
           </div>
         </div>
       </footer>
