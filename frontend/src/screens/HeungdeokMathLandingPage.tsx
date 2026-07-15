@@ -94,10 +94,11 @@ export default function HeungdeokMathLandingPage() {
 
           <figure className="relative min-h-[360px] overflow-hidden lg:min-h-full">
             <Image
-              src="/images/math/hero-math-activity.png"
-              alt="교구로 수학 활동을 하는 아이들"
+              src="/images/math/c2m-activity.png"
+              alt="도형 교구로 수학 활동을 하는 아이"
               fill
-              priority
+              loading="eager"
+              fetchPriority="high"
               sizes="(min-width: 1024px) 610px, 100vw"
               className="object-cover object-[68%_center]"
             />
@@ -202,7 +203,7 @@ export default function HeungdeokMathLandingPage() {
       <section className="overflow-hidden rounded-[36px] bg-[#264f3f] text-[#f8f2e6]" aria-labelledby="concerns-heading">
         <div className="grid lg:grid-cols-[1.02fr_0.98fr]">
           <div className="relative min-h-[330px] lg:min-h-full">
-            <Image src="/images/math/recommendations-triptych.png" alt="교구 수업과 사고력 활동을 하는 아이들" fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />
+            <Image src="/images/math/playfacto-activity.png" alt="블록 교구로 함께 사고력 활동을 하는 아이들" fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />
           </div>
           <div className="px-6 py-12 sm:px-10 sm:py-16 lg:px-12">
             <p className="text-sm font-black text-[#f8c96d]">학부모님이 자주 들려주시는 고민</p>
