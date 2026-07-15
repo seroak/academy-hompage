@@ -56,9 +56,6 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - name: (진단) NEXT_PUBLIC_SITE_URL 확인
-        run: grep -H "NEXT_PUBLIC_SITE_URL\|NEXT_PUBLIC_API_BASE_URL" .vercel/.env.production.local || echo "해당 키 없음"
-
       - name: 프로덕션 빌드
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
