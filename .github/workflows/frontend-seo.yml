@@ -35,7 +35,16 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npm run build
-      - run: npm run seo:audit
+      - name: SEO 감사 (CI 성능 노이즈로 실패 시 최대 3회 재시도)
+        run: |
+          for attempt in 1 2 3; do
+            if npm run seo:audit; then
+              exit 0
+            fi
+            echo "seo:audit 실패 (시도 $attempt/3)"
+            sleep 10
+          done
+          exit 1
 
   deploy:
     needs: verify
