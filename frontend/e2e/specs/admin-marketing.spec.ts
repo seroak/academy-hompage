@@ -33,6 +33,19 @@ test('Meta 연결 전에는 설정 안내를 표시한다', async ({ page }) => 
   await expect(page.getByText('Meta API 연결이 필요합니다')).toBeVisible()
 })
 
+test('관리자는 Meta 동기화 완료와 반영 건수를 확인한다', async ({ page }) => {
+  await page.route(apiPattern('/marketing/dashboard(?:\\?.*)?$'), (route) => fulfillJson(route, 200, dashboard))
+  await routeByMethod(page, apiPattern('/marketing/meta/sync$'), {
+    POST: (route) => fulfillJson(route, 200, { synced: 2 }),
+  })
+
+  await page.goto('/admin/marketing')
+  await page.getByRole('button', { name: '지금 동기화' }).click()
+
+  await expect(page.getByRole('status')).toHaveText('동기화 완료 · 광고 데이터 2건 반영')
+  await expect(page.getByText('마지막 동기화 성공')).toBeVisible()
+})
+
 test('모바일에서도 핵심 광고 지표를 숨기지 않는다', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.route(apiPattern('/marketing/dashboard(?:\\?.*)?$'), (route) =>
