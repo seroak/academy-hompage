@@ -10,6 +10,7 @@ module.exports = {
         'http://localhost:3420/courses/young-children-math',
         'http://localhost:3420/courses/thinking-math',
         'http://localhost:3420/courses/elementary-lower-grades',
+        'http://localhost:3420/courses/heungdeok-math',
       ],
       numberOfRuns: 1,
       settings: {

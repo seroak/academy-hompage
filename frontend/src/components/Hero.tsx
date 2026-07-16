@@ -13,7 +13,7 @@ export default function Hero() {
         <div className="max-w-[560px] pb-28 pt-2 lg:pb-20">
           <p className="mb-5 inline-flex items-center gap-2 text-sm font-bold tracking-[0.08em] text-brand-700">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-600" aria-hidden="true" />
-            유치부부터 초등 저학년까지
+            용인 흥덕 유치부·초등 저학년 수학학원
           </p>
           <h1 className="text-[clamp(2.5rem,5.5vw,4.25rem)] font-extrabold leading-[1.14] tracking-[-0.03em] text-ink-900">
             아이의 오늘이
@@ -38,7 +38,7 @@ export default function Hero() {
         <div className="relative hidden self-end pb-20 sm:block lg:pb-26">
           <Image
             src={childrenImagePath}
-            alt="책상 앞에서 웃고 있는 어린이들"
+            alt="용인 흥덕 유치부·초등 저학년 수학학원에서 책상 앞에 웃고 있는 어린이들"
             width={1536}
             height={1024}
             sizes="(min-width: 1024px) 520px, (min-width: 640px) 420px, 180px"

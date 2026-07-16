@@ -1,5 +1,5 @@
 export interface SeoLandingContent {
-  slug: 'young-children-math' | 'thinking-math' | 'elementary-lower-grades'
+  slug: 'young-children-math' | 'thinking-math' | 'elementary-lower-grades' | 'heungdeok-math'
   title: string
   metaTitle: string
   description: string
@@ -85,6 +85,30 @@ export const seoLandingPages: SeoLandingContent[] = [
     ],
     programs: ['요리수 수학', '씨투엠(C2M)'],
     tone: 'sky',
+  },
+  {
+    slug: 'heungdeok-math',
+    title: '흥덕 수학학원, 유치부부터 초등 저학년까지',
+    metaTitle: '흥덕 수학학원 | 용인 흥덕 유치부·초등 저학년 사고력 수학',
+    description:
+      '경기도 용인시 기흥구 흥덕동 수학학원. 플레이팩토, 요리수 수학, 씨투엠(C2M) 세 과정으로 유치부부터 초등 저학년까지 아이 발달 단계에 맞춰 수업합니다.',
+    ogImage: '/images/og/home.webp',
+    keywords: ['흥덕 수학학원', '용인 흥덕 수학학원', '기흥 수학학원', '흥덕 유치부 수학학원', '흥덕 저학년 수학학원'],
+    eyebrow: '용인시 기흥구 흥덕동 수학학원',
+    intro:
+      '흥덕2로에 위치한 동네 수학학원입니다. 유아부터 초등 저학년까지, 아이의 현재 발달 단계에 맞는 프로그램을 골라 놀이에서 개념 이해, 사고력, 교과 학습까지 단계적으로 이어갑니다.',
+    features: [
+      { title: '연령에 맞는 프로그램', description: '유아는 놀이와 교구로, 저학년은 개념과 사고력 문제로 시작 지점을 다르게 설계합니다.' },
+      { title: '동네에서 꾸준히 다니는 학원', description: '흥덕 지역 아이들이 걸어서 다니며 등하원과 상담이 편리합니다.' },
+      { title: '세 과정의 유기적 연결', description: '플레이팩토·요리수 수학·씨투엠을 아이 성장에 따라 자연스럽게 이어갑니다.' },
+    ],
+    recommendedFor: [
+      '흥덕·기흥 인근에서 다닐 수학학원을 찾는 유아·초등 저학년 학부모',
+      '놀이에서 시작해 사고력, 교과까지 단계적으로 이어가고 싶은 아이',
+      '아이 성향에 맞는 프로그램을 상담받고 싶은 학부모',
+    ],
+    programs: ['플레이팩토', '요리수 수학', '씨투엠(C2M)'],
+    tone: 'sun',
   },
 ]
 

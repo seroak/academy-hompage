@@ -6,7 +6,7 @@ import { SITE_DESCRIPTION, SITE_NAME, baseOpenGraph, buildOrganizationJsonLd, pa
 const socialImage = '/images/og/home.webp'
 
 export const metadata: Metadata = {
-  title: SITE_NAME,
+  title: `${SITE_NAME} | 용인 흥덕 유치부·초등 저학년 수학학원`,
   description: SITE_DESCRIPTION,
   alternates: { canonical: siteUrl('/'), ...rssAlternate() },
   openGraph: {

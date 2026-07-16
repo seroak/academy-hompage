@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/courses/young-children-math',
     '/courses/thinking-math',
     '/courses/elementary-lower-grades',
+    '/courses/heungdeok-math',
   ]
   const staticUrls = staticPaths.map((path) => ({
     url: siteUrl(path),

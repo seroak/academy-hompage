@@ -38,6 +38,12 @@ export default async function Layout({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-[#8a7a61]">
             <p>유치부부터 초등 저학년까지 함께합니다.</p>
             <Link
+              href="/courses/heungdeok-math"
+              className="underline decoration-[#c9ad79] underline-offset-4 transition hover:text-[#e86f00] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#e86f00]"
+            >
+              흥덕 수학학원 안내
+            </Link>
+            <Link
               href="/privacy"
               className="underline decoration-[#c9ad79] underline-offset-4 transition hover:text-[#e86f00] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#e86f00]"
             >
