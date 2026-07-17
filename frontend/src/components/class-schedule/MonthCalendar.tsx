@@ -79,9 +79,7 @@ export default function MonthCalendar({
                       : calendarDay.weekday === 6
                         ? "text-[#3466c2]"
                         : "text-[#332c22]";
-                  const displayedDay = calendarDay.inMonth
-                    ? String(calendarDay.day)
-                    : `${Number(calendarDay.date.slice(5, 7))}/${calendarDay.day}`;
+                  const displayedDay = String(calendarDay.day);
                   const content = (
                     <>
                       <span className={`text-sm font-black ${weekdayClass}`}>{displayedDay}</span>
@@ -92,7 +90,7 @@ export default function MonthCalendar({
                       )}
                     </>
                   );
-                  const common = `min-h-[68px] p-2 text-left align-top transition ${cellClass} ${calendarDay.inMonth || entry ? "" : "opacity-55"} ${selectedDate === calendarDay.date ? "ring-2 ring-inset ring-[#e86f00]" : ""}`;
+                  const common = `min-h-[68px] p-2 text-left align-top transition ${cellClass} ${selectedDate === calendarDay.date ? "ring-2 ring-inset ring-[#e86f00]" : ""}`;
                   return (
                     <td
                       key={calendarDay.date}

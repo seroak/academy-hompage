@@ -8,7 +8,8 @@
 - 기존 dev 서버로 E2E 하기 전 watch 상태와 최근 변경 반영 여부를 확인한다.
 - E2E·빌드 전후 `git status`와 diff를 확인한다. `next-env.d.ts`, `tsconfig.tsbuildinfo` 등 생성 파일은 세션 시작 상태를 확인한 뒤 기능 변경이 아니면 정리한다.
 - 내비게이션·문구·색상·이미지 로딩 전략을 의도적으로 바꾸면 같은 변경에서 관련 E2E의 테스트 이름과 기대값도 현재 동작에 맞춰 갱신한다.
-- `npm run seo:audit`(로컬 Lighthouse) 실행 전 `uptime`으로 시스템 부하를 확인한다. load average가 높으면(예: CPU 코어 수 이상) LCP·TBT 수치가 실제보다 크게 나빠질 수 있어, 그 상태로 측정한 결과만으로 회귀를 단정하지 않는다.
+- `npm run seo:audit`(로컬 Lighthouse) 명령을 실행하기 직전에 반드시 먼저 `uptime`으로 시스템 부하를 확인한다(측정 시작 후·결과를 본 뒤가 아니라 실행 전). load average가 높으면(예: CPU 코어 수 이상) LCP·TBT 수치가 실제보다 크게 나빠질 수 있어, 그 상태로 측정한 결과만으로 회귀를 단정하지 않는다.
+- `seo:audit`이 백그라운드로 띄운 임시 dev 서버도 다른 dev 서버와 동일하게 작업 종료 시 정리하고, 정리 여부를 완료 보고에 명시한다.
 
 ## Frontend Playwright
 

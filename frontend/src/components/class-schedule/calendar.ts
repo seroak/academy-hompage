@@ -22,7 +22,7 @@ export function classMonthOptions(year: number, quarter: number) {
   })
 }
 
-export function buildMonthGrid(year: number, month: number): CalendarDay[] {
+export function buildMonthGrid(year: number, month: number): (CalendarDay | null)[] {
   const first = new Date(Date.UTC(year, month - 1, 1))
   const last = new Date(Date.UTC(year, month, 0))
   const start = new Date(first)
@@ -33,7 +33,8 @@ export function buildMonthGrid(year: number, month: number): CalendarDay[] {
   return Array.from({ length: dayCount }, (_, index) => {
     const date = new Date(start)
     date.setUTCDate(start.getUTCDate() + index)
-    return { date: isoDate(date), day: date.getUTCDate(), weekday: date.getUTCDay(), inMonth: date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 }
+    const inMonth = date.getUTCFullYear() === year && date.getUTCMonth() === month - 1
+    return inMonth ? { date: isoDate(date), day: date.getUTCDate(), weekday: date.getUTCDay(), inMonth } : null
   })
 }
 

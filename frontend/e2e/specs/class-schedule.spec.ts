@@ -20,21 +20,19 @@ test.describe('공개 수업 일정', () => {
     await expect(page.getByText('4월분')).toBeVisible()
   })
 
-  test('3개 달력의 선행·후행 주에 전월과 다음월 색상을 표시한다', async ({ page }) => {
+  test('3개 달력이 전월·다음월 날짜 없이 해당 월 날짜만 표시한다', async ({ page }) => {
     await page.goto('/schedule')
     await page.getByLabel('일정 선택').selectOption('2026-2')
 
     await expect(page.getByTestId('month-calendar')).toHaveCount(3)
     const aprilCalendar = page.getByRole('table', { name: '2026년 4월' })
     const juneCalendar = page.getByRole('table', { name: '2026년 6월' })
-    const marchCell = aprilCalendar.getByRole('cell', { name: /^2026-03-29/ })
-    const julyCell = juneCalendar.getByRole('cell', { name: /^2026-07-04/ })
-    await expect(marchCell).toContainText('3/29')
-    await expect(julyCell).toContainText('7/4')
-    await expect(marchCell.locator('div')).toHaveClass(/bg-\[#f0e5ff\]/)
-    await expect(julyCell.locator('div')).toHaveClass(/bg-\[#ffd5c2\]/)
+    await expect(aprilCalendar.getByRole('cell', { name: /^2026-03-29/ })).toHaveCount(0)
     await expect(aprilCalendar.getByRole('cell', { name: /^2026-03-28/ })).toHaveCount(0)
+    await expect(juneCalendar.getByRole('cell', { name: /^2026-07-04/ })).toHaveCount(0)
     await expect(juneCalendar.getByRole('cell', { name: /^2026-07-05/ })).toHaveCount(0)
+    await expect(aprilCalendar.getByRole('cell', { name: /^2026-04-01/ })).toContainText('1')
+    await expect(juneCalendar.getByRole('cell', { name: /^2026-06-30/ })).toContainText('30')
   })
 
   test('모바일에서 월별 달력을 세로 순서로 배치한다', async ({ page }) => {

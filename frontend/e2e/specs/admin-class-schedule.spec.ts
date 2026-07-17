@@ -104,28 +104,16 @@ test.describe('관리자 수업 일정', () => {
     await expect(day).toHaveCSS('border-top-color', 'rgb(155, 197, 191)')
   })
 
-  test('전월·다음월 도구를 표시하고 전월 마지막 주를 드래그 지정한다', async ({ page }) => {
+  test('전월·다음월 도구는 표시하지만 인접 달 날짜 칸은 숨긴다', async ({ page }) => {
     await page.goto('/admin/schedules')
     await page.getByLabel('등록된 일정').selectOption('schedule-2026-q2')
     const toolbar = page.getByRole('toolbar', { name: '드래그 도구' })
     await expect(toolbar.getByRole('button', { name: '3월분' })).toBeVisible()
     await expect(toolbar.getByRole('button', { name: '7월분' })).toBeVisible()
-    await toolbar.getByRole('button', { name: '3월분' }).click()
 
     const calendar = page.getByRole('table', { name: '2026년 4월' })
-    const first = calendar.getByRole('cell', { name: /^2026-03-29/ }).getByRole('button')
-    const last = calendar.getByRole('cell', { name: /^2026-03-31/ }).getByRole('button')
-    await first.scrollIntoViewIfNeeded()
-    const firstBox = await first.boundingBox()
-    const lastBox = await last.boundingBox()
-    if (!firstBox || !lastBox) throw new Error('확장 날짜 셀 위치를 찾지 못했습니다.')
-
-    await page.mouse.move(firstBox.x + firstBox.width / 2, firstBox.y + firstBox.height / 2)
-    await page.mouse.down()
-    await page.mouse.move(lastBox.x + lastBox.width / 2, lastBox.y + lastBox.height / 2, { steps: 10 })
-    await page.mouse.up()
-
-    await expect(last).toHaveClass(/bg-\[#f0e5ff\]/)
+    await expect(calendar.getByRole('cell', { name: /^2026-03-29/ })).toHaveCount(0)
+    await expect(calendar.getByRole('cell', { name: /^2026-03-31/ })).toHaveCount(0)
   })
 
   test('일정을 삭제하면 목록에서 제거한다', async ({ page }) => {

@@ -1,3 +1,4 @@
+import ClassTimeTable from '../components/math-curriculum/ClassTimeTable'
 import ComparisonTable from '../components/math-curriculum/ComparisonTable'
 import GrowthTimeline from '../components/math-curriculum/GrowthTimeline'
 import MathHero from '../components/math-curriculum/MathHero'
@@ -10,6 +11,7 @@ export default function MathCurriculumPage() {
       <MathHero />
       <div className="mt-5"><GrowthTimeline /></div>
       <ComparisonTable />
+      <ClassTimeTable />
       <ProgramCards />
       <RecommendationCta />
     </div>

@@ -46,6 +46,21 @@ npm run seo:audit
 - SEO·공개 페이지 성능 변경은 production build 후 `npm run seo:audit`으로 핵심 URL 게이트를 확인한다.
 - 새 dev 서버 전 포트 3000·3001 점유와 기존 서버의 최신 watch 상태를 확인한다.
 
+## Meta 광고 자동 분석 운영
+
+- 광고 관리 화면은 `/admin/marketing`이다. 홈페이지 행동은 자체 DB, 광고비·노출·링크 클릭은 Meta Marketing API, 상담 이후 단계는 기존 상담 신청 데이터가 기준이다.
+- 홈페이지 연결 Meta 광고 URL은 이름이 아닌 동적 ID로 통일한다: `utm_source=meta&utm_medium=paid_social&utm_campaign={{campaign.id}}&utm_content={{ad.id}}`.
+- Meta API는 개발자 앱에 Marketing API를 추가하고, Business Portfolio의 시스템 사용자에게 **앱과 실제 광고 계정**을 모두 할당한 뒤 `ads_read` 권한으로 만든 시스템 사용자 토큰을 사용한다. 시스템 사용자 ID·앱 ID는 `META_AD_ACCOUNT_ID`가 아니다.
+- 운영 시크릿은 서버의 `backend/.env.production`에만 둔다. 필요한 키는 `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`, `META_API_VERSION`, `META_SYNC_ENABLED`이며 토큰 값은 저장소·프론트엔드·로그·채팅에 기록하지 않는다.
+- Meta 연동 오류는 먼저 `GET /me/permissions`에서 `ads_read: granted`를 확인하고, 그 **실제 광고 계정 ID**로 `/act_{META_AD_ACCOUNT_ID}/insights`를 직접 조회해 권한과 계정 ID를 구분한다. `{"data":[]}`는 권한 성공이며 해당 기간의 광고 데이터가 없다는 뜻이다.
+- `/admin/marketing`의 `지금 동기화`는 수동 실행이며, 성공 시 반영 건수와 마지막 성공 시각을 표시한다. 광고 집행 전에는 `새로 반영된 광고 데이터가 없습니다`가 정상일 수 있다. 동시 실행은 별도 안내로 표시한다.
+- Meta API 장애나 미설정 상태여도 홈페이지 상담 신청과 관리자 상담 관리는 계속 동작해야 한다. GA4·Meta Pixel·자체 행동 이벤트에 보호자·자녀 개인정보를 보내지 않는다.
+- Ads Manager·청구 화면의 상태를 보고하기 직전에 화면을 새로고침하고 `business_id`, `act` 및 선택된 캠페인·광고 세트·광고 ID가 실제 운영 대상을 가리키는지 확인한다. 오래 열린 탭이나 새로고침 전 문구만으로 결제수단·게시·게재 상태를 단정하지 않는다.
+- 결제수단은 실제 광고 계정의 청구 화면에서 새로고침 후 마스킹된 결제수단과 기본 여부까지 확인한다. 로딩 중이거나 이전 화면의 `추가한 결제 수단이 없습니다` 문구는 최종 근거로 사용하지 않는다.
+- 게시 상태는 캠페인·광고 세트·광고를 각각 확인하고 `임시 저장`, `처리/검토 중`, `예약됨`, `활동 중`을 구분해 보고한다. `검토 후 게시(n개)`는 미게시 변경이 남았다는 뜻이므로 게시 실패로 해석하지 말고, 게시본과 남은 초안을 이름·ID로 분리한다.
+- Instagram 전용이라고 보고하려면 수동 노출 위치에서 Instagram 외 모든 플랫폼과 `제외된 노출 위치에 제한적인 지출 허용`이 꺼졌고 저장됐는지 확인한다. 어드밴티지+ 노출 위치가 켜져 있으면 Facebook·Messenger·Audience Network·WhatsApp 등에도 게재될 수 있음을 명시한다.
+- 일정·예산·타겟·노출 위치는 과거에 입력한 값이 아니라 현재 게시된 광고 세트에서 다시 확인한다. 확인하지 못한 값은 `이전 설정` 또는 `미확인`으로 구분하며 현재값처럼 단정하지 않는다.
+
 ## 변경 전 읽을 가이드
 
 | 변경 영역 | 가이드 |
