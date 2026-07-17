@@ -100,7 +100,8 @@ export default function MarketingDashboardPage() {
 
   useEffect(() => {
     if (!syncFeedback) return;
-    const timeoutId = window.setTimeout(() => setSyncFeedback(null), 5000);
+    const ms = syncFeedback.skipped ? 8000 : 5000;
+    const timeoutId = window.setTimeout(() => setSyncFeedback(null), ms);
     return () => window.clearTimeout(timeoutId);
   }, [syncFeedback]);
 
@@ -195,7 +196,7 @@ export default function MarketingDashboardPage() {
       ) : null}
       {syncFeedback?.skipped ? (
         <p role="status" className="mt-4 bg-[#fff1c7] p-4 text-sm font-black text-[#765421]">
-          다른 동기화가 진행 중입니다. 잠시 후 다시 확인해 주세요.
+          이미 다른 동기화가 진행 중입니다. 완료되면 최신 데이터가 자동으로 반영됩니다.
         </p>
       ) : null}
       {syncFeedback && !syncFeedback.skipped ? (

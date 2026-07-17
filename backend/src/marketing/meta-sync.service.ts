@@ -56,7 +56,7 @@ export class MetaSyncService {
       create: { id: 'meta' },
       update: {},
     });
-    const staleMinutes = Number(this.config.get('META_SYNC_LOCK_MINUTES', 30));
+    const staleMinutes = Number(this.config.get('META_SYNC_LOCK_MINUTES', 5));
     const acquired = await this.prisma.metaSyncState.updateMany({
       where: {
         id: 'meta',
