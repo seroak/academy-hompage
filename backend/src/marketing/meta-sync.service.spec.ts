@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { MetaSyncService } from './meta-sync.service.js';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { MetaInsightsClient } from './meta-insights.client.js';
+import { MetaApiError, MetaInsightsClient } from './meta-insights.client.js';
 
 describe('MetaSyncService', () => {
   it('Nest 모듈에서 테스트용 시계 없이 생성된다', async () => {
@@ -20,6 +20,7 @@ describe('MetaSyncService', () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-07-15T12:00:00+09:00'));
     const prisma = {
       metaAdDailyInsight: { upsert: jest.fn().mockResolvedValue({}) },
+      metaAdCreative: { upsert: jest.fn().mockResolvedValue({}) },
       metaSyncState: {
         findUnique: jest.fn().mockResolvedValue({
           lastSuccessAt: new Date('2026-07-01T00:00:00Z'),
@@ -46,6 +47,13 @@ describe('MetaSyncService', () => {
           linkClicks: 40,
         },
       ]),
+      fetchCreatives: jest.fn().mockResolvedValue([
+        {
+          adId: '30',
+          imageUrl: 'https://example.com/30.jpg',
+          thumbnailUrl: 'https://example.com/30-thumb.jpg',
+        },
+      ]),
     };
     const config = {
       get: jest.fn((_key: string, fallback: unknown) => fallback),
@@ -66,6 +74,17 @@ describe('MetaSyncService', () => {
           where: { date_adId: { date: '2026-07-15', adId: '30' } },
         }),
       );
+      expect(prisma.metaAdCreative.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { adId: '30' },
+          create: {
+            adId: '30',
+            imageUrl: 'https://example.com/30.jpg',
+            thumbnailUrl: 'https://example.com/30-thumb.jpg',
+          },
+        }),
+      );
+      expect(client.fetchCreatives).toHaveBeenCalledWith(['30']);
       const updateCall = (
         prisma.metaSyncState.update.mock.calls as unknown[][]
       )[0]?.[0] as
@@ -75,6 +94,122 @@ describe('MetaSyncService', () => {
         isRunning: false,
         lastError: null,
       });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('인사이트가 없으면 fetchCreatives를 호출하지 않는다', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-15T12:00:00+09:00'));
+    const prisma = {
+      metaAdDailyInsight: { upsert: jest.fn().mockResolvedValue({}) },
+      metaAdCreative: { upsert: jest.fn().mockResolvedValue({}) },
+      metaSyncState: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const client = {
+      isConfigured: jest.fn().mockReturnValue(true),
+      fetchDaily: jest.fn().mockResolvedValue([]),
+      fetchCreatives: jest.fn().mockResolvedValue([]),
+    };
+    const service = new MetaSyncService(
+      prisma as never,
+      client as never,
+      { get: jest.fn((_key: string, fallback: unknown) => fallback) } as never,
+    );
+    try {
+      await expect(service.sync()).resolves.toEqual({ synced: 0 });
+      expect(client.fetchCreatives).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('25건이 넘는 인사이트도 모두 upsert한다', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-15T12:00:00+09:00'));
+    const rows = Array.from({ length: 30 }, (_, index) => ({
+      date: '2026-07-15',
+      accountId: '1',
+      campaignId: '10',
+      campaignName: '흥덕',
+      adSetId: '20',
+      adSetName: '학부모',
+      adId: String(index),
+      adName: `광고 ${index}`,
+      spendWon: 1000,
+      impressions: 100,
+      linkClicks: 1,
+    }));
+    const prisma = {
+      metaAdDailyInsight: { upsert: jest.fn().mockResolvedValue({}) },
+      metaAdCreative: { upsert: jest.fn().mockResolvedValue({}) },
+      metaSyncState: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const client = {
+      isConfigured: jest.fn().mockReturnValue(true),
+      fetchDaily: jest.fn().mockResolvedValue(rows),
+      fetchCreatives: jest.fn().mockResolvedValue([]),
+    };
+    const service = new MetaSyncService(
+      prisma as never,
+      client as never,
+      { get: jest.fn((_key: string, fallback: unknown) => fallback) } as never,
+    );
+    try {
+      await expect(service.sync()).resolves.toEqual({ synced: 30 });
+      expect(prisma.metaAdDailyInsight.upsert).toHaveBeenCalledTimes(30);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('Meta API 오류 사유를 lastError에 그대로 남긴다', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-15T12:00:00+09:00'));
+    const prisma = {
+      metaAdDailyInsight: { upsert: jest.fn() },
+      metaAdCreative: { upsert: jest.fn() },
+      metaSyncState: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const client = {
+      isConfigured: jest.fn().mockReturnValue(true),
+      fetchDaily: jest
+        .fn()
+        .mockRejectedValue(
+          new MetaApiError(
+            'unauthorized',
+            'Meta API 권한이 없습니다. 시스템 사용자 토큰의 ads_read 권한을 확인하세요.',
+          ),
+        ),
+    };
+    const service = new MetaSyncService(
+      prisma as never,
+      client as never,
+      { get: jest.fn((_key: string, fallback: unknown) => fallback) } as never,
+    );
+    try {
+      await expect(service.sync()).rejects.toThrow('권한이 없습니다');
+      expect(prisma.metaSyncState.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({
+            lastError:
+              'Meta API 권한이 없습니다. 시스템 사용자 토큰의 ads_read 권한을 확인하세요.',
+          }),
+        }),
+      );
     } finally {
       jest.useRealTimers();
     }

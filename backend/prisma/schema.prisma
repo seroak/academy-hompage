@@ -310,6 +310,13 @@ model MetaAdDailyInsight {
   @@index([campaignId, date])
 }
 
+model MetaAdCreative {
+  adId         String   @id
+  imageUrl     String?
+  thumbnailUrl String?
+  updatedAt    DateTime @updatedAt
+}
+
 model MetaSyncState {
   id            String    @id
   isRunning     Boolean   @default(false)

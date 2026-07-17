@@ -67,6 +67,7 @@ function enrich(value: Metrics) {
       ? Math.round((value.spendWon / value.impressions) * 1000)
       : null,
     cpc: cost(value.spendWon, value.linkClicks),
+    ctr: ratio(value.linkClicks, value.impressions),
     costPerLead: cost(value.spendWon, value.leads),
     costPerValidLead: cost(value.spendWon, value.validLeads),
     costPerRegistration: cost(value.spendWon, value.registrations),
@@ -90,6 +91,13 @@ function range(query: QueryMarketingDashboardDto) {
     new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(
       new Date(end.getTime() - 6 * 86400000),
     );
+  if (from > to)
+    return {
+      from: to,
+      to: from,
+      start: new Date(`${to}T00:00:00.000+09:00`),
+      end: new Date(`${from}T23:59:59.999+09:00`),
+    };
   return { from, to, start: new Date(`${from}T00:00:00.000+09:00`), end };
 }
 function key(item: SourceItem) {
@@ -121,13 +129,20 @@ export class MarketingService {
     const campaignFilter = query.campaignId
       ? { utmCampaign: query.campaignId }
       : {};
-    const [insights, events, leads, sync] = await Promise.all([
-      this.prisma.metaAdDailyInsight.findMany({
-        where: {
-          date: { gte: dates.from, lte: dates.to },
-          campaignId: query.campaignId,
-        },
-      }),
+    const insights = await this.prisma.metaAdDailyInsight.findMany({
+      where: {
+        date: { gte: dates.from, lte: dates.to },
+        campaignId: query.campaignId,
+      },
+    });
+    const insightAdIds = [...new Set(insights.map((item) => item.adId))];
+    const creativeImages =
+      insightAdIds.length > 0
+        ? await this.prisma.metaAdCreative.findMany({
+            where: { adId: { in: insightAdIds } },
+          })
+        : [];
+    const [events, leads, sync] = await Promise.all([
       this.prisma.marketingEvent.findMany({
         where: {
           occurredAt: { gte: dates.start, lte: dates.end },
@@ -215,15 +230,55 @@ export class MarketingService {
     for (const group of groups.values())
       for (const field of Object.keys(totals) as (keyof Metrics)[])
         totals[field] += group[field];
+    const imagesByAdId = new Map(
+      creativeImages.map((item) => [
+        item.adId,
+        { imageUrl: item.imageUrl, thumbnailUrl: item.thumbnailUrl },
+      ]),
+    );
     const creatives = [...groups.values()]
       .map((group) => ({
         campaignId: group.campaignId,
         campaignName: group.campaignName,
         adId: group.adId,
         adName: group.adName,
+        imageUrl: imagesByAdId.get(group.adId)?.imageUrl ?? null,
+        thumbnailUrl: imagesByAdId.get(group.adId)?.thumbnailUrl ?? null,
         ...enrich(group),
       }))
       .sort((a, b) => b.spendWon - a.spendWon);
+    const seoulDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+    });
+    type DayBucket = {
+      spendWon: number;
+      landingSessions: Set<string>;
+      leads: number;
+      registrations: number;
+    };
+    const dayBuckets = new Map<string, DayBucket>();
+    const ensureDay = (date: string) => {
+      if (!dayBuckets.has(date))
+        dayBuckets.set(date, {
+          spendWon: 0,
+          landingSessions: new Set(),
+          leads: 0,
+          registrations: 0,
+        });
+      return dayBuckets.get(date)!;
+    };
+    for (const item of insights) ensureDay(item.date).spendWon += item.spendWon;
+    for (const item of events) {
+      if (item.name !== 'view_ad_landing') continue;
+      ensureDay(seoulDate.format(item.occurredAt)).landingSessions.add(
+        item.sessionId,
+      );
+    }
+    for (const lead of leads) {
+      const bucket = ensureDay(seoulDate.format(lead.createdAt));
+      bucket.leads += 1;
+      if (lead.status === 'REGISTERED') bucket.registrations += 1;
+    }
     const daily = Array.from(
       {
         length:
@@ -231,33 +286,16 @@ export class MarketingService {
           1,
       },
       (_, index) => {
-        const date = new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'Asia/Seoul',
-        }).format(new Date(dates.start.getTime() + index * 86400000));
-        const dayInsights = insights.filter((item) => item.date === date);
-        const dayLeads = leads.filter(
-          (item) =>
-            new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(
-              item.createdAt,
-            ) === date,
+        const date = seoulDate.format(
+          new Date(dates.start.getTime() + index * 86400000),
         );
+        const bucket = dayBuckets.get(date);
         return {
           date,
-          spendWon: dayInsights.reduce((sum, item) => sum + item.spendWon, 0),
-          landingVisits: new Set(
-            events
-              .filter(
-                (item) =>
-                  item.name === 'view_ad_landing' &&
-                  new Intl.DateTimeFormat('en-CA', {
-                    timeZone: 'Asia/Seoul',
-                  }).format(item.occurredAt) === date,
-              )
-              .map((item) => item.sessionId),
-          ).size,
-          leads: dayLeads.length,
-          registrations: dayLeads.filter((item) => item.status === 'REGISTERED')
-            .length,
+          spendWon: bucket?.spendWon ?? 0,
+          landingVisits: bucket?.landingSessions.size ?? 0,
+          leads: bucket?.leads ?? 0,
+          registrations: bucket?.registrations ?? 0,
         };
       },
     );

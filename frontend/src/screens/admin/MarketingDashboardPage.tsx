@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MarketingDashboard } from "../../api/schemas/marketing.schema";
 import { useMarketingDashboardQuery, useMetaSyncMutation } from "./hooks/useMarketingDashboardQuery";
 
@@ -50,6 +50,9 @@ function CreativeDetails({ creative }: { creative: MarketingDashboard["creatives
         링크 클릭 <b>{number(creative.linkClicks)}</b>
       </span>
       <span>
+        CTR <b>{percent(creative.ctr)}</b>
+      </span>
+      <span>
         CPC <b>{won(creative.cpc)}</b>
       </span>
       <span>
@@ -78,6 +81,7 @@ export default function MarketingDashboardPage() {
   const [from, setFrom] = useState(seoulDate(-6));
   const [to, setTo] = useState(seoulDate());
   const [campaignId, setCampaignId] = useState("");
+  const [sortBy, setSortBy] = useState<"spend" | "ctr">("spend");
   const [syncFeedback, setSyncFeedback] = useState<{ synced: number; skipped?: true } | null>(null);
   const query = useMarketingDashboardQuery({ from, to, campaignId: campaignId || undefined });
   const sync = useMetaSyncMutation();
@@ -85,6 +89,11 @@ export default function MarketingDashboardPage() {
   const campaigns = data
     ? [...new Map(data.creatives.map((item) => [item.campaignId, item.campaignName])).entries()]
     : [];
+  const sortedCreatives = useMemo(() => {
+    if (!data) return [];
+    if (sortBy === "spend") return data.creatives;
+    return [...data.creatives].sort((a, b) => (b.ctr ?? -1) - (a.ctr ?? -1));
+  }, [data, sortBy]);
   const isStale = data?.meta.lastSuccessAt
     ? Date.now() - new Date(data.meta.lastSuccessAt).getTime() > 12 * 60 * 60 * 1000
     : false;
@@ -223,21 +232,52 @@ export default function MarketingDashboardPage() {
                 {data.range.from} – {data.range.to}
               </p>
             </div>
+            <div className="mt-4 flex gap-2">
+              {(
+                [
+                  ["spend", "광고비순"],
+                  ["ctr", "CTR(클릭률)순"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSortBy(value)}
+                  className={`h-9 rounded-full px-4 text-xs font-black ${
+                    sortBy === value ? "bg-[#2c4f40] text-[#fffaf0]" : "bg-white text-[#6a604f]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             {data.creatives.length === 0 ? (
               <p className="mt-5 bg-white p-8 text-center text-sm font-bold text-[#716656]">
                 선택한 기간에 연결된 광고 소재가 없습니다.
               </p>
             ) : (
               <div className="mt-5 divide-y divide-[#ead9b7] border-y border-[#ead9b7] bg-white">
-                {data.creatives.map((creative) => (
+                {sortedCreatives.map((creative) => (
                   <details key={`${creative.campaignId}-${creative.adId}`}>
                     <summary
                       aria-label={`${creative.adName} 상세 보기`}
-                      className="grid cursor-pointer gap-4 px-4 py-5 sm:grid-cols-[1.5fr_repeat(4,1fr)] sm:items-center"
+                      className="grid cursor-pointer gap-4 px-4 py-5 sm:grid-cols-[auto_1.5fr_repeat(4,1fr)] sm:items-center"
                     >
+                      {creative.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={creative.thumbnailUrl}
+                          alt={`${creative.adName} 썸네일`}
+                          className="h-14 w-14 rounded-lg border border-[#ead9b7] object-cover"
+                        />
+                      ) : (
+                        <div className="h-14 w-14 rounded-lg border border-dashed border-[#ead9b7]" />
+                      )}
                       <div>
                         <p className="font-black text-[#29251f]">{creative.adName}</p>
-                        <p className="mt-1 text-xs text-[#817460]">{creative.campaignName}</p>
+                        <p className="mt-1 text-xs text-[#817460]">
+                          {creative.campaignName} · CTR {percent(creative.ctr)}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-[#817460]">광고비</p>

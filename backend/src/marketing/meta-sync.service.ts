@@ -1,10 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { MetaInsightsClient } from './meta-insights.client.js';
+import { MetaApiError, MetaInsightsClient } from './meta-insights.client.js';
 
 const dateInSeoul = (date: Date) =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(date);
+const UPSERT_CHUNK_SIZE = 25;
+const DEFAULT_SYNC_ERROR = 'Meta 광고 데이터를 가져오지 못했습니다.';
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size)
+    chunks.push(items.slice(index, index + size));
+  return chunks;
+}
+
+function describeError(error: unknown): string {
+  return error instanceof MetaApiError ? error.message : DEFAULT_SYNC_ERROR;
+}
 
 @Injectable()
 export class MetaSyncService {
@@ -64,30 +77,46 @@ export class MetaSyncService {
       const from = dateInSeoul(new Date(startedAt.getTime() - days * 86400000));
       const to = dateInSeoul(startedAt);
       const rows = await this.client.fetchDaily(from, to);
-      for (const row of rows)
-        await this.prisma.metaAdDailyInsight.upsert({
-          where: { date_adId: { date: row.date, adId: row.adId } },
-          create: row,
-          update: row,
-        });
+      for (const batch of chunk(rows, UPSERT_CHUNK_SIZE))
+        await Promise.all(
+          batch.map((row) =>
+            this.prisma.metaAdDailyInsight.upsert({
+              where: { date_adId: { date: row.date, adId: row.adId } },
+              create: row,
+              update: row,
+            }),
+          ),
+        );
+      const adIds = [...new Set(rows.map((row) => row.adId))];
+      if (adIds.length > 0) {
+        const creatives = await this.client.fetchCreatives(adIds);
+        for (const batch of chunk(creatives, UPSERT_CHUNK_SIZE))
+          await Promise.all(
+            batch.map((creative) =>
+              this.prisma.metaAdCreative.upsert({
+                where: { adId: creative.adId },
+                create: creative,
+                update: creative,
+              }),
+            ),
+          );
+      }
       await this.prisma.metaSyncState.update({
         where: { id: 'meta' },
         data: { isRunning: false, lastSuccessAt: new Date(), lastError: null },
       });
       return { synced: rows.length };
     } catch (error) {
+      const lastError = describeError(error);
       await this.prisma.metaSyncState.upsert({
         where: { id: 'meta' },
         create: {
           id: 'meta',
           isRunning: false,
           lastStartedAt: startedAt,
-          lastError: 'Meta 광고 데이터를 가져오지 못했습니다.',
+          lastError,
         },
-        update: {
-          isRunning: false,
-          lastError: 'Meta 광고 데이터를 가져오지 못했습니다.',
-        },
+        update: { isRunning: false, lastError },
       });
       throw error;
     }
