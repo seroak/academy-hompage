@@ -6,6 +6,7 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
+import { IsMetaUtmId } from './meta-utm-id.validator.js';
 
 export const MARKETING_EVENT_NAMES = [
   'view_ad_landing',
@@ -22,8 +23,8 @@ export class CreateMarketingEventDto {
   @IsIn(MARKETING_EVENT_NAMES) name!: MarketingEventName;
   @IsOptional() @IsString() @MaxLength(100) utmSource?: string;
   @IsOptional() @IsString() @MaxLength(100) utmMedium?: string;
-  @IsOptional() @IsString() @MaxLength(200) utmCampaign?: string;
-  @IsOptional() @IsString() @MaxLength(500) utmContent?: string;
+  @IsOptional() @IsString() @MaxLength(200) @IsMetaUtmId() utmCampaign?: string;
+  @IsOptional() @IsString() @MaxLength(500) @IsMetaUtmId() utmContent?: string;
   @IsOptional() @IsString() @MaxLength(200) utmTerm?: string;
   @IsOptional() @IsString() @MaxLength(500) fbclid?: string;
   @IsOptional() @IsString() @MaxLength(1000) landingPath?: string;
