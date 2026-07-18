@@ -58,7 +58,6 @@ export class LeadsService {
           phone,
           childAge: input.childAge,
           contactWindow: input.contactWindow,
-          commuteStatus: input.commuteStatus,
           utmSource: input.utmSource,
           utmMedium: input.utmMedium,
           utmCampaign: input.utmCampaign,

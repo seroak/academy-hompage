@@ -236,18 +236,12 @@ enum ContactWindow {
   H18_20
 }
 
-enum CommuteStatus {
-  AVAILABLE
-  DECIDE_AFTER_CONSULTATION
-}
-
 model Lead {
   id                       String        @id @default(cuid())
   guardianName             String
   phone                    String
   childAge                 Int
   contactWindow            ContactWindow
-  commuteStatus            CommuteStatus
   status                   LeadStatus    @default(NEW)
   utmSource                String?
   utmMedium                String?

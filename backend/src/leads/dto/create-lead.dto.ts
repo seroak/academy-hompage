@@ -39,9 +39,6 @@ export class CreateLeadDto {
   @IsIn(['H13_15', 'H15_18', 'H18_20'])
   contactWindow!: 'H13_15' | 'H15_18' | 'H18_20';
 
-  @IsIn(['AVAILABLE', 'DECIDE_AFTER_CONSULTATION'])
-  commuteStatus!: 'AVAILABLE' | 'DECIDE_AFTER_CONSULTATION';
-
   @Equals(true)
   privacyConsent!: true;
 
