@@ -26,7 +26,6 @@ describe('LeadsService', () => {
     phone: '010-1234-5678',
     childAge: 7,
     contactWindow: 'H15_18' as const,
-    commuteStatus: 'AVAILABLE' as const,
     privacyConsent: true as const,
     privacyConsentVersion: '2026-07-15',
     turnstileToken: 'token',

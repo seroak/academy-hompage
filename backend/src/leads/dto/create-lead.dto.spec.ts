@@ -8,7 +8,6 @@ const validPayload = {
   phone: '010-1234-5678',
   childAge: 7,
   contactWindow: 'H15_18',
-  commuteStatus: 'AVAILABLE',
   privacyConsent: true,
   privacyConsentVersion: '2026-07-15',
   turnstileToken: 'verified-token',
@@ -48,11 +47,10 @@ describe('CreateLeadDto', () => {
         ...validPayload,
         phone: 'not-a-phone',
         contactWindow: 'MORNING',
-        commuteStatus: 'UNKNOWN',
       }),
     );
     expect(errors.map((error) => error.property)).toEqual(
-      expect.arrayContaining(['phone', 'contactWindow', 'commuteStatus']),
+      expect.arrayContaining(['phone', 'contactWindow']),
     );
   });
 });
