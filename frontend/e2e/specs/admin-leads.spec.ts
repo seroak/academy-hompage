@@ -10,7 +10,6 @@ const lead = {
   phone: '01012345678',
   childAge: 7,
   contactWindow: 'H15_18',
-  commuteStatus: 'AVAILABLE',
   status: 'NEW',
   utmSource: 'meta',
   utmMedium: 'paid_social',

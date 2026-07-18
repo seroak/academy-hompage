@@ -11,7 +11,7 @@ test.describe('개인정보처리방침', () => {
     await expect(page).toHaveURL(/\/privacy$/)
     await expect(page.getByRole('heading', { level: 1, name: '개인정보처리방침' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Meta 광고 상담 정보' })).toBeVisible()
-    await expect(page.getByText('보호자 이름, 휴대전화, 자녀 만 나이, 연락 가능 시간, 통학 가능 여부')).toBeVisible()
+    await expect(page.getByText('보호자 이름, 휴대전화, 자녀 만 나이, 연락 가능 시간')).toBeVisible()
     await expect(page.getByText('상담 종료 후 3개월')).toBeVisible()
     await expect(page.getByRole('link', { name: '010-2976-0166' })).toHaveAttribute('href', 'tel:01029760166')
     await expect(page.getByText('시행일: 2026년 7월 15일')).toBeVisible()
