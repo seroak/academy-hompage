@@ -97,7 +97,7 @@ export default function PrivacyPage() {
             <div className="mt-5 rounded-2xl border border-[#ffd38e] bg-[#fff8eb] p-5 sm:p-6">
               <dl className="grid gap-5 text-sm leading-7 sm:grid-cols-[9rem_1fr] sm:text-base">
                 <dt className="font-black text-[#5a4020]">수집 항목</dt>
-                <dd className="font-medium text-[#655b4d]">보호자 이름, 휴대전화, 자녀 만 나이, 연락 가능 시간, 통학 가능 여부</dd>
+                <dd className="font-medium text-[#655b4d]">보호자 이름, 휴대전화, 자녀 만 나이, 연락 가능 시간</dd>
                 <dt className="font-black text-[#5a4020]">이용 목적</dt>
                 <dd className="font-medium text-[#655b4d]">수업 상담 접수, 연락, 상담 가능 여부 확인</dd>
                 <dt className="font-black text-[#5a4020]">보유기간</dt>

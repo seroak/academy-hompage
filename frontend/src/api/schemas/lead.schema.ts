@@ -10,14 +10,12 @@ export const LeadStatusSchema = z.enum([
   'DISQUALIFIED',
 ])
 export const ContactWindowSchema = z.enum(['H13_15', 'H15_18', 'H18_20'])
-export const CommuteStatusSchema = z.enum(['AVAILABLE', 'DECIDE_AFTER_CONSULTATION'])
 
 export const CreateLeadInputSchema = z.object({
   guardianName: z.string().trim().min(1).max(50),
   phone: z.string().trim().min(9).max(20),
   childAge: z.number().int().min(4).max(10),
   contactWindow: ContactWindowSchema,
-  commuteStatus: CommuteStatusSchema,
   privacyConsent: z.literal(true),
   privacyConsentVersion: z.string(),
   turnstileToken: z.string().min(1),
@@ -41,7 +39,6 @@ export const LeadSchema = z.object({
   phone: z.string(),
   childAge: z.number(),
   contactWindow: ContactWindowSchema,
-  commuteStatus: CommuteStatusSchema,
   status: LeadStatusSchema,
   utmSource: z.string().nullable(),
   utmMedium: z.string().nullable(),

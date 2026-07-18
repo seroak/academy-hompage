@@ -41,7 +41,6 @@ export default function LeadConsultationForm() {
         phone: String(form.get('phone') ?? ''),
         childAge: Number(form.get('childAge')),
         contactWindow: String(form.get('contactWindow')) as 'H13_15' | 'H15_18' | 'H18_20',
-        commuteStatus: String(form.get('commuteStatus')) as 'AVAILABLE' | 'DECIDE_AFTER_CONSULTATION',
         privacyConsent: true,
         privacyConsentVersion: '2026-07-15',
         turnstileToken,
@@ -88,7 +87,6 @@ export default function LeadConsultationForm() {
         <label className="grid gap-2 text-sm font-black text-[#4a4135]">휴대전화<input name="phone" required inputMode="tel" autoComplete="tel" placeholder="010-0000-0000" className={fieldClass} /></label>
         <label className="grid gap-2 text-sm font-black text-[#4a4135]">자녀 만 나이<select name="childAge" required defaultValue="" className={fieldClass}><option value="" disabled>선택해 주세요</option>{Array.from({ length: 7 }, (_, index) => index + 4).map((age) => <option key={age} value={age}>{age}세</option>)}</select></label>
         <label className="grid gap-2 text-sm font-black text-[#4a4135]">연락 가능 시간<select name="contactWindow" required defaultValue="" className={fieldClass}><option value="" disabled>선택해 주세요</option><option value="H13_15">13~15시</option><option value="H15_18">15~18시</option><option value="H18_20">18~20시</option></select></label>
-        <label className="grid gap-2 text-sm font-black text-[#4a4135] sm:col-span-2">통학 가능 여부<select name="commuteStatus" required defaultValue="" className={fieldClass}><option value="" disabled>선택해 주세요</option><option value="AVAILABLE">가능</option><option value="DECIDE_AFTER_CONSULTATION">상담 후 결정</option></select></label>
       </div>
       <label className="mt-5 flex items-start gap-3 text-sm font-bold leading-6 text-[#5a5043]"><input type="checkbox" required className="mt-1 size-4 accent-[#d96000]" /> <span>개인정보 수집·이용에 동의합니다. <Link href="/privacy" target="_blank" className="underline underline-offset-4">자세히 보기</Link></span></label>
       <div className="mt-5"><TurnstileWidget onToken={handleToken} /></div>
