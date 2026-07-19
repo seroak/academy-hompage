@@ -19,6 +19,12 @@ const trimString = ({ value }: { value: unknown }): unknown =>
 const optionalTrimmedString = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim() || undefined : value;
 
+const CONTACT_WINDOWS = [
+  'H09_10', 'H10_11', 'H11_12', 'H12_13', 'H13_14', 'H14_15', 'H15_16',
+  'H16_17', 'H17_18', 'H18_19', 'H19_20', 'H20_21', 'H21_22', 'H22_23', 'H23_24',
+] as const;
+type ContactWindow = (typeof CONTACT_WINDOWS)[number];
+
 export class CreateLeadDto {
   @Transform(trimString)
   @IsString()
@@ -36,8 +42,8 @@ export class CreateLeadDto {
   @Max(10)
   childAge!: number;
 
-  @IsIn(['H13_15', 'H15_18', 'H18_20'])
-  contactWindow!: 'H13_15' | 'H15_18' | 'H18_20';
+  @IsIn(CONTACT_WINDOWS)
+  contactWindow!: ContactWindow;
 
   @Equals(true)
   privacyConsent!: true;

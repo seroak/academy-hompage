@@ -67,7 +67,7 @@ test.describe('흥덕 수학 광고 랜딩', () => {
     await page.getByLabel('보호자 이름').fill('김보호')
     await page.getByLabel('휴대전화').fill('010-1234-5678')
     await page.getByLabel('자녀 만 나이').selectOption('7')
-    await page.getByLabel('연락 가능 시간').selectOption('H15_18')
+    await page.getByLabel('연락 가능 시간').selectOption('H15_16')
     await page.getByLabel('개인정보 수집·이용에 동의합니다').check()
     await page.getByRole('button', { name: '상담 신청하기' }).click()
 
@@ -76,7 +76,7 @@ test.describe('흥덕 수학 광고 랜딩', () => {
       guardianName: '김보호',
       phone: '010-1234-5678',
       childAge: 7,
-      contactWindow: 'H15_18',
+      contactWindow: 'H15_16',
       turnstileToken: 'turnstile-test-token',
       utmSource: 'meta',
       utmCampaign: 'heungdeok-v1',
@@ -93,7 +93,7 @@ test.describe('흥덕 수학 광고 랜딩', () => {
     await page.getByLabel('보호자 이름').fill('김보호')
     await page.getByLabel('휴대전화').fill('010-1234-5678')
     await page.getByLabel('자녀 만 나이').selectOption('7')
-    await page.getByLabel('연락 가능 시간').selectOption('H15_18')
+    await page.getByLabel('연락 가능 시간').selectOption('H15_16')
     await page.getByLabel('개인정보 수집·이용에 동의합니다').check()
     await page.getByRole('button', { name: '상담 신청하기' }).click()
 

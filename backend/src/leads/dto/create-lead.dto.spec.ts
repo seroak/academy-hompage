@@ -7,7 +7,7 @@ const validPayload = {
   guardianName: '김보호',
   phone: '010-1234-5678',
   childAge: 7,
-  contactWindow: 'H15_18',
+  contactWindow: 'H15_16',
   privacyConsent: true,
   privacyConsentVersion: '2026-07-15',
   turnstileToken: 'verified-token',
@@ -37,6 +37,15 @@ describe('CreateLeadDto', () => {
       }),
     );
     expect(errors.some((error) => error.property === 'privacyConsent')).toBe(
+      true,
+    );
+  });
+
+  it('1시간 단위가 아닌 기존 3구간 값을 거부한다', async () => {
+    const errors = await validate(
+      plainToInstance(CreateLeadDto, { ...validPayload, contactWindow: 'H15_18' }),
+    );
+    expect(errors.some((error) => error.property === 'contactWindow')).toBe(
       true,
     );
   });

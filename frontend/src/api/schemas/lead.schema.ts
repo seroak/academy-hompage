@@ -9,7 +9,10 @@ export const LeadStatusSchema = z.enum([
   'NO_RESPONSE',
   'DISQUALIFIED',
 ])
-export const ContactWindowSchema = z.enum(['H13_15', 'H15_18', 'H18_20'])
+export const ContactWindowSchema = z.enum([
+  'H09_10', 'H10_11', 'H11_12', 'H12_13', 'H13_14', 'H14_15', 'H15_16',
+  'H16_17', 'H17_18', 'H18_19', 'H19_20', 'H20_21', 'H21_22', 'H22_23', 'H23_24',
+])
 
 export const CreateLeadInputSchema = z.object({
   guardianName: z.string().trim().min(1).max(50),
@@ -73,6 +76,7 @@ export const LeadSummarySchema = z.object({
   registrationRate: z.number().nonnegative(),
 })
 
+export type ContactWindow = z.infer<typeof ContactWindowSchema>
 export type CreateLeadInput = z.infer<typeof CreateLeadInputSchema>
 export type Lead = z.infer<typeof LeadSchema>
 export type LeadStatus = z.infer<typeof LeadStatusSchema>

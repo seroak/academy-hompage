@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useRef, useState } from 'react'
 import { createLead } from '../../api/leads.api'
+import type { ContactWindow } from '../../api/schemas/lead.schema'
 import { ApiError } from '../../lib/apiClient'
 import { readAttribution } from '../../lib/marketing/attribution'
 import { sendTrackingEvent } from '../../lib/marketing/events'
@@ -40,7 +41,7 @@ export default function LeadConsultationForm() {
         guardianName: String(form.get('guardianName') ?? ''),
         phone: String(form.get('phone') ?? ''),
         childAge: Number(form.get('childAge')),
-        contactWindow: String(form.get('contactWindow')) as 'H13_15' | 'H15_18' | 'H18_20',
+        contactWindow: String(form.get('contactWindow')) as ContactWindow,
         privacyConsent: true,
         privacyConsentVersion: '2026-07-15',
         turnstileToken,
@@ -86,7 +87,7 @@ export default function LeadConsultationForm() {
         <label className="grid gap-2 text-sm font-black text-[#4a4135]">보호자 이름<input name="guardianName" required maxLength={50} autoComplete="name" className={fieldClass} /></label>
         <label className="grid gap-2 text-sm font-black text-[#4a4135]">휴대전화<input name="phone" required inputMode="tel" autoComplete="tel" placeholder="010-0000-0000" className={fieldClass} /></label>
         <label className="grid gap-2 text-sm font-black text-[#4a4135]">자녀 만 나이<select name="childAge" required defaultValue="" className={fieldClass}><option value="" disabled>선택해 주세요</option>{Array.from({ length: 7 }, (_, index) => index + 4).map((age) => <option key={age} value={age}>{age}세</option>)}</select></label>
-        <label className="grid gap-2 text-sm font-black text-[#4a4135]">연락 가능 시간<select name="contactWindow" required defaultValue="" className={fieldClass}><option value="" disabled>선택해 주세요</option><option value="H13_15">13~15시</option><option value="H15_18">15~18시</option><option value="H18_20">18~20시</option></select></label>
+        <label className="grid gap-2 text-sm font-black text-[#4a4135]">연락 가능 시간<select name="contactWindow" required defaultValue="" className={fieldClass}><option value="" disabled>선택해 주세요</option>{Array.from({ length: 15 }, (_, index) => index + 9).map((hour) => <option key={hour} value={`H${String(hour).padStart(2, '0')}_${String(hour + 1).padStart(2, '0')}`}>{hour}~{hour + 1}시</option>)}</select></label>
       </div>
       <label className="mt-5 flex items-start gap-3 text-sm font-bold leading-6 text-[#5a5043]"><input type="checkbox" required className="mt-1 size-4 accent-[#d96000]" /> <span>개인정보 수집·이용에 동의합니다. <Link href="/privacy" target="_blank" className="underline underline-offset-4">자세히 보기</Link></span></label>
       <div className="mt-5"><TurnstileWidget onToken={handleToken} /></div>

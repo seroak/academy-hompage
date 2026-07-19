@@ -52,7 +52,7 @@ export default function HeungdeokMathLandingPage() {
 
   const scrollToForm = () => {
     sendTrackingEvent("consultation_cta_click");
-    document.getElementById("consultation-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("consultation-form")?.scrollIntoView({ block: "start" });
   };
 
   return (

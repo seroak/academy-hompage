@@ -9,7 +9,7 @@ const lead = {
   guardianName: '김보호',
   phone: '01012345678',
   childAge: 7,
-  contactWindow: 'H15_18',
+  contactWindow: 'H15_16',
   status: 'NEW',
   utmSource: 'meta',
   utmMedium: 'paid_social',
