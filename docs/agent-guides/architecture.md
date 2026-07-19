@@ -3,6 +3,7 @@
 ## Backend CRUD와 인증
 
 - `courses`, `notices`, `instructors`는 controller/service/dto와 `findAll`/`findOne`/`create`/`update`/`remove` 패턴을 통일한다.
+- 새 모듈을 만들거나 기존 모듈에 엔드포인트를 추가할 때는 유사한 모듈(예: `members`)과 CRUD 대칭성을 확인한다 — `leads` 모듈에 `DELETE :id`가 없어 관리자 화면에서 테스트 데이터를 지울 방법이 없었던 사례가 있었다.
 - `GET`은 공개다. `POST`·`PATCH`·`DELETE`에는 `JwtAuthGuard`를 적용한다. 신청자 개인정보 GET은 클래스가 아니라 메서드 단위로 가드한다.
 - 공개 정적 경로는 `:id` 라우트보다 먼저 선언한다.
 - `DELETE`는 `@HttpCode(HttpStatus.NO_CONTENT)`로 204를 반환한다.
@@ -28,6 +29,7 @@
 - `useEffect`는 네트워크 구독, DOM 조작, 타이머 같은 실제 사이드 이펙트에만 사용한다.
 - `<dialog open>` 모달은 `useModalFocusTrap`과 `data-autofocus`로 포커스 격리를 제공한다. Tailwind preflight 중앙정렬은 기존 모달 방식을 복제한다. 이 훅의 키보드 핸들러는 `event.isComposing`을 확인한다 — 한글 등 조합 입력 중 Tab을 누르면 조합 미확정 상태로 트랩 처리가 꼬이는 레이스 컨디션이 있었던 걸 막기 위함이라, 이 체크는 지우지 않는다(여러 모달이 이 훅을 공유한다).
 - 폼 오류 이동은 `scrollIntoView({ block: 'start' })`, `scroll-mt-*`, `tabIndex={-1}`을 사용한다.
+- CSS `scroll-behavior: smooth`와 JS `scrollIntoView({ behavior: 'smooth' })`를 같은 요소에 동시에 걸면 Meta/Instagram 인앱 브라우저(웹뷰)에서 프로그램적 스무스 스크롤이 무시되어 CTA 버튼을 눌러도 폼으로 이동하지 않는다 — 광고 랜딩 등 인앱 브라우저 유입이 많은 페이지의 스크롤 이동 코드에서 재발 가능하니 주의한다.
 - 긴 시간표의 터치는 드래그 캡처 대신 이동 임계값을 둔 탭 방식으로 분기한다. 반응형은 `useIsNarrow`를 재사용하고 마운트 후 전환을 E2E에서 기다린다.
 - 여러 화면(공개/관리자 등)이 공유하는 컴포넌트(`MonthCalendar` 등)를 수정하기 전에는 grep으로 전체 사용처를 찾고 각 사용처의 관련 E2E 테스트를 먼저 읽는다 — 겉보기엔 단순 표시 요소가 다른 화면에서는 의도된 기능(예: 관리자 드래그 편집)일 수 있다.
 - 신규 광고 랜딩페이지(`*LandingPage.tsx`)는 독자적인 색상 팔레트를 새로 만들지 않는다. 이미 확립된 사이트 톤(크림 배경, 웜다크 텍스트, 앰버 포인트)과 동일 타깃의 기존 페이지를 먼저 확인해 재사용한다.
@@ -49,6 +51,7 @@
 - `SMTP_FROM`(발신 전용, 받는 편지함 불필요)과 `ADMIN_NOTIFICATION_EMAIL`(수신용, 실제 확인 가능한 메일함 필수)은 역할이 다르므로 한쪽을 no-reply 계정으로 바꿀 때 다른 쪽까지 같이 바꾸지 않는다.
 - `openmath.io.kr`은 MX 레코드가 없는 발신 전용 도메인이다. Resend SMTP의 SPF/DKIM/DMARC는 `send`/`resend._domainkey` 서브도메인에 설정한다.
 - dotenv v17.2.3+가 콘솔에 자체 홍보 문구(`vestauth.com`/dotenvx 언급 등)를 출력하는 것은 정상 동작이며 시크릿 유출이 아니다.
+- `frontend/.env`의 `VITE_API_BASE_URL`은 Next.js 전환 이전(Vite 시절) 잔여 변수로, 앱은 `NEXT_PUBLIC_*`만 읽고 `src`에서 참조하는 곳이 없다 — 디버깅 중 발견해도 원인일 가능성은 낮은 죽은 변수이니 재조사에 시간을 쓰지 않는다.
 
 ## 예약 생성
 

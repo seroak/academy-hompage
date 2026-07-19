@@ -7,12 +7,16 @@
 - `backend/package.json`이 바뀌면 GHA의 `npm ci` 레이어 캐시가 무효화되어 의존성이 통째로 재다운로드된다(1회성 비용, 수백MB 규모일 수 있음) — 이 경우 배포가 평소보다 느려 보여도 재조사 없이 원인으로 판단할 수 있다.
 - production compose는 항상 `--env-file .env.production`을 명시한다.
 - Dockerfile은 `NODE_ENV=production`보다 먼저 `npm ci`를 실행한다. seed를 위해 `src/generated`와 필요한 `src` 소스를 러너 이미지에 포함한다.
+- `backend/scripts/*.ts` 같은 최상위 스크립트 파일을 추가하면 `tsconfig.build.json`에 `rootDir`가 없어 `nest build` 출력이 `dist/main.js`가 아니라 `dist/src/main.js`로 바뀔 수 있다 — `start:prod`/Dockerfile은 `dist/main.js` 경로를 하드코딩하고 있어 조용히 배포가 실패한다. `backend/scripts/` 하위에 새 파일을 추가하면 로컬 `npm run build` 후 `dist/main.js`가 실제로 그 경로에 생성되는지 확인한다.
+- 로컬 `nest start --watch`(`npm run start:dev`)에서 tsc가 "Found 0 errors"라고 하는데도 `node dist/main`이 `MODULE_NOT_FOUND`로 실패하면, `nest-cli.json`의 `deleteOutDir: true`와 `tsconfig.json`의 `incremental: true` 충돌을 의심한다 — `deleteOutDir`가 재시작마다 `dist/`를 지우는데, 소스 변경이 없으면 tsc가 `tsconfig.build.tsbuildinfo` 캐시만 보고 "다시 emit할 필요 없음"으로 판단해 실제 파일을 다시 쓰지 않는다. 이 조합은 소스 변경 없이 dev 서버를 껐다 켤 때마다 재발한다(2026-07-19, `tsconfig.json`에서 `incremental` 제거로 해결).
+- `prisma migrate deploy`와 앱 컨테이너 교체는 배포 파이프라인에서 분리된 단계다 — 마이그레이션은 성공했는데 앱 배포만 실패하면, 프론트가 새 값을 보내도 구버전 API가 옛 enum/스키마 기준으로 거부하는 상태가 생길 수 있다. 배포 실패를 의심할 때는 DB 마이그레이션 성공 여부와 실행 중인 API의 응답 스키마를 각각 별도로 확인한다.
 - SSR fetch는 `API_INTERNAL_URL`을 우선하고 `NEXT_PUBLIC_API_BASE_URL`로 폴백한다. SSR 목록이 비어 보이면 이 URL부터 확인한다.
 - 도메인 변경 시 루트 `.env.production`, `backend/.env.production`, Vercel 환경변수와 Google OAuth 리디렉션 URI·출처를 함께 갱신한다.
 - Vercel Production에는 `NEXT_PUBLIC_SITE_URL`을 실제 프론트 도메인으로 설정하고 `NAVER_SITE_VERIFICATION`을 서치어드바이저가 발급한 값으로 설정한 뒤 재배포한다. 두 값은 metadata·사이트맵의 빌드 결과에 영향을 주므로 환경변수 저장만 하고 재배포를 생략하지 않는다.
 - `vercel`/`vercel build`/`vercel deploy` CLI는 저장소 루트에서 실행한다. Vercel 프로젝트의 Root Directory 설정이 `frontend`이므로 `frontend/` 안에서 실행하면 `frontend/frontend`를 찾아 에러가 난다.
 - 로컬에서 `vercel --prod`를 직접 실행하기 전 `git status`로 워킹 디렉토리가 clean한지 확인한다. dirty 상태로 실행하면 커밋되지 않은 무관한 변경까지 그대로 업로드된다 — dirty하면 GitHub Actions의 clean checkout 배포 경로(아래 워크플로)를 우선한다.
 - Vercel 대시보드의 "Redeploy" 버튼은 prebuilt 배포에는 `Prebuilt deployments cannot be redeployed` 에러로 실패한다. 이 프로젝트의 프론트 재배포는 `gh workflow run frontend-seo.yml --ref main`으로 한다.
+- GitHub Actions 워크플로의 `deploy` job에 `if: github.event_name == 'push'`만 걸려 있으면 `workflow_dispatch`(수동 실행) 시 deploy가 조용히 스킵된다 — 수동 재배포도 지원하려면 `if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'`처럼 조건을 넓힌다. 새 배포 워크플로를 작성하거나 기존 워크플로의 트리거를 바꿀 때 이 조건을 확인한다.
 - Vercel 환경변수를 "Sensitive"로 등록하면 `vercel pull`/CLI 빌드 시 값이 마스킹되어 빈 문자열로 처리될 수 있다 — `NEXT_PUBLIC_*`처럼 클라이언트 번들에 그대로 노출되는 값은 Sensitive 토글을 쓰지 않는다. 실제로 Sensitive로 잘못 등록돼 CI 빌드가 값을 못 읽고 번들에 리터럴 문자열 `"[SENSITIVE]"`가 그대로 박힌 채 배포된 사례가 있었다 — 배포 후 프로덕션 번들에서 `grep -r "\[SENSITIVE\]"`로 검증한다.
 - 새 필수 환경변수를 요구하는 공개 기능(예: Turnstile 자동입력방지)을 배포하기 전, 해당 운영 키가 Vercel과 백엔드 운영 환경 양쪽에 실제로 설정돼 있는지 확인한다 — 미설정 상태로 배포하면 실사용자도 해당 기능(상담 신청 등)을 못 쓰는 상태로 조용히 운영될 수 있다.
 - 새 환경변수를 추가하면 `backend/.env.example`(개발용)뿐 아니라 `backend/.env.production.example`(운영용)도 함께 갱신한다 — 한쪽만 갱신하면 운영 환경에 해당 값이 누락된 채 방치되기 쉽다.
@@ -24,6 +28,9 @@
 - 홈페이지 연결 광고의 URL 매개변수는 `utm_campaign={{campaign.id}}`, `utm_content={{ad.id}}`로 설정해야 Meta Insights와 리드가 자동 연결된다. 배포 후 `/admin/marketing`의 수동 동기화로 광고 관리자 수치와 일치하는지 확인한다.
 - 배포용 SSH 키는 전용 패스프레이즈 없는 키를 사용하고 시크릿으로 등록한다.
 - 프로덕션 서버 로그인용 SSH 키(`~/.ssh/oci_academy`)는 패스프레이즈가 걸려 있어 Claude Code의 Bash 도구(TTY 없음)로는 직접 접속할 수 없다 — 진단·조치 명령을 사용자에게 제공하고 결과를 받아 진단하는 방식으로 진행한다.
+- 운영 DB(Lead/MarketingEvent 등)에 쌓인 테스트 데이터를 정리해야 하면: 사용자가 터미널에서 SSH·`psql`을 수동 실행 → `SELECT`로 대상 행을 먼저 확인 → 확인된 조건으로만 `DELETE` 문을 제공 → 실행 후 `SELECT COUNT(*)`로 삭제 결과를 검증하는 순서를 따른다. Claude가 직접 실행할 수 없으므로 각 단계의 SQL과 결과 확인 방법을 명확히 안내한다.
+- 백엔드 프로덕션 컨테이너에는 `curl`이 설치돼 있지 않다 — `docker exec`로 컨테이너 내부에서 HTTP 요청을 확인해야 하면 `node -e "fetch('...').then(r=>r.text()).then(console.log)"` 형태를 사용한다.
+- SSH로 사용자에게 멀티라인 진단 명령을 전달할 때 중첩 따옴표(`node -e "... /^[\"']/ ..."` 등)를 쓰면 사용자 쉘이 `>` 연속 입력 프롬프트에 걸려 멈출 수 있다 — 가능하면 한 줄 명령으로 만들거나 `\x27`/`\x22` 이스케이프, `JSON.stringify(...)` 출력으로 단순화한다.
 - Google Search Console 등록, DNS/HTML 소유권 확인, sitemap 제출, 개별 URL 색인 요청은 사용자의 구글 계정으로만 가능한 수동 작업이다. Claude가 담당하는 범위는 코드·설정(검증 메타태그·파일 추가, `sitemap.ts` 자동 생성)까지다.
 
 ## 백엔드 무중단(블루-그린) 배포
