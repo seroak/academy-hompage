@@ -61,7 +61,7 @@ function CreativeDetails({ creative }: { creative: MarketingDashboard["creatives
         CTA 클릭 <b>{number(creative.ctaClicks)}</b>
       </span>
       <span>
-        양식 시작 <b>{number(creative.formStarts)}</b>
+        폼 시작 <b>{number(creative.formStarts)}</b>
       </span>
       <span>
         유효 상담 <b>{number(creative.validLeads)}</b>
@@ -308,24 +308,30 @@ export default function MarketingDashboardPage() {
             )}
           </section>
           <section className="mt-12 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-            <div>
-              <h2 className="text-2xl font-black text-[#29251f]">전체 전환 흐름</h2>
-              <ol className="mt-5 grid grid-cols-2 gap-px bg-[#ead9b7] sm:grid-cols-3">
-                {[
+            <section aria-labelledby="marketing-funnel-heading">
+              <h2 id="marketing-funnel-heading" className="text-2xl font-black text-[#29251f]">
+                전체 전환 흐름
+              </h2>
+              <ol className="mt-5 grid grid-cols-2 gap-px bg-[#ead9b7] sm:grid-cols-5">
+                {([
+                  ["노출", data.totals.impressions],
+                  ["링크 클릭", data.totals.linkClicks],
                   ["랜딩 방문", data.totals.landingVisits],
+                  ["CTA 클릭", data.totals.ctaClicks],
+                  ["폼 시작", data.totals.formStarts],
                   ["상담 신청", data.totals.leads],
                   ["유효 상담", data.totals.validLeads],
                   ["상담 예약", data.totals.bookings],
                   ["방문", data.totals.visits],
                   ["등록", data.totals.registrations],
-                ].map(([label, value]) => (
+                ] as const).map(([label, value]) => (
                   <li key={label} className="bg-[#fffdf7] p-4">
                     <p className="text-xs font-black text-[#776b5a]">{label}</p>
-                    <p className="mt-2 text-2xl font-black">{value}</p>
+                    <p className="mt-2 text-2xl font-black">{number(value)}</p>
                   </li>
                 ))}
               </ol>
-            </div>
+            </section>
             <div>
               <h2 className="text-2xl font-black text-[#29251f]">일별 변화</h2>
               <div className="mt-5 divide-y divide-[#ead9b7]">
