@@ -1,6 +1,6 @@
 export const SITE_NAME = '생각을 여는 수학'
 export const SITE_DESCRIPTION =
-  '경기도 용인 흥덕의 유치부·초등 저학년 수학학원. 플레이팩토, 요리수 수학, 씨투엠(C2M)으로 놀이에서 사고력, 교과까지 이어지는 배움을 제공합니다.'
+  '경기도 용인 흥덕의 유치부·초등 저학년 수학학원. 플레이팩토, 요리수 연산, 씨투엠(C2M)으로 놀이에서 사고력, 교과까지 이어지는 배움을 제공합니다.'
 
 export const BUSINESS_REGION = '경기도'
 export const BUSINESS_LOCALITY = '용인시 기흥구'
@@ -29,7 +29,7 @@ export const SITE_KEYWORDS = [
   '유아 수학',
   '사고력 수학',
   '플레이팩토',
-  '요리수 수학',
+  '요리수 연산',
   '씨투엠',
   'C2M',
 ]
@@ -92,7 +92,7 @@ export function buildOrganizationJsonLd() {
     },
     telephone: BUSINESS_PHONE,
     areaServed: '경기도 용인시',
-    knowsAbout: ['플레이팩토', '요리수 수학', '씨투엠(C2M)'],
+    knowsAbout: ['플레이팩토', '요리수 연산', '씨투엠(C2M)'],
     openingHoursSpecification: BUSINESS_HOURS.map((hours) => ({
       '@type': 'OpeningHoursSpecification',
       ...hours,

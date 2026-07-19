@@ -35,7 +35,9 @@ test.describe('공개 페이지 스모크', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')
 
-    const heroImage = page.locator('img[alt="책상 앞에서 웃고 있는 어린이들"]')
+    const heroImage = page.locator(
+      'img[alt="용인 흥덕 유치부·초등 저학년 수학학원에서 책상 앞에 웃고 있는 어린이들"]',
+    )
     await expect(heroImage).toHaveAttribute('width', '1536')
     await expect(heroImage).toHaveAttribute('height', '1024')
     await expect(heroImage).toHaveAttribute(
@@ -182,7 +184,7 @@ test.describe('공개 페이지 스모크', () => {
 
     for (const alt of [
       '플레이팩토 수업 활동',
-      '요리수 수학 수업 활동',
+      '요리수 연산 수업 활동',
       '씨투엠(C2M) 수업 활동',
     ]) {
       await expect(page.locator(`img[alt="${alt}"]`)).toBeHidden()
@@ -323,7 +325,7 @@ test.describe('공개 페이지 스모크', () => {
 
     const courseLinks = [
       ['플레이팩토', '/courses/thinking-math'],
-      ['요리수 수학', '/courses/young-children-math'],
+      ['요리수 연산', '/courses/young-children-math'],
       ['씨투엠(C2M)', '/courses/elementary-lower-grades'],
     ] as const
 

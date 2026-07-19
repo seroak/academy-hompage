@@ -23,7 +23,7 @@ const programs = [
     tone: "bg-[#fff0ca]",
   },
   {
-    name: "요리수 수학",
+    name: "요리수 연산",
     stage: "이야기와 활동으로 이해하는 단계",
     description: "생활 속 상황과 이야기에서 문제를 찾고, 교구와 그림으로 해결 과정을 표현하며 개념을 단단히 다집니다.",
     image: "/images/math/yorisu-activity.png",
@@ -64,6 +64,11 @@ export default function HeungdeokMathLandingPage() {
             <h1 className="mt-5 max-w-[12ch] break-keep text-[clamp(2.7rem,6.8vw,5.35rem)] font-black leading-[0.98] tracking-[-0.06em]">
               흥덕 유치부·초등 저학년 수학
             </h1>
+            <div className="mt-5 flex flex-wrap items-center gap-2 text-xs font-black tracking-[0.08em] text-[#ffc84a]">
+              <span className="rounded-full border border-[#5a5445] bg-[#302e28] px-3 py-1.5">플레이팩토</span>
+              <span className="rounded-full border border-[#5a5445] bg-[#302e28] px-3 py-1.5">요리수 연산</span>
+              <span className="rounded-full border border-[#5a5445] bg-[#302e28] px-3 py-1.5">씨투엠</span>
+            </div>
             <p className="mt-7 max-w-[32rem] break-keep text-base font-semibold leading-7 text-[#e7dfd0] sm:text-lg">
               빨리 푸는 연습보다 스스로 발견하고 설명하는 경험을 먼저 만듭니다. 놀이에서 시작해 개념, 사고력, 교과로 이어지는 수학 수업입니다.
             </p>
@@ -73,6 +78,12 @@ export default function HeungdeokMathLandingPage() {
               <span>흥덕 도보 통학권</span>
               <span aria-hidden="true">·</span>
               <span>무료 상담</span>
+            </div>
+            <div className="mt-6 max-w-[32rem] rounded-2xl border border-[#4d493f] bg-[#302e28] px-5 py-4">
+              <p className="break-keep text-sm font-bold leading-6 text-[#f4ecdd]">
+                등록 확정 없이 아이에게 맞는 과정과 가능한 수업 시간을 안내합니다.
+              </p>
+              <p className="mt-2 text-xs font-black tracking-[0.08em] text-[#ffc84a]">매일 9~21시 순차 연락</p>
             </div>
             <div className="mt-9 flex flex-wrap gap-3">
               <button

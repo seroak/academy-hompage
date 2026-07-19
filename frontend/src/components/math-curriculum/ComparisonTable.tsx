@@ -40,7 +40,7 @@ export default function ComparisonTable() {
         <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-10 bg-gradient-to-l from-[#fff9ec] to-transparent lg:hidden" />
         <div className="overflow-x-auto overscroll-x-contain">
           <table className="min-w-[860px] w-full border-collapse text-center">
-            <caption className="sr-only">플레이팩토, 요리수 수학, 씨투엠의 교육 과정 비교표</caption>
+            <caption className="sr-only">플레이팩토, 요리수 연산, 씨투엠의 교육 과정 비교표</caption>
             <thead>
               <tr className="border-b border-[#eadfc9]">
                 <th scope="col" className="sticky left-0 z-10 w-[150px] bg-[#fff9ec] px-5 py-5 text-left text-sm font-bold text-[#514839]">비교 항목</th>

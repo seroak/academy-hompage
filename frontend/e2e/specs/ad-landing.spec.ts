@@ -38,13 +38,15 @@ test.describe('흥덕 수학 광고 랜딩', () => {
     await expect(page.getByRole('heading', { level: 2, name: '생각을 여는 수학은 무엇이 다른가요?' })).toBeVisible()
     await expect(page.getByRole('heading', { level: 2, name: '아이의 성장에 맞춰 이어지는 세 가지 수업' })).toBeVisible()
     await expect(page.getByRole('heading', { level: 3, name: '플레이팩토' })).toBeVisible()
-    await expect(page.getByRole('heading', { level: 3, name: '요리수 수학' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 3, name: '요리수 연산' })).toBeVisible()
     await expect(page.getByRole('heading', { level: 3, name: '씨투엠(C2M)' })).toBeVisible()
     await expect(page.getByRole('heading', { level: 2, name: '이런 고민이 있다면 상담해 보세요' })).toBeVisible()
     await expect(page.getByRole('img', { name: '블록 교구로 함께 사고력 활동을 하는 아이들' })).toHaveAttribute('src', /playfacto-activity/)
     await expect(page.getByText('놀이 → 개념 이해 → 사고력 → 교과 연결')).toBeVisible()
     await expect(page.getByRole('link', { name: '전화로 상담하기' }).first()).toHaveAttribute('href', 'tel:01029760166')
-    await expect(page.getByRole('button', { name: '상담 신청하기' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '무료로 수업 방향 상담받기' })).toBeVisible()
+    await expect(page.getByText('등록 확정 없이 아이에게 맞는 과정과 가능한 수업 시간을 안내합니다.')).toBeVisible()
+    await expect(page.getByText('매일 9~21시 순차 연락')).toBeVisible()
   })
 
   test('넓은 화면에서 히어로 이미지를 표시 폭 이상의 해상도로 제공한다', async ({ page }) => {
@@ -58,6 +60,11 @@ test.describe('흥덕 수학 광고 랜딩', () => {
 
   test('UTM과 최소 상담 정보만 제출하고 완료 안내를 표시한다', async ({ page }) => {
     let submittedBody: Record<string, unknown> | undefined
+    const marketingEvents: string[] = []
+    await page.route(apiPattern('/marketing/events$'), async (route) => {
+      marketingEvents.push((route.request().postDataJSON() as { name: string }).name)
+      await fulfillJson(route, 202, { accepted: true })
+    })
     await page.route(apiPattern('/leads$'), async (route) => {
       submittedBody = route.request().postDataJSON() as Record<string, unknown>
       await fulfillJson(route, 201, { accepted: true })
@@ -68,10 +75,11 @@ test.describe('흥덕 수학 광고 랜딩', () => {
     await page.getByLabel('휴대전화').fill('010-1234-5678')
     await page.getByLabel('자녀 만 나이').selectOption('7')
     await page.getByLabel('연락 가능 시간').selectOption('H15_16')
+    await expect(page.getByLabel('연락 가능 시간').locator('option')).toHaveCount(13)
     await page.getByLabel('개인정보 수집·이용에 동의합니다').check()
-    await page.getByRole('button', { name: '상담 신청하기' }).click()
+    await page.getByRole('button', { name: '무료로 수업 방향 상담받기' }).click()
 
-    await expect(page.getByText('평일 13~20시 확인 후 연락드립니다')).toBeVisible()
+    await expect(page.getByText('매일 9~21시 확인 후 연락드립니다')).toBeVisible()
     expect(submittedBody).toMatchObject({
       guardianName: '김보호',
       phone: '010-1234-5678',
@@ -82,11 +90,33 @@ test.describe('흥덕 수학 광고 랜딩', () => {
       utmCampaign: 'heungdeok-v1',
       utmContent: 'video-a',
       fbclid: 'fb-test',
+      analyticsConsent: false,
+      marketingConsent: false,
     })
     expect(submittedBody).not.toHaveProperty('childName')
+    expect(marketingEvents).toContain('lead_submit_attempt')
+  })
+
+  test('필수 입력이나 자동 입력 방지 확인이 빠지면 제출 차단을 기록한다', async ({ page }) => {
+    const marketingEvents: string[] = []
+    await page.route(apiPattern('/marketing/events$'), async (route) => {
+      marketingEvents.push((route.request().postDataJSON() as { name: string }).name)
+      await fulfillJson(route, 202, { accepted: true })
+    })
+    await page.goto('/lp/heungdeok-math')
+
+    await page.getByRole('button', { name: '무료로 수업 방향 상담받기' }).click()
+
+    await expect.poll(() => marketingEvents).toContain('lead_submit_attempt')
+    expect(marketingEvents).toContain('lead_submit_blocked')
   })
 
   test('접수 실패 시 입력을 유지하고 다시 시도할 수 있게 안내한다', async ({ page }) => {
+    const marketingEvents: string[] = []
+    await page.route(apiPattern('/marketing/events$'), async (route) => {
+      marketingEvents.push((route.request().postDataJSON() as { name: string }).name)
+      await fulfillJson(route, 202, { accepted: true })
+    })
     await page.route(apiPattern('/leads$'), (route) => fulfillJson(route, 503, { message: 'unavailable' }))
     await page.goto('/lp/heungdeok-math')
 
@@ -95,9 +125,10 @@ test.describe('흥덕 수학 광고 랜딩', () => {
     await page.getByLabel('자녀 만 나이').selectOption('7')
     await page.getByLabel('연락 가능 시간').selectOption('H15_16')
     await page.getByLabel('개인정보 수집·이용에 동의합니다').check()
-    await page.getByRole('button', { name: '상담 신청하기' }).click()
+    await page.getByRole('button', { name: '무료로 수업 방향 상담받기' }).click()
 
     await expect(page.getByText('상담 신청을 접수하지 못했습니다. 잠시 후 다시 시도해 주세요.')).toBeVisible()
     await expect(page.getByLabel('보호자 이름')).toHaveValue('김보호')
+    expect(marketingEvents).toContain('lead_submit_error')
   })
 })

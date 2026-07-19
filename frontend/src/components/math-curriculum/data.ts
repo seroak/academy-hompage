@@ -51,7 +51,7 @@ export const programs: MathProgram[] = [
     tone: "orange",
   },
   {
-    name: "요리수 수학",
+    name: "요리수 연산",
     englishName: "YORISU MATH",
     keyword: "놀이와 스토리로 시작하는 수학",
     philosophy: "놀이 + 스토리",
@@ -123,7 +123,7 @@ export const recommendations = [
   {
     title: "수학이 처음이거나 흥미가 필요한 아이",
     description: "놀이를 통해 수학을 즐겁게 시작해요.",
-    program: "요리수 수학",
+    program: "요리수 연산",
     tone: "mint" as const,
     imageSrc: "/images/math/yorisu-activity.png",
   },
