@@ -4,3 +4,4 @@
 .worktrees/
 .env.production
 .vercel
+HANDOFF.md
