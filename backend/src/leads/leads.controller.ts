@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -44,5 +47,12 @@ export class LeadsController {
   @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() input: UpdateLeadDto) {
     return this.leadsService.update(id, input);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id') id: string) {
+    await this.leadsService.remove(id);
   }
 }

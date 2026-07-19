@@ -161,6 +161,16 @@ export class LeadsService {
     }
   }
 
+  async remove(id: string) {
+    try {
+      await this.prisma.lead.delete({ where: { id } });
+    } catch (error) {
+      if (isPrismaNotFoundError(error))
+        throw new NotFoundException(`Lead ${id} not found`);
+      throw error;
+    }
+  }
+
   private buildFilter(
     query: QueryLeadSummaryDto & { status?: QueryLeadsDto['status'] },
   ): Prisma.LeadWhereInput {

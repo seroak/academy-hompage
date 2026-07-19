@@ -46,3 +46,7 @@ export async function fetchLeadSummary(filters: Omit<LeadFilters, 'page' | 'stat
 export async function updateLead(id: string, input: { status?: LeadStatus; adminNote?: string | null }): Promise<Lead> {
   return LeadSchema.parse(await apiFetch(`/leads/${id}`, { method: 'PATCH', body: JSON.stringify(input) }))
 }
+
+export async function deleteLead(id: string): Promise<void> {
+  await apiFetch(`/leads/${id}`, { method: 'DELETE' })
+}

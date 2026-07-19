@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchLeads, fetchLeadSummary, updateLead, type LeadFilters } from '../../../api/leads.api'
+import { deleteLead, fetchLeads, fetchLeadSummary, updateLead, type LeadFilters } from '../../../api/leads.api'
 import { queryKeys } from '../../../queries/queryKeys'
 
 export function useLeadsQuery(filters: LeadFilters) {
@@ -13,6 +13,14 @@ export function useUpdateLeadMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: Parameters<typeof updateLead>[1] }) => updateLead(id, input),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.leads.all }),
+  })
+}
+
+export function useDeleteLeadMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteLead(id),
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.leads.all }),
   })
 }

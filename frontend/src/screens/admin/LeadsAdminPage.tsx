@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { ApiError } from "../../lib/apiClient";
 import type { LeadStatus } from "../../api/schemas/lead.schema";
-import { useLeadsQuery, useUpdateLeadMutation } from "./hooks/useLeadsQuery";
+import { useDeleteLeadMutation, useLeadsQuery, useUpdateLeadMutation } from "./hooks/useLeadsQuery";
 
 const STATUS_LABELS: Record<LeadStatus, string> = {
   NEW: "신규",
@@ -42,7 +43,17 @@ export default function LeadsAdminPage() {
   };
   const { list, summary } = useLeadsQuery(filters);
   const updateMutation = useUpdateLeadMutation();
+  const deleteMutation = useDeleteLeadMutation();
   const funnel = summary.data;
+
+  async function handleDelete(id: string, guardianName: string) {
+    if (!window.confirm(`'${guardianName}' 상담 신청을 삭제하시겠습니까?`)) return;
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch (cause) {
+      window.alert(cause instanceof ApiError ? cause.message : "상담 신청을 삭제하지 못했습니다.");
+    }
+  }
 
   return (
     <div>
@@ -128,6 +139,7 @@ export default function LeadsAdminPage() {
                 <th className="px-4 py-3">유입 경로</th>
                 <th className="px-4 py-3">상태</th>
                 <th className="px-4 py-3">메모</th>
+                <th className="px-4 py-3">관리</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#efe2c8]">
@@ -177,6 +189,16 @@ export default function LeadsAdminPage() {
                       placeholder="상담 메모"
                       className="h-10 w-48 rounded-xl border border-[#ddc89f] px-3"
                     />
+                  </td>
+                  <td className="px-4 py-4">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(lead.id, lead.guardianName)}
+                      disabled={deleteMutation.isPending}
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-bold text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      삭제
+                    </button>
                   </td>
                 </tr>
               ))}

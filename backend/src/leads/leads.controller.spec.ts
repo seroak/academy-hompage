@@ -9,6 +9,7 @@ describe('LeadsController', () => {
     findAll: jest.fn(),
     summary: jest.fn(),
     update: jest.fn(),
+    remove: jest.fn(),
   };
   const controller = new LeadsController(service as unknown as LeadsService);
 
@@ -21,10 +22,17 @@ describe('LeadsController', () => {
     expect(service.submit).toHaveBeenCalledWith(dto, '203.0.113.10');
   });
 
+  it('리드 삭제를 서비스로 전달한다', async () => {
+    service.remove.mockResolvedValue(undefined);
+    await controller.remove('lead-1');
+    expect(service.remove).toHaveBeenCalledWith('lead-1');
+  });
+
   it.each([
     ['findAll', 'findAll'],
     ['summary', 'summary'],
     ['update', 'update'],
+    ['remove', 'remove'],
   ])('%s 관리자 메서드는 JWT 가드를 사용한다', (methodName) => {
     const guards = Reflect.getMetadata(
       GUARDS_METADATA,

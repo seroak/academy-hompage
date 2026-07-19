@@ -16,6 +16,7 @@ describe('LeadsService', () => {
       count: jest.Mock;
       groupBy: jest.Mock;
       update: jest.Mock;
+      delete: jest.Mock;
     };
   };
   let verifier: { verify: jest.Mock };
@@ -43,6 +44,7 @@ describe('LeadsService', () => {
         count: jest.fn(),
         groupBy: jest.fn(),
         update: jest.fn(),
+        delete: jest.fn(),
       },
     };
     verifier = { verify: jest.fn().mockResolvedValue(true) };
@@ -250,5 +252,20 @@ describe('LeadsService', () => {
     await expect(
       service.update('missing', { status: 'CONTACTED' }),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('리드를 삭제한다', async () => {
+    prisma.lead.delete.mockResolvedValue({ id: 'lead-1' });
+    await service.remove('lead-1');
+    expect(prisma.lead.delete).toHaveBeenCalledWith({
+      where: { id: 'lead-1' },
+    });
+  });
+
+  it('없는 리드 삭제는 404로 변환한다', async () => {
+    prisma.lead.delete.mockRejectedValue({ code: 'P2025' });
+    await expect(service.remove('missing')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });
