@@ -14,6 +14,9 @@ export const MARKETING_EVENT_NAMES = [
   'consultation_cta_click',
   'phone_click',
   'lead_form_start',
+  'lead_submit_attempt',
+  'lead_submit_blocked',
+  'lead_submit_error',
 ] as const;
 export type MarketingEventName = (typeof MARKETING_EVENT_NAMES)[number];
 

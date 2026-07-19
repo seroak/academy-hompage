@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const NullableMetricSchema = z.number().nullable()
 export const MarketingMetricsSchema = z.object({
-  spendWon: z.number().int().nonnegative(), impressions: z.number().int().nonnegative(), linkClicks: z.number().int().nonnegative(), landingVisits: z.number().int().nonnegative(), ctaClicks: z.number().int().nonnegative(), formStarts: z.number().int().nonnegative(), leads: z.number().int().nonnegative(), validLeads: z.number().int().nonnegative(), bookings: z.number().int().nonnegative(), visits: z.number().int().nonnegative(), registrations: z.number().int().nonnegative(),
+  spendWon: z.number().int().nonnegative(), impressions: z.number().int().nonnegative(), linkClicks: z.number().int().nonnegative(), landingVisits: z.number().int().nonnegative(), ctaClicks: z.number().int().nonnegative(), formStarts: z.number().int().nonnegative(), submitAttempts: z.number().int().nonnegative(), submitBlocked: z.number().int().nonnegative(), submitErrors: z.number().int().nonnegative(), leads: z.number().int().nonnegative(), validLeads: z.number().int().nonnegative(), bookings: z.number().int().nonnegative(), visits: z.number().int().nonnegative(), registrations: z.number().int().nonnegative(),
   cpm: NullableMetricSchema, cpc: NullableMetricSchema, ctr: NullableMetricSchema, costPerLead: NullableMetricSchema, costPerValidLead: NullableMetricSchema, costPerRegistration: NullableMetricSchema, clickToLandingRate: NullableMetricSchema, landingToLeadRate: NullableMetricSchema, leadToValidRate: NullableMetricSchema, validToBookingRate: NullableMetricSchema, bookingToVisitRate: NullableMetricSchema, visitToRegistrationRate: NullableMetricSchema,
 })
 export const MarketingDashboardSchema = z.object({

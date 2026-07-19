@@ -99,4 +99,22 @@ describe('CreateMarketingEventDto', () => {
       ),
     ).resolves.toBeDefined();
   });
+
+  it.each([
+    'lead_submit_attempt',
+    'lead_submit_blocked',
+    'lead_submit_error',
+  ])('상담 제출 진단 이벤트 %s를 허용한다', async (name) => {
+    await expect(
+      pipe.transform(
+        {
+          eventId: '5eddf7c8-ea1a-4973-aa67-ff9fa45fe913',
+          sessionId: '76a93f01-6007-475a-a939-a481abbdbecc',
+          name,
+          occurredAt: '2026-07-15T01:00:00.000Z',
+        },
+        metadata,
+      ),
+    ).resolves.toBeDefined();
+  });
 });

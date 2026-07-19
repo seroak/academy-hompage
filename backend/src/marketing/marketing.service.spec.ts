@@ -79,6 +79,27 @@ describe('MarketingService', () => {
         utmContent: '30',
         occurredAt: new Date('2026-07-15T02:00:00Z'),
       },
+      {
+        name: 'lead_submit_attempt',
+        sessionId: 's1',
+        utmCampaign: '10',
+        utmContent: '30',
+        occurredAt: new Date('2026-07-15T02:01:00Z'),
+      },
+      {
+        name: 'lead_submit_blocked',
+        sessionId: 's1',
+        utmCampaign: '10',
+        utmContent: '30',
+        occurredAt: new Date('2026-07-15T02:02:00Z'),
+      },
+      {
+        name: 'lead_submit_error',
+        sessionId: 's1',
+        utmCampaign: '10',
+        utmContent: '30',
+        occurredAt: new Date('2026-07-15T02:03:00Z'),
+      },
     ]);
     prisma.lead.findMany.mockResolvedValue([
       {
@@ -116,6 +137,9 @@ describe('MarketingService', () => {
       impressions: 3200,
       linkClicks: 40,
       landingVisits: 1,
+      submitAttempts: 1,
+      submitBlocked: 1,
+      submitErrors: 1,
       leads: 2,
       registrations: 1,
       costPerLead: 10000,

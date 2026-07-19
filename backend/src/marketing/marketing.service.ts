@@ -44,6 +44,9 @@ type Metrics = {
   landingVisits: number;
   ctaClicks: number;
   formStarts: number;
+  submitAttempts: number;
+  submitBlocked: number;
+  submitErrors: number;
   leads: number;
   validLeads: number;
   bookings: number;
@@ -59,6 +62,9 @@ function blankMetrics(): Metrics {
     landingVisits: 0,
     ctaClicks: 0,
     formStarts: 0,
+    submitAttempts: 0,
+    submitBlocked: 0,
+    submitErrors: 0,
     leads: 0,
     validLeads: 0,
     bookings: 0,
@@ -253,7 +259,7 @@ export class MarketingService {
     }
   }
 
-  /** 자체 행동 이벤트(랜딩 세션·CTA 클릭·폼 시작)를 캠페인/광고 단위 그룹에 반영한다. */
+  /** 자체 행동 이벤트(랜딩 세션·CTA·폼·제출 결과)를 캠페인/광고 단위 그룹에 반영한다. */
   private collectEventSessions(
     groups: Map<string, CampaignGroup>,
     events: MarketingEvent[],
@@ -268,6 +274,9 @@ export class MarketingService {
         sessions.set(groupKey, values);
       } else if (item.name === 'consultation_cta_click') group.ctaClicks += 1;
       else if (item.name === 'lead_form_start') group.formStarts += 1;
+      else if (item.name === 'lead_submit_attempt') group.submitAttempts += 1;
+      else if (item.name === 'lead_submit_blocked') group.submitBlocked += 1;
+      else if (item.name === 'lead_submit_error') group.submitErrors += 1;
     }
     for (const [groupKey, values] of sessions) {
       const [campaignId, adId] = groupKey.split('::');

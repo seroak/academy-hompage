@@ -20,6 +20,11 @@ const measurementRows = [
     unit: "페이지 로드당 최대 1회",
   },
   {
+    section: "제출 시도·차단·오류",
+    method: "제출 클릭, 필수 입력·Turnstile 차단, API 실패를 자체 서버에 각각 전송",
+    unit: "이벤트 발생 횟수",
+  },
+  {
     section: "상담 신청",
     method: "Turnstile 검증을 통과하고 실제 Lead DB 행이 생성된 수",
     unit: "저장된 신청 건수",

@@ -64,6 +64,15 @@ function CreativeDetails({ creative }: { creative: MarketingDashboard["creatives
         폼 시작 <b>{number(creative.formStarts)}</b>
       </span>
       <span>
+        제출 시도 <b>{number(creative.submitAttempts)}</b>
+      </span>
+      <span>
+        제출 차단 <b>{number(creative.submitBlocked)}</b>
+      </span>
+      <span>
+        제출 오류 <b>{number(creative.submitErrors)}</b>
+      </span>
+      <span>
         유효 상담 <b>{number(creative.validLeads)}</b>
       </span>
       <span>
@@ -312,13 +321,16 @@ export default function MarketingDashboardPage() {
               <h2 id="marketing-funnel-heading" className="text-2xl font-black text-[#29251f]">
                 전체 전환 흐름
               </h2>
-              <ol className="mt-5 grid grid-cols-2 gap-px bg-[#ead9b7] sm:grid-cols-5">
+              <ol className="mt-5 grid grid-cols-2 gap-px bg-[#ead9b7] sm:grid-cols-4 lg:grid-cols-7">
                 {([
                   ["노출", data.totals.impressions],
                   ["링크 클릭", data.totals.linkClicks],
                   ["랜딩 방문", data.totals.landingVisits],
                   ["CTA 클릭", data.totals.ctaClicks],
                   ["폼 시작", data.totals.formStarts],
+                  ["제출 시도", data.totals.submitAttempts],
+                  ["제출 차단", data.totals.submitBlocked],
+                  ["제출 오류", data.totals.submitErrors],
                   ["상담 신청", data.totals.leads],
                   ["유효 상담", data.totals.validLeads],
                   ["상담 예약", data.totals.bookings],
