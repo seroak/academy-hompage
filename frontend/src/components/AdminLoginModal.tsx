@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import type { SubmitEvent } from 'react'
+import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { ChevronDown, LockKeyhole, X } from 'lucide-react'
-import { loginParentWithPassword, signupParent, socialLoginStartUrl } from '../api/auth.api'
-import type { OAuthProvider } from '../api/schemas/auth.schema'
-import { useLoginMutation } from '../screens/admin/hooks/useLoginMutation'
-import { ApiError } from '../lib/apiClient'
+import { LockKeyhole, X } from 'lucide-react'
 import { useModalFocusTrap } from '../hooks/useModalFocusTrap'
+import { AdminLoginForm } from './admin-login/AdminLoginForm'
+import { ParentLoginForm } from './admin-login/ParentLoginForm'
+import { SocialLoginButtons } from './admin-login/SocialLoginButtons'
+import { useAdminLoginForm } from './admin-login/useAdminLoginForm'
+import { useParentLoginForm } from './admin-login/useParentLoginForm'
 
 interface AdminLoginModalProps {
   isOpen: boolean
@@ -18,68 +18,6 @@ interface AdminLoginModalProps {
   onParentSuccess: () => void
 }
 
-const socialProviders: Array<{ provider: OAuthProvider; label: string; className: string }> = [
-  {
-    provider: 'google',
-    label: 'Google로 계속하기',
-    className: 'border-[#ead7ad] bg-white text-[#2b2418] hover:border-[#ffd66b]',
-  },
-  {
-    provider: 'kakao',
-    label: '카카오로 계속하기',
-    className: 'border-[#f6df36] bg-[#f6df36] text-[#2b2418] hover:bg-[#f1d900]',
-  },
-  {
-    provider: 'naver',
-    label: '네이버로 계속하기',
-    className: 'border-[#03c75a] bg-[#03c75a] text-white hover:bg-[#02b351]',
-  },
-]
-
-function OAuthProviderIcon({ provider }: { provider: OAuthProvider }) {
-  if (provider === 'google') {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        data-testid="oauth-provider-icon-google"
-        className="size-5"
-      >
-        <path fill="#4285F4" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.5h3.2c1.9-1.8 3.1-4.4 3.1-7.4Z" />
-        <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.2-2.5c-.9.6-2 .9-3.5.9-2.7 0-5-1.8-5.8-4.3H2.9v2.6A10 10 0 0 0 12 22Z" />
-        <path fill="#FBBC05" d="M6.2 13.7a6 6 0 0 1 0-3.8V7.3H2.9a10 10 0 0 0 0 9l3.3-2.6Z" />
-        <path fill="#EA4335" d="M12 6c1.6 0 3 .5 4.1 1.6l3-3A10 10 0 0 0 2.9 7.3l3.3 2.6C7 7.8 9.3 6 12 6Z" />
-      </svg>
-    )
-  }
-
-  if (provider === 'kakao') {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        data-testid="oauth-provider-icon-kakao"
-        className="size-5"
-      >
-        <path fill="currentColor" d="M12 3.5c-4.7 0-8.5 3-8.5 6.6 0 2.3 1.5 4.4 3.8 5.6L6.5 20l4.2-2.7c.4 0 .8.1 1.3.1 4.7 0 8.5-3 8.5-6.6s-3.8-6.6-8.5-6.6Z" />
-      </svg>
-    )
-  }
-
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      data-testid="oauth-provider-icon-naver"
-      className="size-5"
-    >
-      <path fill="currentColor" d="M5 4h4.3l5.4 8.1V4H19v16h-4.3L9.3 11.9V20H5V4Z" />
-    </svg>
-  )
-}
-
-type ParentAuthMode = 'login' | 'signup'
-
 export default function AdminLoginModal({
   isOpen,
   redirectTo,
@@ -87,28 +25,17 @@ export default function AdminLoginModal({
   onSuccess,
   onParentSuccess,
 }: AdminLoginModalProps) {
-  const [parentAuthMode, setParentAuthMode] = useState<ParentAuthMode>('login')
-  const [parentName, setParentName] = useState('')
-  const [parentEmail, setParentEmail] = useState('')
-  const [parentPassword, setParentPassword] = useState('')
-  const [parentAuthError, setParentAuthError] = useState<string | null>(null)
-  const [isParentSubmitting, setIsParentSubmitting] = useState(false)
-  const [signupSentEmail, setSignupSentEmail] = useState<string | null>(null)
-  const [adminUsername, setAdminUsername] = useState('')
-  const [adminPassword, setAdminPassword] = useState('')
-  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false)
-  const { login, isLoggingIn, loginError } = useLoginMutation()
   const pathname = usePathname()
   const dialogRef = useModalFocusTrap(isOpen)
+  const parentForm = useParentLoginForm(onParentSuccess)
+  const adminForm = useAdminLoginForm(onSuccess)
 
   useEffect(() => {
     if (!isOpen) {
-      setIsAdminLoginOpen(false)
-      setAdminPassword('')
-      setParentPassword('')
-      setParentAuthError(null)
-      setSignupSentEmail(null)
+      parentForm.reset()
+      adminForm.reset()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
   useEffect(() => {
@@ -128,59 +55,6 @@ export default function AdminLoginModal({
 
   if (!isOpen) {
     return null
-  }
-
-  async function handleAdminSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault()
-    try {
-      await login(adminUsername, adminPassword)
-      setAdminPassword('')
-      onSuccess()
-    } catch {
-      // loginError already reflects the failure via useMutation state
-    }
-  }
-
-  async function handleParentSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setParentAuthError(null)
-
-    if (parentAuthMode === 'signup' && !parentName.trim()) {
-      setParentAuthError('이름을 입력해 주세요.')
-      return
-    }
-
-    if (parentPassword.length < 8) {
-      setParentAuthError('비밀번호는 8자 이상 입력해 주세요.')
-      return
-    }
-
-    setIsParentSubmitting(true)
-    try {
-      if (parentAuthMode === 'signup') {
-        const trimmedEmail = parentEmail.trim()
-        await signupParent({
-          name: parentName.trim(),
-          email: trimmedEmail,
-          password: parentPassword,
-        })
-        setParentPassword('')
-        setSignupSentEmail(trimmedEmail)
-      } else {
-        await loginParentWithPassword({
-          email: parentEmail.trim(),
-          password: parentPassword,
-        })
-        setParentPassword('')
-        onParentSuccess()
-      }
-    } catch (error) {
-      setParentAuthError(
-        error instanceof ApiError ? error.message : '로그인 처리에 실패했습니다.',
-      )
-    } finally {
-      setIsParentSubmitting(false)
-    }
   }
 
   return (
@@ -227,103 +101,7 @@ export default function AdminLoginModal({
           상담 신청은 소셜 계정으로, 학원 관리는 아이디와 비밀번호로 로그인할 수 있습니다.
         </p>
 
-        <form onSubmit={handleParentSubmit} className="mt-6 grid gap-4">
-          <div className="grid grid-cols-2 gap-2 rounded-full bg-[#fff0cf] p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setParentAuthMode('login')
-                setParentAuthError(null)
-                setSignupSentEmail(null)
-              }}
-              className={`h-10 rounded-full text-sm font-black transition ${
-                parentAuthMode === 'login'
-                  ? 'bg-white text-[#e86f00] shadow-[0_8px_18px_rgba(48,33,10,0.08)]'
-                  : 'text-[#6a6256]'
-              }`}
-            >
-              일반 로그인
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setParentAuthMode('signup')
-                setParentAuthError(null)
-                setSignupSentEmail(null)
-              }}
-              className={`h-10 rounded-full text-sm font-black transition ${
-                parentAuthMode === 'signup'
-                  ? 'bg-white text-[#e86f00] shadow-[0_8px_18px_rgba(48,33,10,0.08)]'
-                  : 'text-[#6a6256]'
-              }`}
-            >
-              회원가입
-            </button>
-          </div>
-
-          {parentAuthMode === 'signup' && signupSentEmail ? (
-            <p className="rounded-2xl bg-[#fff0cf] px-4 py-4 text-sm font-bold leading-6 text-[#6a6256]">
-              <span className="text-[#e86f00]">{signupSentEmail}</span>로 인증 메일을
-              보냈습니다. 메일함의 링크를 눌러 가입을 완료해 주세요.
-            </p>
-          ) : (
-            <>
-              {parentAuthMode === 'signup' && (
-                <label className="flex flex-col gap-2 text-sm font-bold text-[#3f3a31]">
-                  이름
-                  <input
-                    type="text"
-                    value={parentName}
-                    onChange={(event) => setParentName(event.target.value)}
-                    className="h-12 rounded-2xl border border-[#ead7ad] bg-white px-4 text-sm font-semibold text-[#222222] outline-none transition focus:border-[#ffd66b] focus:ring-4 focus:ring-[#ffd66b]/25"
-                    required
-                  />
-                </label>
-              )}
-
-              <label className="flex flex-col gap-2 text-sm font-bold text-[#3f3a31]">
-                이메일
-                <input
-                  type="email"
-                  value={parentEmail}
-                  onChange={(event) => setParentEmail(event.target.value)}
-                  className="h-12 rounded-2xl border border-[#ead7ad] bg-white px-4 text-sm font-semibold text-[#222222] outline-none transition focus:border-[#ffd66b] focus:ring-4 focus:ring-[#ffd66b]/25"
-                  required
-                />
-              </label>
-
-              <label className="flex flex-col gap-2 text-sm font-bold text-[#3f3a31]">
-                비밀번호
-                <input
-                  type="password"
-                  value={parentPassword}
-                  onChange={(event) => setParentPassword(event.target.value)}
-                  className="h-12 rounded-2xl border border-[#ead7ad] bg-white px-4 text-sm font-semibold text-[#222222] outline-none transition focus:border-[#ffd66b] focus:ring-4 focus:ring-[#ffd66b]/25"
-                  required
-                  minLength={8}
-                />
-              </label>
-
-              {parentAuthError && (
-                <p className="rounded-2xl bg-[#fff0ed] px-4 py-3 text-sm font-bold text-[#d6452f]">
-                  {parentAuthError}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={isParentSubmitting}
-                className="h-12 rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418] shadow-[0_14px_28px_rgba(255,214,107,0.34)] transition hover:bg-[#ffcf4d] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isParentSubmitting
-                  ? '처리 중...'
-                  : parentAuthMode === 'signup'
-                    ? '회원가입'
-                    : '로그인'}
-              </button>
-            </>
-          )}
-        </form>
+        <ParentLoginForm form={parentForm} />
 
         <div className="my-6 flex items-center gap-3">
           <span className="h-px flex-1 bg-[#ead7ad]" />
@@ -331,23 +109,7 @@ export default function AdminLoginModal({
           <span className="h-px flex-1 bg-[#ead7ad]" />
         </div>
 
-        <div className="grid gap-3">
-          {socialProviders.map((item) => (
-            <button
-              key={item.provider}
-              type="button"
-              onClick={() => {
-                window.location.href = socialLoginStartUrl(item.provider, redirectTo ?? pathname ?? '/')
-              }}
-              className={`relative flex h-12 items-center justify-center rounded-full border px-5 text-sm font-black transition ${item.className}`}
-            >
-              <span className="absolute left-5 flex size-5 items-center justify-center">
-                <OAuthProviderIcon provider={item.provider} />
-              </span>
-              {item.label}
-            </button>
-          ))}
-        </div>
+        <SocialLoginButtons redirectTo={redirectTo} pathname={pathname} />
 
         <div className="my-6 flex items-center gap-3">
           <span className="h-px flex-1 bg-[#ead7ad]" />
@@ -355,58 +117,7 @@ export default function AdminLoginModal({
           <span className="h-px flex-1 bg-[#ead7ad]" />
         </div>
 
-        <button
-          type="button"
-          aria-expanded={isAdminLoginOpen}
-          onClick={() => setIsAdminLoginOpen((current) => !current)}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#ead7ad] bg-white px-5 text-sm font-black text-[#3f3a31] transition hover:border-[#ffd66b] hover:text-[#e86f00]"
-        >
-          관리자 아이디로 로그인
-          <ChevronDown
-            size={18}
-            strokeWidth={2.5}
-            className={`transition ${isAdminLoginOpen ? 'rotate-180' : ''}`}
-          />
-        </button>
-
-        {isAdminLoginOpen && (
-          <form onSubmit={handleAdminSubmit} className="mt-5 flex flex-col gap-4">
-            <label className="flex flex-col gap-2 text-sm font-bold text-[#3f3a31]">
-              아이디
-              <input
-                type="text"
-                value={adminUsername}
-                onChange={(event) => setAdminUsername(event.target.value)}
-                className="h-12 rounded-2xl border border-[#ead7ad] bg-white px-4 text-sm font-semibold text-[#222222] outline-none transition focus:border-[#ffd66b] focus:ring-4 focus:ring-[#ffd66b]/25"
-                required={isAdminLoginOpen}
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-bold text-[#3f3a31]">
-              비밀번호
-              <input
-                type="password"
-                value={adminPassword}
-                onChange={(event) => setAdminPassword(event.target.value)}
-                className="h-12 rounded-2xl border border-[#ead7ad] bg-white px-4 text-sm font-semibold text-[#222222] outline-none transition focus:border-[#ffd66b] focus:ring-4 focus:ring-[#ffd66b]/25"
-                required={isAdminLoginOpen}
-              />
-            </label>
-
-            {loginError && (
-              <p className="rounded-2xl bg-[#fff0ed] px-4 py-3 text-sm font-bold text-[#d6452f]">
-                {loginError instanceof ApiError ? loginError.message : '로그인에 실패했습니다.'}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoggingIn}
-              className="h-12 w-full rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418] shadow-[0_14px_28px_rgba(255,214,107,0.34)] transition hover:bg-[#ffcf4d] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isLoggingIn ? '로그인 중...' : '로그인'}
-            </button>
-          </form>
-        )}
+        <AdminLoginForm form={adminForm} />
       </dialog>
     </div>
   )

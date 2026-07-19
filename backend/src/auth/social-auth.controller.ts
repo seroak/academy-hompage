@@ -4,6 +4,7 @@ import { SocialAuthService } from './social-auth.service.js';
 import { ParentPrincipal } from './strategies/parent-jwt.strategy.js';
 import { setAuthCookie } from './auth-cookies.js';
 import type { CookieResponse } from './auth-cookies.js';
+import { ExchangeSessionDto } from './dto/exchange-session.dto.js';
 
 interface RedirectResponse {
   redirect: (url: string) => void;
@@ -37,7 +38,7 @@ export class SocialAuthController {
 
   @Post('exchange')
   async exchange(
-    @Body() dto: { code: string },
+    @Body() dto: ExchangeSessionDto,
     @Res({ passthrough: true }) response: CookieResponse,
   ) {
     const result = await this.socialAuthService.exchangeSessionCode(dto.code);
