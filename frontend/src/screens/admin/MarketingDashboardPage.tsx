@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MarketingDashboard } from "../../api/schemas/marketing.schema";
@@ -276,10 +277,12 @@ export default function MarketingDashboardPage() {
                       className="grid cursor-pointer gap-4 px-4 py-5 sm:grid-cols-[auto_1.5fr_repeat(4,1fr)] sm:items-center"
                     >
                       {creative.thumbnailUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={creative.thumbnailUrl}
                           alt={`${creative.adName} 썸네일`}
+                          width={56}
+                          height={56}
+                          unoptimized
                           className="h-14 w-14 rounded-lg border border-[#ead9b7] object-cover"
                         />
                       ) : (
