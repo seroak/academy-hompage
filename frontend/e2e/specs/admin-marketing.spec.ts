@@ -49,6 +49,49 @@ test('관리자는 Meta 동기화 완료와 반영 건수를 확인한다', asyn
   await expect(page.getByText('마지막 동기화 성공')).toBeVisible()
 })
 
+test('관리자는 측정 기준을 펼쳐 구간별 집계 단위를 확인한다', async ({ page }) => {
+  await page.route(apiPattern('/marketing/dashboard(?:\\?.*)?$'), (route) =>
+    fulfillJson(route, 200, dashboard),
+  )
+
+  await page.goto('/admin/marketing')
+
+  const guide = page.getByRole('table', { name: '광고 분석 측정 기준' })
+  await expect(guide).toBeHidden()
+  await page.locator('summary').filter({ hasText: '측정 기준 보기' }).click()
+  await expect(guide).toBeVisible()
+
+  for (const section of [
+    '노출·링크 클릭·광고비',
+    '랜딩 방문',
+    'CTA 클릭',
+    '폼 시작',
+    '상담 신청',
+    '유효 상담·예약·방문·등록',
+  ]) {
+    await expect(guide.getByRole('cell', { name: section, exact: true })).toBeVisible()
+  }
+  await expect(guide.getByRole('cell', { name: '30분 기준 고유 세션', exact: true })).toBeVisible()
+  await expect(page.getByText('클릭·세션·이벤트·DB 건수는 서로 다른 집계 단위이며 실제 고유 인원과 같지 않을 수 있습니다.')).toBeVisible()
+})
+
+test('모바일 측정 기준 안내는 가로 스크롤 없이 표시된다', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.route(apiPattern('/marketing/dashboard(?:\\?.*)?$'), (route) =>
+    fulfillJson(route, 200, dashboard),
+  )
+
+  await page.goto('/admin/marketing')
+  await page.locator('summary').filter({ hasText: '측정 기준 보기' }).click()
+
+  const guide = page.getByRole('table', { name: '광고 분석 측정 기준' })
+  await expect(guide).toBeVisible()
+  await expect(guide.getByRole('cell', { name: '집계 단위 Meta 집계 횟수', exact: true })).toBeVisible()
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true)
+})
+
 test('모바일에서도 핵심 광고 지표를 숨기지 않는다', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.route(apiPattern('/marketing/dashboard(?:\\?.*)?$'), (route) =>

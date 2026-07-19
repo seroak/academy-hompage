@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MarketingDashboard } from "../../api/schemas/marketing.schema";
+import MarketingMeasurementGuide from "./MarketingMeasurementGuide";
 import { useMarketingDashboardQuery, useMetaSyncMutation } from "./hooks/useMarketingDashboardQuery";
 
 const won = (value: number | null) => (value === null ? "계산 불가" : `${Math.round(value).toLocaleString("ko-KR")}원`);
@@ -339,6 +340,7 @@ export default function MarketingDashboardPage() {
               </div>
             </div>
           </section>
+          <MarketingMeasurementGuide />
         </>
       ) : null}
     </div>
