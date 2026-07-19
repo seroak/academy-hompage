@@ -8,7 +8,6 @@ import {
   IsOptional,
   IsString,
   Matches,
-  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -38,8 +37,7 @@ export class CreateLeadDto {
 
   @Type(() => Number)
   @IsInt()
-  @Min(4)
-  @Max(10)
+  @Min(5)
   childAge!: number;
 
   @IsIn(CONTACT_WINDOWS)

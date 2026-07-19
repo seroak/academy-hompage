@@ -22,11 +22,18 @@ describe('CreateLeadDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it.each([3, 11])('자녀 나이 %i를 거부한다', async (childAge) => {
+  it.each([3, 4])('자녀 나이 %i를 거부한다', async (childAge) => {
     const errors = await validate(
       plainToInstance(CreateLeadDto, { ...validPayload, childAge }),
     );
     expect(errors.some((error) => error.property === 'childAge')).toBe(true);
+  });
+
+  it('자녀 나이 11(상한 없음)을 허용한다', async () => {
+    const errors = await validate(
+      plainToInstance(CreateLeadDto, { ...validPayload, childAge: 11 }),
+    );
+    expect(errors.some((error) => error.property === 'childAge')).toBe(false);
   });
 
   it('개인정보 동의가 true가 아니면 거부한다', async () => {

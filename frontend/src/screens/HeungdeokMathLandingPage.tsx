@@ -68,7 +68,7 @@ export default function HeungdeokMathLandingPage() {
               빨리 푸는 연습보다 스스로 발견하고 설명하는 경험을 먼저 만듭니다. 놀이에서 시작해 개념, 사고력, 교과로 이어지는 수학 수업입니다.
             </p>
             <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold text-[#cfc5b3]">
-              <span>만 4~10세</span>
+              <span>만 5~9세 이상</span>
               <span aria-hidden="true">·</span>
               <span>흥덕 도보 통학권</span>
               <span aria-hidden="true">·</span>
@@ -237,7 +237,7 @@ export default function HeungdeokMathLandingPage() {
             상담 신청은 등록 확정이 아닙니다. 연령과 수학 경험을 듣고 아이에게 맞는 과정과 가능한 수업 시간을 차분히 안내해 드립니다.
           </p>
           <ul className="mt-6 space-y-3 text-sm font-bold leading-6 text-[#4b443a]">
-            <li>만 4~10세 연령과 수학 경험</li>
+            <li>만 5~9세 이상 연령과 수학 경험</li>
             <li>흥미·개념·사고력의 현재 균형</li>
             <li>흥덕 통학과 가능한 상담 시간</li>
           </ul>
