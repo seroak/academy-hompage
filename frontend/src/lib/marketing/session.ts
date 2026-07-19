@@ -1,13 +1,18 @@
+import { z } from 'zod'
+
 export const MARKETING_SESSION_STORAGE_KEY = 'openmath-marketing-session-v1'
 export const MARKETING_SESSION_TIMEOUT_MS = 30 * 60 * 1000
 
-type StoredSession = { id: string; lastActivityAt: number }
+const StoredSessionSchema = z.object({
+  id: z.string(),
+  lastActivityAt: z.number(),
+})
 
 export function getMarketingSessionId(now = Date.now()): string {
   const raw = window.localStorage.getItem(MARKETING_SESSION_STORAGE_KEY)
   if (raw) {
     try {
-      const stored = JSON.parse(raw) as StoredSession
+      const stored = StoredSessionSchema.parse(JSON.parse(raw))
       if (stored.id && now - stored.lastActivityAt < MARKETING_SESSION_TIMEOUT_MS) {
         window.localStorage.setItem(MARKETING_SESSION_STORAGE_KEY, JSON.stringify({ ...stored, lastActivityAt: now }))
         return stored.id

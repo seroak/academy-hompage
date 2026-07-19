@@ -1,18 +1,22 @@
+import { z } from 'zod'
+
 export const ATTRIBUTION_STORAGE_KEY = 'openmath-attribution-v1'
 export const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
-export type Attribution = {
-  utmSource?: string
-  utmMedium?: string
-  utmCampaign?: string
-  utmContent?: string
-  utmTerm?: string
-  fbclid?: string
-  landingPath: string
-  referrer: string
-  capturedAt: string
-  expiresAt: string
-}
+const AttributionSchema = z.object({
+  utmSource: z.string().optional(),
+  utmMedium: z.string().optional(),
+  utmCampaign: z.string().optional(),
+  utmContent: z.string().optional(),
+  utmTerm: z.string().optional(),
+  fbclid: z.string().optional(),
+  landingPath: z.string(),
+  referrer: z.string(),
+  capturedAt: z.string(),
+  expiresAt: z.string(),
+})
+
+export type Attribution = z.infer<typeof AttributionSchema>
 
 export function captureAttribution(location: Location, referrer: string): Attribution | null {
   const params = new URLSearchParams(location.search)
@@ -47,7 +51,7 @@ export function readAttribution(): Attribution | null {
   if (!raw) return null
 
   try {
-    const parsed = JSON.parse(raw) as Attribution
+    const parsed = AttributionSchema.parse(JSON.parse(raw))
     if (!parsed.expiresAt || new Date(parsed.expiresAt).getTime() <= Date.now()) {
       window.localStorage.removeItem(ATTRIBUTION_STORAGE_KEY)
       return null

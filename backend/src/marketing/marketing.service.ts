@@ -1,9 +1,23 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma, MetaAdDailyInsight, MetaAdCreative, MarketingEvent } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateMarketingEventDto } from './dto/create-marketing-event.dto.js';
 import { QueryMarketingDashboardDto } from './dto/query-marketing-dashboard.dto.js';
 import { MarketingEventRateLimiter } from './marketing-event-rate-limiter.service.js';
 import { MetaInsightsClient } from './meta-insights.client.js';
+
+type LeadFunnelRow = Prisma.LeadGetPayload<{
+  select: { status: true; utmCampaign: true; utmContent: true; createdAt: true };
+}>;
+
+type DateRange = ReturnType<typeof range>;
+
+type CampaignGroup = Metrics & {
+  campaignId: string;
+  campaignName: string;
+  adId: string;
+  adName: string;
+};
 
 const VALID = new Set([
   'CONTACTED',
@@ -129,19 +143,10 @@ export class MarketingService {
     const campaignFilter = query.campaignId
       ? { utmCampaign: query.campaignId }
       : {};
-    const insights = await this.prisma.metaAdDailyInsight.findMany({
-      where: {
-        date: { gte: dates.from, lte: dates.to },
-        campaignId: query.campaignId,
-      },
-    });
-    const insightAdIds = [...new Set(insights.map((item) => item.adId))];
-    const creativeImages =
-      insightAdIds.length > 0
-        ? await this.prisma.metaAdCreative.findMany({
-            where: { adId: { in: insightAdIds } },
-          })
-        : [];
+    const { insights, creativeImages } = await this.collectAdInsights(
+      dates,
+      query.campaignId,
+    );
     const [events, leads, sync] = await Promise.all([
       this.prisma.marketingEvent.findMany({
         where: {
@@ -163,34 +168,80 @@ export class MarketingService {
       }),
       this.prisma.metaSyncState.findUnique({ where: { id: 'meta' } }),
     ]);
-    const groups = new Map<
-      string,
-      Metrics & {
-        campaignId: string;
-        campaignName: string;
-        adId: string;
-        adName: string;
-      }
-    >();
-    const ensure = (
-      campaignId: string | null,
-      adId: string | null,
-      campaignName?: string,
-      adName?: string,
-    ) => {
-      const id = `${campaignId ?? 'legacy'}::${adId ?? 'legacy'}`;
-      if (!groups.has(id))
-        groups.set(id, {
-          ...blankMetrics(),
-          campaignId: campaignId ?? 'legacy',
-          campaignName: campaignName ?? '기존 UTM',
-          adId: adId ?? 'legacy',
-          adName: adName ?? adId ?? '기존 UTM',
-        });
-      return groups.get(id)!;
+
+    const groups = new Map<string, CampaignGroup>();
+    this.applyInsightsToGroups(groups, insights);
+    this.collectEventSessions(groups, events);
+    this.collectLeadFunnel(groups, leads);
+
+    const totals = blankMetrics();
+    for (const group of groups.values())
+      for (const field of Object.keys(totals) as (keyof Metrics)[])
+        totals[field] += group[field];
+
+    const creatives = this.buildCreativeBreakdown(groups, creativeImages);
+    const daily = this.buildDayBuckets(dates, insights, events, leads);
+
+    return {
+      range: { from: dates.from, to: dates.to },
+      totals: enrich(totals),
+      creatives,
+      daily,
+      newLeads: leads.filter((lead) => lead.status === 'NEW').length,
+      meta: {
+        configured: this.metaClient.isConfigured(),
+        isRunning: sync?.isRunning ?? false,
+        lastSuccessAt: sync?.lastSuccessAt?.toISOString() ?? null,
+        lastError: sync?.lastError ?? null,
+      },
     };
+  }
+
+  private ensureGroup(
+    groups: Map<string, CampaignGroup>,
+    campaignId: string | null,
+    adId: string | null,
+    campaignName?: string,
+    adName?: string,
+  ): CampaignGroup {
+    const id = `${campaignId ?? 'legacy'}::${adId ?? 'legacy'}`;
+    if (!groups.has(id))
+      groups.set(id, {
+        ...blankMetrics(),
+        campaignId: campaignId ?? 'legacy',
+        campaignName: campaignName ?? '기존 UTM',
+        adId: adId ?? 'legacy',
+        adName: adName ?? adId ?? '기존 UTM',
+      });
+    return groups.get(id)!;
+  }
+
+  /** Meta 광고 일별 인사이트와 소재 이미지를 조회한다. */
+  private async collectAdInsights(dates: DateRange, campaignId?: string) {
+    const insights = await this.prisma.metaAdDailyInsight.findMany({
+      where: {
+        date: { gte: dates.from, lte: dates.to },
+        campaignId,
+      },
+    });
+    const insightAdIds = [...new Set(insights.map((item) => item.adId))];
+    const creativeImages =
+      insightAdIds.length > 0
+        ? await this.prisma.metaAdCreative.findMany({
+            where: { adId: { in: insightAdIds } },
+          })
+        : [];
+    return { insights, creativeImages };
+  }
+
+  /** 광고비·노출·클릭을 캠페인/광고 단위 그룹에 반영한다. */
+  private applyInsightsToGroups(
+    groups: Map<string, CampaignGroup>,
+    insights: MetaAdDailyInsight[],
+  ): void {
     for (const item of insights) {
-      const group = ensure(
+      const group = this.ensureGroup(
+        groups,
         item.campaignId,
         item.adId,
         item.campaignName,
@@ -200,9 +251,16 @@ export class MarketingService {
       group.impressions += item.impressions;
       group.linkClicks += item.linkClicks;
     }
+  }
+
+  /** 자체 행동 이벤트(랜딩 세션·CTA 클릭·폼 시작)를 캠페인/광고 단위 그룹에 반영한다. */
+  private collectEventSessions(
+    groups: Map<string, CampaignGroup>,
+    events: MarketingEvent[],
+  ): void {
     const sessions = new Map<string, Set<string>>();
     for (const item of events) {
-      const group = ensure(item.utmCampaign, item.utmContent);
+      const group = this.ensureGroup(groups, item.utmCampaign, item.utmContent);
       const groupKey = key(item);
       if (item.name === 'view_ad_landing') {
         const values = sessions.get(groupKey) ?? new Set<string>();
@@ -213,30 +271,41 @@ export class MarketingService {
     }
     for (const [groupKey, values] of sessions) {
       const [campaignId, adId] = groupKey.split('::');
-      ensure(
+      this.ensureGroup(
+        groups,
         campaignId === 'legacy' ? null : campaignId,
         adId === 'legacy' ? null : adId,
       ).landingVisits = values.size;
     }
+  }
+
+  /** 상담 신청 리드의 상태별 퍼널(유효 리드·예약·방문·등록)을 캠페인/광고 단위 그룹에 반영한다. */
+  private collectLeadFunnel(
+    groups: Map<string, CampaignGroup>,
+    leads: LeadFunnelRow[],
+  ): void {
     for (const lead of leads) {
-      const group = ensure(lead.utmCampaign, lead.utmContent);
+      const group = this.ensureGroup(groups, lead.utmCampaign, lead.utmContent);
       group.leads += 1;
       if (VALID.has(lead.status)) group.validLeads += 1;
       if (BOOKING.has(lead.status)) group.bookings += 1;
       if (VISITED.has(lead.status)) group.visits += 1;
       if (lead.status === 'REGISTERED') group.registrations += 1;
     }
-    const totals = blankMetrics();
-    for (const group of groups.values())
-      for (const field of Object.keys(totals) as (keyof Metrics)[])
-        totals[field] += group[field];
+  }
+
+  /** 그룹별 지표를 소재 이미지와 합쳐 소재별 효율 비교 목록을 만든다(지출 내림차순). */
+  private buildCreativeBreakdown(
+    groups: Map<string, CampaignGroup>,
+    creativeImages: MetaAdCreative[],
+  ) {
     const imagesByAdId = new Map(
       creativeImages.map((item) => [
         item.adId,
         { imageUrl: item.imageUrl, thumbnailUrl: item.thumbnailUrl },
       ]),
     );
-    const creatives = [...groups.values()]
+    return [...groups.values()]
       .map((group) => ({
         campaignId: group.campaignId,
         campaignName: group.campaignName,
@@ -247,6 +316,15 @@ export class MarketingService {
         ...enrich(group),
       }))
       .sort((a, b) => b.spendWon - a.spendWon);
+  }
+
+  /** 조회 기간의 일자별 지출·랜딩 방문·리드·등록 시계열을 만든다. */
+  private buildDayBuckets(
+    dates: DateRange,
+    insights: MetaAdDailyInsight[],
+    events: MarketingEvent[],
+    leads: LeadFunnelRow[],
+  ) {
     const seoulDate = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Seoul',
     });
@@ -279,7 +357,7 @@ export class MarketingService {
       bucket.leads += 1;
       if (lead.status === 'REGISTERED') bucket.registrations += 1;
     }
-    const daily = Array.from(
+    return Array.from(
       {
         length:
           Math.floor((dates.end.getTime() - dates.start.getTime()) / 86400000) +
@@ -299,18 +377,5 @@ export class MarketingService {
         };
       },
     );
-    return {
-      range: { from: dates.from, to: dates.to },
-      totals: enrich(totals),
-      creatives,
-      daily,
-      newLeads: leads.filter((lead) => lead.status === 'NEW').length,
-      meta: {
-        configured: this.metaClient.isConfigured(),
-        isRunning: sync?.isRunning ?? false,
-        lastSuccessAt: sync?.lastSuccessAt?.toISOString() ?? null,
-        lastError: sync?.lastError ?? null,
-      },
-    };
   }
 }

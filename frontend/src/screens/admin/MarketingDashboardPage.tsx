@@ -23,8 +23,9 @@ function seoulDateTime(value: string) {
 
 function MetricStrip({ data }: { data: MarketingDashboard }) {
   return (
-    <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
       {[
+        ["노출", number(data.totals.impressions), `클릭률(CTR) ${percent(data.totals.ctr)}`],
         ["광고비", won(data.totals.spendWon), "Meta 자동 동기화"],
         ["상담 신청", `${number(data.totals.leads)}건`, `랜딩→상담 신청 ${percent(data.totals.landingToLeadRate)}`],
         ["등록", `${number(data.totals.registrations)}명`, `방문→등록 ${percent(data.totals.visitToRegistrationRate)}`],
