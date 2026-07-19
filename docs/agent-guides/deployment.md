@@ -11,7 +11,11 @@
 - 도메인 변경 시 루트 `.env.production`, `backend/.env.production`, Vercel 환경변수와 Google OAuth 리디렉션 URI·출처를 함께 갱신한다.
 - Vercel Production에는 `NEXT_PUBLIC_SITE_URL`을 실제 프론트 도메인으로 설정하고 `NAVER_SITE_VERIFICATION`을 서치어드바이저가 발급한 값으로 설정한 뒤 재배포한다. 두 값은 metadata·사이트맵의 빌드 결과에 영향을 주므로 환경변수 저장만 하고 재배포를 생략하지 않는다.
 - `vercel`/`vercel build`/`vercel deploy` CLI는 저장소 루트에서 실행한다. Vercel 프로젝트의 Root Directory 설정이 `frontend`이므로 `frontend/` 안에서 실행하면 `frontend/frontend`를 찾아 에러가 난다.
-- Vercel 환경변수를 "Sensitive"로 등록하면 `vercel pull`/CLI 빌드 시 값이 마스킹되어 빈 문자열로 처리될 수 있다 — `NEXT_PUBLIC_*`처럼 클라이언트 번들에 그대로 노출되는 값은 Sensitive 토글을 쓰지 않는다.
+- 로컬에서 `vercel --prod`를 직접 실행하기 전 `git status`로 워킹 디렉토리가 clean한지 확인한다. dirty 상태로 실행하면 커밋되지 않은 무관한 변경까지 그대로 업로드된다 — dirty하면 GitHub Actions의 clean checkout 배포 경로(아래 워크플로)를 우선한다.
+- Vercel 대시보드의 "Redeploy" 버튼은 prebuilt 배포에는 `Prebuilt deployments cannot be redeployed` 에러로 실패한다. 이 프로젝트의 프론트 재배포는 `gh workflow run frontend-seo.yml --ref main`으로 한다.
+- Vercel 환경변수를 "Sensitive"로 등록하면 `vercel pull`/CLI 빌드 시 값이 마스킹되어 빈 문자열로 처리될 수 있다 — `NEXT_PUBLIC_*`처럼 클라이언트 번들에 그대로 노출되는 값은 Sensitive 토글을 쓰지 않는다. 실제로 Sensitive로 잘못 등록돼 CI 빌드가 값을 못 읽고 번들에 리터럴 문자열 `"[SENSITIVE]"`가 그대로 박힌 채 배포된 사례가 있었다 — 배포 후 프로덕션 번들에서 `grep -r "\[SENSITIVE\]"`로 검증한다.
+- 새 필수 환경변수를 요구하는 공개 기능(예: Turnstile 자동입력방지)을 배포하기 전, 해당 운영 키가 Vercel과 백엔드 운영 환경 양쪽에 실제로 설정돼 있는지 확인한다 — 미설정 상태로 배포하면 실사용자도 해당 기능(상담 신청 등)을 못 쓰는 상태로 조용히 운영될 수 있다.
+- 새 환경변수를 추가하면 `backend/.env.example`(개발용)뿐 아니라 `backend/.env.production.example`(운영용)도 함께 갱신한다 — 한쪽만 갱신하면 운영 환경에 해당 값이 누락된 채 방치되기 쉽다.
 - `next.config`의 `output: 'standalone'`은 Docker 배포 전용이라 Vercel 빌드와 충돌한다. `process.env.VERCEL` 여부로 분기해 Vercel 빌드에서는 `standalone`을 쓰지 않는다.
 - production compose의 `.env.production` 등 env_file 내용을 바꾼 뒤에는 `docker restart`만으로 반영되지 않는다 — 컨테이너를 `--force-recreate`로 재생성해야 한다.
 - 광고 측정 랜딩을 배포할 때 Vercel에는 `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`를 설정한다. 백엔드 운영 환경에는 같은 Turnstile 위젯의 `TURNSTILE_SECRET_KEY`와 리드 제한값(`LEAD_DEDUP_DAYS`, `LEAD_RATE_LIMIT`, `LEAD_RATE_WINDOW_SECONDS`)을 설정한다.
@@ -19,6 +23,8 @@
 - Meta 광고 분석 자동 동기화는 백엔드 운영 환경의 `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`, `META_API_VERSION`, `META_SYNC_ENABLED=true`를 사용한다. 토큰은 `ads_read`만 가진 시스템 사용자 토큰으로 제한하고 프론트·로그·Compose 치환용 루트 환경파일에는 넣지 않는다.
 - 홈페이지 연결 광고의 URL 매개변수는 `utm_campaign={{campaign.id}}`, `utm_content={{ad.id}}`로 설정해야 Meta Insights와 리드가 자동 연결된다. 배포 후 `/admin/marketing`의 수동 동기화로 광고 관리자 수치와 일치하는지 확인한다.
 - 배포용 SSH 키는 전용 패스프레이즈 없는 키를 사용하고 시크릿으로 등록한다.
+- 프로덕션 서버 로그인용 SSH 키(`~/.ssh/oci_academy`)는 패스프레이즈가 걸려 있어 Claude Code의 Bash 도구(TTY 없음)로는 직접 접속할 수 없다 — 진단·조치 명령을 사용자에게 제공하고 결과를 받아 진단하는 방식으로 진행한다.
+- Google Search Console 등록, DNS/HTML 소유권 확인, sitemap 제출, 개별 URL 색인 요청은 사용자의 구글 계정으로만 가능한 수동 작업이다. Claude가 담당하는 범위는 코드·설정(검증 메타태그·파일 추가, `sitemap.ts` 자동 생성)까지다.
 
 ## 백엔드 무중단(블루-그린) 배포
 

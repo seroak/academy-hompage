@@ -53,6 +53,8 @@ npm run seo:audit
 - Meta API는 개발자 앱에 Marketing API를 추가하고, Business Portfolio의 시스템 사용자에게 **앱과 실제 광고 계정**을 모두 할당한 뒤 `ads_read` 권한으로 만든 시스템 사용자 토큰을 사용한다. 시스템 사용자 ID·앱 ID는 `META_AD_ACCOUNT_ID`가 아니다.
 - 운영 시크릿은 서버의 `backend/.env.production`에만 둔다. 필요한 키는 `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`, `META_API_VERSION`, `META_SYNC_ENABLED`이며 토큰 값은 저장소·프론트엔드·로그·채팅에 기록하지 않는다.
 - Meta 연동 오류는 먼저 `GET /me/permissions`에서 `ads_read: granted`를 확인하고, 그 **실제 광고 계정 ID**로 `/act_{META_AD_ACCOUNT_ID}/insights`를 직접 조회해 권한과 계정 ID를 구분한다. `{"data":[]}`는 권한 성공이며 해당 기간의 광고 데이터가 없다는 뜻이다.
+- `/me/permissions`·`/insights`·`/debug_token`처럼 서로 다른 엔드포인트가 모두 동일한 `error.code`(예: `200 "API access blocked"`)로 실패하면 계정 ID나 개별 권한 문제가 아니라 **개발자 계정·시스템 사용자 토큰 자체가 Meta 쪽에서 차단된 상태**다. `developers.facebook.com/apps/`가 `개발자 플랫폼 차단 사용자 오류` 화면으로 리다이렉트되는지 먼저 확인한다.
+- 여러 비즈니스 포트폴리오에 로그인 가능한 계정으로 Ads Manager를 확인할 때는, 화면에 처음 뜨는 비즈니스를 실제 운영 대상으로 가정하지 않는다 — 먼저 실제 운영 광고 계정 ID를 확보한 뒤 화면의 `business_id`·`act`와 대조한다.
 - `/admin/marketing`의 `지금 동기화`는 수동 실행이며, 성공 시 반영 건수와 마지막 성공 시각을 표시한다. 광고 집행 전에는 `새로 반영된 광고 데이터가 없습니다`가 정상일 수 있다. 동시 실행은 별도 안내로 표시한다.
 - Meta API 장애나 미설정 상태여도 홈페이지 상담 신청과 관리자 상담 관리는 계속 동작해야 한다. GA4·Meta Pixel·자체 행동 이벤트에 보호자·자녀 개인정보를 보내지 않는다.
 - Ads Manager·청구 화면의 상태를 보고하기 직전에 화면을 새로고침하고 `business_id`, `act` 및 선택된 캠페인·광고 세트·광고 ID가 실제 운영 대상을 가리키는지 확인한다. 오래 열린 탭이나 새로고침 전 문구만으로 결제수단·게시·게재 상태를 단정하지 않는다.

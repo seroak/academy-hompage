@@ -9,6 +9,7 @@
 - E2E·빌드 전후 `git status`와 diff를 확인한다. `next-env.d.ts`, `tsconfig.tsbuildinfo` 등 생성 파일은 세션 시작 상태를 확인한 뒤 기능 변경이 아니면 정리한다.
 - 내비게이션·문구·색상·이미지 로딩 전략을 의도적으로 바꾸면 같은 변경에서 관련 E2E의 테스트 이름과 기대값도 현재 동작에 맞춰 갱신한다.
 - `npm run seo:audit`(로컬 Lighthouse) 명령을 실행하기 직전에 반드시 먼저 `uptime`으로 시스템 부하를 확인한다(측정 시작 후·결과를 본 뒤가 아니라 실행 전). load average가 높으면(예: CPU 코어 수 이상) LCP·TBT 수치가 실제보다 크게 나빠질 수 있어, 그 상태로 측정한 결과만으로 회귀를 단정하지 않는다.
+- GitHub Actions 공용 러너의 Lighthouse CI는 `throttlingMethod: 'provided'` + `numberOfRuns: 1` 조합 때문에 Total Blocking Time이 임계값 근처에서 크게 흔들린다(무관한 커밋에서도 실패 이력 있음). 로컬 실행이 통과(예: 0ms)하는데 CI만 실패하면 코드 회귀가 아니라 CI 환경 노이즈일 가능성을 먼저 의심한다(`.github/workflows/frontend-seo.yml`에 재시도 루프로 완화돼 있음).
 - `seo:audit`이 백그라운드로 띄운 임시 dev 서버도 다른 dev 서버와 동일하게 작업 종료 시 정리하고, 정리 여부를 완료 보고에 명시한다.
 
 ## Frontend Playwright
