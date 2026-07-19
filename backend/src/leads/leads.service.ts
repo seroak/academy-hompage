@@ -35,11 +35,16 @@ export class LeadsService {
   ) {}
 
   async submit(input: CreateLeadDto, ip: string): Promise<{ accepted: true }> {
-    if (!this.rateLimiter.consume(ip)) return { accepted: true };
+    if (!this.rateLimiter.consume(ip)) {
+      this.logger.warn(`레이트리밋 초과로 리드 제출을 무시했습니다. ip=${ip}`);
+      return { accepted: true };
+    }
 
     try {
-      if (!(await this.verifier.verify(input.turnstileToken, ip)))
+      if (!(await this.verifier.verify(input.turnstileToken, ip))) {
+        this.logger.warn(`Turnstile 검증 실패로 리드 제출을 저장하지 않았습니다. ip=${ip}`);
         return { accepted: true };
+      }
 
       const phone = input.phone.replace(/\D/g, '');
       const dedupDays = this.positiveInteger('LEAD_DEDUP_DAYS', 30);
@@ -50,7 +55,12 @@ export class LeadsService {
         where: { phone, createdAt: { gte: duplicateSince } },
         select: { id: true },
       });
-      if (duplicate) return { accepted: true };
+      if (duplicate) {
+        this.logger.warn(
+          `${dedupDays}일 이내 중복 전화번호로 리드 제출을 저장하지 않았습니다. ip=${ip}`,
+        );
+        return { accepted: true };
+      }
 
       await this.prisma.lead.create({
         data: {

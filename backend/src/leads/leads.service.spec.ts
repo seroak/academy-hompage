@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { LeadsService } from './leads.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { TurnstileVerifier } from './turnstile-verifier.service.js';
@@ -118,9 +118,16 @@ describe('LeadsService', () => {
     expect(prisma.lead.create).not.toHaveBeenCalled();
   });
 
-  it.each(['verification', 'rate-limit'])(
-    '%s 실패를 노출하지 않고 accepted를 반환한다',
-    async (failure) => {
+  it.each([
+    ['verification', /turnstile/i],
+    ['rate-limit', /rate.?limit|레이트리밋/i],
+  ])(
+    '%s 실패를 노출하지 않고 accepted를 반환하되 원인을 로그로 남긴다',
+    async (failure, expectedMessage) => {
+      const warnSpy = jest
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+
       if (failure === 'verification') verifier.verify.mockResolvedValue(false);
       else limiter.consume.mockReturnValue(false);
 
@@ -128,8 +135,27 @@ describe('LeadsService', () => {
         accepted: true,
       });
       expect(prisma.lead.create).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringMatching(expectedMessage),
+      );
+
+      warnSpy.mockRestore();
     },
   );
+
+  it('30일 이내 중복 전화번호 제출도 원인을 로그로 남긴다', async () => {
+    const warnSpy = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined);
+    prisma.lead.findFirst.mockResolvedValue({ id: 'existing' });
+
+    await expect(service.submit(input, '203.0.113.10')).resolves.toEqual({
+      accepted: true,
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/중복|duplicate/i));
+    warnSpy.mockRestore();
+  });
 
   it('필터를 적용해 생성일 역순 페이지를 반환한다', async () => {
     let findManyArg:
