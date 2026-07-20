@@ -65,7 +65,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko" data-scroll-behavior="smooth" className={pretendard.variable}>
+    <html
+      lang="ko"
+      data-scroll-behavior="smooth"
+      className={pretendard.variable}
+      suppressHydrationWarning
+    >
       <body>
         <Providers>{children}</Providers>
         {AgentationDev ? <AgentationDev /> : null}

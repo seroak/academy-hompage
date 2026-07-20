@@ -24,6 +24,7 @@
 - production compose의 `.env.production` 등 env_file 내용을 바꾼 뒤에는 `docker restart`만으로 반영되지 않는다 — 컨테이너를 `--force-recreate`로 재생성해야 한다.
 - 광고 측정 랜딩을 배포할 때 Vercel에는 `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`를 설정한다. 백엔드 운영 환경에는 같은 Turnstile 위젯의 `TURNSTILE_SECRET_KEY`와 리드 제한값(`LEAD_DEDUP_DAYS`, `LEAD_RATE_LIMIT`, `LEAD_RATE_WINDOW_SECONDS`)을 설정한다.
 - Turnstile 키는 운영 도메인 `openmath.io.kr`을 허용한 위젯의 한 쌍을 사용한다. 키를 바꾼 뒤에는 랜딩에서 실제 테스트 리드를 제출하고 관리자 `/admin/leads`에 저장되는지 확인한다.
+- Turnstile은 프론트 `NEXT_PUBLIC_TURNSTILE_SITE_KEY`(Vercel), 백엔드 `TURNSTILE_SECRET_KEY`, Cloudflare 위젯의 Hostname Management에 등록된 운영 도메인 세 가지가 모두 일치해야 동작한다. 하나라도 어긋나면 위젯이 challenge iframe 없이 죽거나 `challenges.cloudflare.com` 요청이 400으로 실패하며, 방문자에게는 폼 제출 자체가 막힌 것으로 보인다 — 폼 제출 불가 신고 시 이 세 값의 일치 여부를 먼저 확인한다.
 - Meta 광고 분석 자동 동기화는 백엔드 운영 환경의 `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`, `META_API_VERSION`, `META_SYNC_ENABLED=true`를 사용한다. 토큰은 `ads_read`만 가진 시스템 사용자 토큰으로 제한하고 프론트·로그·Compose 치환용 루트 환경파일에는 넣지 않는다.
 - `/me/permissions`·`/insights`·`/debug_token`처럼 서로 다른 Meta 엔드포인트가 모두 동일한 `error.code`(예: `200 "API access blocked"`)로 실패하면 개별 권한이나 광고 계정 ID보다 개발자 계정·시스템 사용자 토큰·플랫폼 수준 차단일 가능성이 높다. 원인을 확정하지 말고 `developers.facebook.com/apps/`의 개발자 계정 상태를 추가로 확인한다.
 - Access Token Debugger의 `Malformed access token` 결과는 토큰 손상 외에도 복사·붙여넣기 과정의 개행·공백으로 생길 수 있다. 웹 Debugger 결과만으로 원인을 확정하지 말고, 컨테이너 내부에서 프로덕션과 동일한 경로로 `debug_token` 엔드포인트를 호출해 교차 검증한다.

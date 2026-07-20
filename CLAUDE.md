@@ -66,6 +66,8 @@ npm run seo:audit
 - 광고 하나에 이미지 여러 장이 슬라이드·콜라주·단일미디어로 랜덤 노출되는 캐러셀/Flexible Ads 구조는 기존 "소재별 CTR 비교" 대시보드(광고 단위)를 무력화한다 — 이미지별 성과 비교가 필요하면 이미지마다 별도 광고를 만들어 같은 광고 세트에서 운영해야 대시보드 기능을 쓸 수 있다.
 - 테스트 트래픽은 `utm_content=qa-*` 등 고정 접두사를 써서 실 운영 데이터와 구분한다. 접두사 없는 테스트 값(`test456`, `verification` 등)이 프로덕션 Lead/MarketingEvent 테이블에 쌓이면 식별·일괄삭제가 어려워진다.
 - "전환이 안 된다"는 신고를 진단할 때는 다음 순서가 비용 대비 효과적이다: 기술적 완전 차단 시나리오(가드·CORS·환경변수 누락 등)부터 저비용으로 먼저 배제 → 실제 표본(리드·이벤트 로그) 확보 → 실기기 인앱 브라우저로 직접 재현 → 홈페이지 자체 4단계 퍼널(랜딩 방문/CTA 클릭/폼 시작/신청 완료)로 이탈 구간을 특정한다.
+- `leads.service.ts`의 `submit()`은 레이트리밋 초과·Turnstile 검증 실패·중복 전화번호·DB 에러 어느 경우에도 방문자에게는 동일하게 `{accepted:true}`를 반환한다(의도된 설계 — 봇에게 실패 사유를 노출하지 않기 위함). 즉 방문자 화면의 "신청 완료"는 실제 저장을 보장하지 않으므로, 리드 미저장 신고는 서버 로그(`레이트리밋 초과로...`, `Turnstile 검증 실패로...`, `중복 전화번호로...`, `리드 제출 처리 실패`)로만 원인을 구분할 수 있다.
+- `generate_lead`(신청 완료) 이벤트는 `frontend/src/lib/marketing/firstParty.ts`에서 의도적으로 `/marketing/events` 전송 대상에서 제외된다(신청 완료는 leads 테이블 자체로 집계) — 대시보드에 `generate_lead` MarketingEvent가 없는 건 버그가 아니다. 반면 `cta_click`/`form_start` 등 다른 이벤트는 `utm_source=meta`일 때 `utmCampaign`/`utmContent`가 숫자 ID(`meta-utm-id.validator.ts`, `{{campaign.id}}`/`{{ad.id}}` 형식)가 아니면 백엔드가 400을 반환하고, `firstParty.ts`가 이 실패를 `catch(() => undefined)`로 조용히 삼켜 프론트 로그에도 남기지 않는다 — CTA/폼 이벤트 수치가 비정상적으로 0에 가까우면 이 검증 실패부터 의심한다.
 
 ## 변경 전 읽을 가이드
 

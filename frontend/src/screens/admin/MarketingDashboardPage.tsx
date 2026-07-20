@@ -274,7 +274,7 @@ export default function MarketingDashboardPage() {
                   <details key={`${creative.campaignId}-${creative.adId}`}>
                     <summary
                       aria-label={`${creative.adName} 상세 보기`}
-                      className="grid cursor-pointer gap-4 px-4 py-5 sm:grid-cols-[auto_1.5fr_repeat(4,1fr)] sm:items-center"
+                      className="grid cursor-pointer gap-4 px-4 py-5 sm:grid-cols-[auto_1.5fr_repeat(5,1fr)] sm:items-center"
                     >
                       {creative.thumbnailUrl ? (
                         <Image
@@ -293,6 +293,10 @@ export default function MarketingDashboardPage() {
                         <p className="mt-1 text-xs text-[#817460]">
                           {creative.campaignName} · CTR {percent(creative.ctr)}
                         </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-[#817460]">노출</p>
+                        <b>{number(creative.impressions)}</b>
                       </div>
                       <div>
                         <p className="text-xs text-[#817460]">광고비</p>
