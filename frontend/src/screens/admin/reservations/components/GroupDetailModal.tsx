@@ -181,24 +181,27 @@ export default function GroupDetailModal({
               />
             </label>
           </div>
-          {infoDraft && (
-            <div className="col-span-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setInfoDraft(null)}
-                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={saveInfo}
-                className="rounded-full bg-[#e86f00] px-3 py-1.5 text-xs font-black text-white"
-              >
-                저장
-              </button>
-            </div>
-          )}
+          <div
+            className={`col-span-2 flex justify-end gap-2 ${infoDraft ? '' : 'invisible'}`}
+            aria-hidden={!infoDraft}
+          >
+            <button
+              type="button"
+              tabIndex={infoDraft ? 0 : -1}
+              onClick={() => setInfoDraft(null)}
+              className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              tabIndex={infoDraft ? 0 : -1}
+              onClick={saveInfo}
+              className="rounded-full bg-[#e86f00] px-3 py-1.5 text-xs font-black text-white"
+            >
+              저장
+            </button>
+          </div>
         </div>
 
         <div className="mt-5">
