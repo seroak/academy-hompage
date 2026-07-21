@@ -110,6 +110,279 @@ describe('ReservationGroupLifecycleService', () => {
     expect(result.reservations).toEqual([reservation]);
   });
 
+  it('그룹 스케줄을 변경하면 멤버 슬롯도 새 스케줄로 함께 교체한다', async () => {
+    const member = {
+      id: 'r1',
+      status: 'GROUPED',
+      preferredSlots: [{ dayOfWeek: 'TUE', startMinute: 780, endMinute: 900 }],
+    };
+    const existingGroup = {
+      id: 'g1',
+      scheduleDayOfWeek: 'MON',
+      scheduleStartMinute: 780,
+      scheduleEndMinute: 840,
+      slots: [
+        { id: 's1', reservationId: 'r1', dayOfWeek: 'MON', startMinute: 780, endMinute: 840 },
+      ],
+    };
+    const updatedGroup = { ...existingGroup, scheduleDayOfWeek: 'TUE' };
+    const tx = {
+      reservationGroup: {
+        findUnique: jest.fn().mockResolvedValue(existingGroup),
+        update: jest.fn().mockResolvedValue(updatedGroup),
+      },
+      reservation: {
+        findMany: jest.fn().mockResolvedValue([member]),
+      },
+      reservationGroupSlot: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+        createManyAndReturn: jest.fn().mockResolvedValue([]),
+      },
+    };
+    const transaction = { run: jest.fn((operation) => operation(tx)) };
+    const validator = {
+      validateSlotsWithinPreferred: jest.fn(),
+    };
+    const service = new ReservationGroupLifecycleService(
+      transaction as never,
+      {} as never,
+      validator as never,
+    );
+
+    await service.update('g1', {
+      scheduleDayOfWeek: 'TUE',
+      scheduleStartMinute: 780,
+      scheduleEndMinute: 840,
+    } as never);
+
+    expect(validator.validateSlotsWithinPreferred).toHaveBeenCalledWith(
+      [{ dayOfWeek: 'TUE', startMinute: 780, endMinute: 840 }],
+      member.preferredSlots,
+    );
+    expect(tx.reservationGroupSlot.deleteMany).toHaveBeenCalledWith({
+      where: { groupId: 'g1' },
+    });
+    expect(tx.reservationGroupSlot.createManyAndReturn).toHaveBeenCalledWith({
+      data: [
+        { dayOfWeek: 'TUE', startMinute: 780, endMinute: 840, groupId: 'g1', reservationId: 'r1' },
+      ],
+    });
+    expect(tx.reservationGroup.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'g1' } }),
+    );
+  });
+
+  it('새 스케줄이 멤버의 선호 시간 밖이면 그룹 스케줄 변경을 거부한다', async () => {
+    const member = {
+      id: 'r1',
+      status: 'GROUPED',
+      preferredSlots: [{ dayOfWeek: 'MON', startMinute: 780, endMinute: 840 }],
+    };
+    const existingGroup = {
+      id: 'g1',
+      scheduleDayOfWeek: 'MON',
+      scheduleStartMinute: 780,
+      scheduleEndMinute: 840,
+      slots: [],
+    };
+    const tx = {
+      reservationGroup: { findUnique: jest.fn().mockResolvedValue(existingGroup) },
+      reservation: { findMany: jest.fn().mockResolvedValue([member]) },
+      reservationGroupSlot: {
+        deleteMany: jest.fn(),
+        createManyAndReturn: jest.fn(),
+      },
+    };
+    const transaction = { run: jest.fn((operation) => operation(tx)) };
+    const validator = {
+      validateSlotsWithinPreferred: jest.fn(() => {
+        throw new Error('밖 범위');
+      }),
+    };
+    const service = new ReservationGroupLifecycleService(
+      transaction as never,
+      {} as never,
+      validator as never,
+    );
+
+    await expect(
+      service.update('g1', {
+        scheduleDayOfWeek: 'TUE',
+        scheduleStartMinute: 780,
+        scheduleEndMinute: 840,
+      } as never),
+    ).rejects.toThrow('밖 범위');
+    expect(tx.reservationGroupSlot.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('일정이 없던 그룹도 요일·시각을 새로 지정할 수 있다', async () => {
+    const existingGroup = {
+      id: 'g1',
+      scheduleDayOfWeek: null,
+      scheduleStartMinute: null,
+      scheduleEndMinute: null,
+      slots: [],
+    };
+    const tx = {
+      reservationGroup: {
+        findUnique: jest.fn().mockResolvedValue(existingGroup),
+        update: jest.fn().mockResolvedValue(existingGroup),
+      },
+      reservation: { findMany: jest.fn().mockResolvedValue([]) },
+      reservationGroupSlot: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createManyAndReturn: jest.fn().mockResolvedValue([]),
+      },
+    };
+    const transaction = { run: jest.fn((operation) => operation(tx)) };
+    const service = new ReservationGroupLifecycleService(
+      transaction as never,
+      {} as never,
+      { validateSlotsWithinPreferred: jest.fn() } as never,
+    );
+
+    await service.update('g1', {
+      scheduleDayOfWeek: 'TUE',
+      scheduleStartMinute: 780,
+      scheduleEndMinute: 840,
+    } as never);
+
+    expect(tx.reservationGroup.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'g1' },
+        data: expect.objectContaining({
+          scheduleDayOfWeek: 'TUE',
+          scheduleStartMinute: 780,
+          scheduleEndMinute: 840,
+        }),
+      }),
+    );
+  });
+
+  it('서로 다른 요일에 배정돼 있던 멤버들도 새 스케줄 하나로 슬롯이 합쳐진다', async () => {
+    const memberA = {
+      id: 'r1',
+      status: 'GROUPED',
+      preferredSlots: [{ dayOfWeek: 'TUE', startMinute: 780, endMinute: 900 }],
+    };
+    const memberB = {
+      id: 'r2',
+      status: 'GROUPED',
+      preferredSlots: [{ dayOfWeek: 'TUE', startMinute: 840, endMinute: 900 }],
+    };
+    const existingGroup = {
+      id: 'g1',
+      scheduleDayOfWeek: null,
+      scheduleStartMinute: null,
+      scheduleEndMinute: null,
+      slots: [
+        { id: 's1', reservationId: 'r1', dayOfWeek: 'MON', startMinute: 780, endMinute: 840 },
+        { id: 's2', reservationId: 'r2', dayOfWeek: 'WED', startMinute: 900, endMinute: 960 },
+      ],
+    };
+    const tx = {
+      reservationGroup: {
+        findUnique: jest.fn().mockResolvedValue(existingGroup),
+        update: jest.fn().mockResolvedValue(existingGroup),
+      },
+      reservation: { findMany: jest.fn().mockResolvedValue([memberA, memberB]) },
+      reservationGroupSlot: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+        createManyAndReturn: jest.fn().mockResolvedValue([]),
+      },
+    };
+    const transaction = { run: jest.fn((operation) => operation(tx)) };
+    const validator = { validateSlotsWithinPreferred: jest.fn() };
+    const service = new ReservationGroupLifecycleService(
+      transaction as never,
+      {} as never,
+      validator as never,
+    );
+
+    await service.update('g1', {
+      scheduleDayOfWeek: 'TUE',
+      scheduleStartMinute: 840,
+      scheduleEndMinute: 900,
+    } as never);
+
+    expect(tx.reservationGroupSlot.deleteMany).toHaveBeenCalledWith({
+      where: { groupId: 'g1' },
+    });
+    expect(tx.reservationGroupSlot.createManyAndReturn).toHaveBeenCalledWith({
+      data: [
+        { dayOfWeek: 'TUE', startMinute: 840, endMinute: 900, groupId: 'g1', reservationId: 'r1' },
+        { dayOfWeek: 'TUE', startMinute: 840, endMinute: 900, groupId: 'g1', reservationId: 'r2' },
+      ],
+    });
+  });
+
+  it('스케줄 필드 중 일부만 보내면 거부한다', async () => {
+    const existingGroup = {
+      id: 'g1',
+      scheduleDayOfWeek: 'MON',
+      scheduleStartMinute: 780,
+      scheduleEndMinute: 840,
+      slots: [],
+    };
+    const tx = {
+      reservationGroup: { findUnique: jest.fn().mockResolvedValue(existingGroup) },
+      reservation: { findMany: jest.fn() },
+      reservationGroupSlot: { deleteMany: jest.fn(), createManyAndReturn: jest.fn() },
+    };
+    const transaction = { run: jest.fn((operation) => operation(tx)) };
+    const service = new ReservationGroupLifecycleService(
+      transaction as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.update('g1', { scheduleDayOfWeek: 'TUE' } as never),
+    ).rejects.toThrow('요일과 시작·종료 시각을 모두 선택해 주세요');
+  });
+
+  it('멤버가 없는 그룹의 스케줄을 변경하면 앵커 슬롯도 새 스케줄로 이동한다', async () => {
+    const existingGroup = {
+      id: 'g1',
+      scheduleDayOfWeek: 'MON',
+      scheduleStartMinute: 780,
+      scheduleEndMinute: 840,
+      slots: [
+        { id: 's1', reservationId: null, dayOfWeek: 'MON', startMinute: 780, endMinute: 840 },
+      ],
+    };
+    const tx = {
+      reservationGroup: {
+        findUnique: jest.fn().mockResolvedValue(existingGroup),
+        update: jest.fn().mockResolvedValue(existingGroup),
+      },
+      reservation: { findMany: jest.fn().mockResolvedValue([]) },
+      reservationGroupSlot: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+        createManyAndReturn: jest.fn().mockResolvedValue([]),
+      },
+    };
+    const transaction = { run: jest.fn((operation) => operation(tx)) };
+    const validator = { validateSlotsWithinPreferred: jest.fn() };
+    const service = new ReservationGroupLifecycleService(
+      transaction as never,
+      {} as never,
+      validator as never,
+    );
+
+    await service.update('g1', {
+      scheduleDayOfWeek: 'TUE',
+      scheduleStartMinute: 780,
+      scheduleEndMinute: 840,
+    } as never);
+
+    expect(tx.reservationGroupSlot.createManyAndReturn).toHaveBeenCalledWith({
+      data: [
+        { dayOfWeek: 'TUE', startMinute: 780, endMinute: 840, groupId: 'g1', reservationId: null },
+      ],
+    });
+  });
+
   it('그룹 삭제에서 신청 상태 복원과 그룹 삭제를 하나의 직렬화 트랜잭션으로 실행한다', async () => {
     const tx = {
       reservation: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },

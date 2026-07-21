@@ -140,6 +140,65 @@ export class ReservationGroupLifecycleService {
             dto.maxAge,
           );
         }
+
+        const scheduleFields = [
+          dto.scheduleDayOfWeek,
+          dto.scheduleStartMinute,
+          dto.scheduleEndMinute,
+        ];
+        const hasScheduleChange = scheduleFields.some(
+          (value) => value !== undefined,
+        );
+
+        if (hasScheduleChange) {
+          if (scheduleFields.some((value) => value === undefined)) {
+            throw new ConflictException(
+              '요일과 시작·종료 시각을 모두 선택해 주세요',
+            );
+          }
+          const group = await tx.reservationGroup.findUnique({
+            where: { id },
+            include: { slots: true },
+          });
+          if (!group) {
+            throw new NotFoundException(`ReservationGroup ${id} not found`);
+          }
+          const newSchedule = {
+            dayOfWeek: dto.scheduleDayOfWeek!,
+            startMinute: dto.scheduleStartMinute!,
+            endMinute: dto.scheduleEndMinute!,
+          };
+          const members = await tx.reservation.findMany({
+            where: { groupId: id, status: 'GROUPED' },
+            include: { preferredSlots: true },
+          });
+          members.forEach((member) =>
+            this.validator.validateSlotsWithinPreferred(
+              [newSchedule],
+              member.preferredSlots,
+            ),
+          );
+          const hadAnchor = group.slots.some(
+            (slot) => slot.reservationId === null,
+          );
+          await tx.reservationGroupSlot.deleteMany({ where: { groupId: id } });
+          const newSlots = [
+            ...members.map((member) => ({
+              ...newSchedule,
+              groupId: id,
+              reservationId: member.id,
+            })),
+            ...(members.length === 0 && hadAnchor
+              ? [{ ...newSchedule, groupId: id, reservationId: null }]
+              : []),
+          ];
+          if (newSlots.length > 0) {
+            await tx.reservationGroupSlot.createManyAndReturn({
+              data: newSlots,
+            });
+          }
+        }
+
         return tx.reservationGroup.update({
           where: { id },
           data: dto,

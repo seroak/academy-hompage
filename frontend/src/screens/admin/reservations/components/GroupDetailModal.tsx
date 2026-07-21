@@ -2,7 +2,18 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
-import { DAY_OF_WEEK_LABELS, parseDayOfWeek, Reservation, timeRangeLabel, type PreferredSlot } from '../../../../api/schemas/reservation.schema'
+import {
+  DAY_OF_WEEK_LABELS,
+  DAY_OF_WEEK_OPTIONS,
+  OPERATING_END_MINUTE,
+  OPERATING_START_MINUTE,
+  parseDayOfWeek,
+  Reservation,
+  SLOT_STEP_MINUTES,
+  timeLabel,
+  timeRangeLabel,
+  type PreferredSlot,
+} from '../../../../api/schemas/reservation.schema'
 import { ReservationGroup, UpdateReservationGroupInput } from '../../../../api/schemas/reservation-group.schema'
 import PreferredSlotsPicker from '../../../../components/PreferredSlotsPicker'
 import { useModalFocusTrap } from '../../../../hooks/useModalFocusTrap'
@@ -14,6 +25,39 @@ type GroupInfoDraft = {
   capacity: number | ''
   minAge: number | ''
   maxAge: number | ''
+}
+
+type ScheduleDraft = {
+  dayOfWeek: (typeof DAY_OF_WEEK_OPTIONS)[number]
+  startMinute: number
+  endMinute: number
+}
+
+const SCHEDULE_TIME_OPTIONS = Array.from(
+  { length: (OPERATING_END_MINUTE - OPERATING_START_MINUTE) / SLOT_STEP_MINUTES + 1 },
+  (_, index) => OPERATING_START_MINUTE + index * SLOT_STEP_MINUTES,
+)
+
+function deriveDefaultSchedule(group: ReservationGroup): ScheduleDraft {
+  if (
+    group.scheduleDayOfWeek &&
+    group.scheduleStartMinute !== null &&
+    group.scheduleStartMinute !== undefined &&
+    group.scheduleEndMinute !== null &&
+    group.scheduleEndMinute !== undefined
+  ) {
+    return {
+      dayOfWeek: group.scheduleDayOfWeek,
+      startMinute: group.scheduleStartMinute,
+      endMinute: group.scheduleEndMinute,
+    }
+  }
+  const firstSlot = group.slots[0]
+  const dayOfWeek = firstSlot ? parseDayOfWeek(firstSlot.dayOfWeek) : null
+  if (firstSlot && dayOfWeek) {
+    return { dayOfWeek, startMinute: firstSlot.startMinute, endMinute: firstSlot.endMinute }
+  }
+  return { dayOfWeek: 'MON', startMinute: OPERATING_START_MINUTE, endMinute: OPERATING_START_MINUTE + SLOT_STEP_MINUTES }
 }
 
 type Props = {
@@ -45,6 +89,7 @@ export default function GroupDetailModal({
 }: Props) {
   const dialogRef = useModalFocusTrap(Boolean(group))
   const [infoDraft, setInfoDraft] = useState<GroupInfoDraft | null>(null)
+  const [scheduleDraft, setScheduleDraft] = useState<ScheduleDraft | null>(null)
   const [editingSlotsFor, setEditingSlotsFor] = useState<string | null>(null)
   const [slotDraft, setSlotDraft] = useState<PreferredSlot[]>([])
 
@@ -52,7 +97,13 @@ export default function GroupDetailModal({
   const activeGroup = group
 
   const info: GroupInfoDraft =
-    infoDraft ?? { label: group.label, capacity: group.capacity, minAge: group.minAge, maxAge: group.maxAge }
+    infoDraft ?? {
+      label: group.label,
+      capacity: group.capacity,
+      minAge: group.minAge,
+      maxAge: group.maxAge,
+    }
+  const schedule: ScheduleDraft = scheduleDraft ?? deriveDefaultSchedule(group)
   const members = group.reservations ?? []
 
   const slotsByMember = new Map<string, ReservationGroup['slots']>()
@@ -103,13 +154,27 @@ export default function GroupDetailModal({
   }
 
   function saveInfo() {
+    if (scheduleDraft && members.length > 0) {
+      const confirmed = window.confirm(
+        '요일·시각을 바꾸면 배정된 학생들의 시간도 함께 이동합니다. 계속할까요?',
+      )
+      if (!confirmed) return
+    }
     onUpdateGroup(activeGroup.id, {
       label: info.label,
       capacity: info.capacity === '' ? activeGroup.capacity : info.capacity,
       minAge: info.minAge === '' ? activeGroup.minAge : info.minAge,
       maxAge: info.maxAge === '' ? activeGroup.maxAge : info.maxAge,
+      ...(scheduleDraft
+        ? {
+            scheduleDayOfWeek: scheduleDraft.dayOfWeek,
+            scheduleStartMinute: scheduleDraft.startMinute,
+            scheduleEndMinute: scheduleDraft.endMinute,
+          }
+        : {}),
     })
     setInfoDraft(null)
+    setScheduleDraft(null)
   }
 
   return (
@@ -181,21 +246,71 @@ export default function GroupDetailModal({
               />
             </label>
           </div>
+          <div className="col-span-2 grid gap-3 sm:grid-cols-3">
+            <label className="text-xs font-bold text-[#6f6253]">
+              요일
+              <select
+                value={schedule.dayOfWeek}
+                onChange={(event) => {
+                  const dayOfWeek = parseDayOfWeek(event.target.value)
+                  if (dayOfWeek) setScheduleDraft({ ...schedule, dayOfWeek })
+                }}
+                className="mt-1 w-full rounded-lg border border-[#f2dfb9] px-3 py-2 text-sm font-semibold text-[#222222]"
+              >
+                {DAY_OF_WEEK_OPTIONS.map((day) => (
+                  <option key={day} value={day}>
+                    {DAY_OF_WEEK_LABELS[day]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-bold text-[#6f6253]">
+              시작 시각
+              <select
+                value={schedule.startMinute}
+                onChange={(event) => setScheduleDraft({ ...schedule, startMinute: Number(event.target.value) })}
+                className="mt-1 w-full rounded-lg border border-[#f2dfb9] px-3 py-2 text-sm font-semibold text-[#222222]"
+              >
+                {SCHEDULE_TIME_OPTIONS.slice(0, -1).map((minute) => (
+                  <option key={minute} value={minute}>
+                    {timeLabel(minute)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-bold text-[#6f6253]">
+              종료 시각
+              <select
+                value={schedule.endMinute}
+                onChange={(event) => setScheduleDraft({ ...schedule, endMinute: Number(event.target.value) })}
+                className="mt-1 w-full rounded-lg border border-[#f2dfb9] px-3 py-2 text-sm font-semibold text-[#222222]"
+              >
+                {SCHEDULE_TIME_OPTIONS.slice(1).map((minute) => (
+                  <option key={minute} value={minute}>
+                    {timeLabel(minute)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <div
-            className={`col-span-2 flex justify-end gap-2 ${infoDraft ? '' : 'invisible'}`}
-            aria-hidden={!infoDraft}
+            className={`col-span-2 flex justify-end gap-2 ${infoDraft || scheduleDraft ? '' : 'invisible'}`}
+            aria-hidden={!infoDraft && !scheduleDraft}
           >
             <button
               type="button"
-              tabIndex={infoDraft ? 0 : -1}
-              onClick={() => setInfoDraft(null)}
+              tabIndex={infoDraft || scheduleDraft ? 0 : -1}
+              onClick={() => {
+                setInfoDraft(null)
+                setScheduleDraft(null)
+              }}
               className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-500"
             >
               취소
             </button>
             <button
               type="button"
-              tabIndex={infoDraft ? 0 : -1}
+              tabIndex={infoDraft || scheduleDraft ? 0 : -1}
               onClick={saveInfo}
               className="rounded-full bg-[#e86f00] px-3 py-1.5 text-xs font-black text-white"
             >

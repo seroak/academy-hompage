@@ -99,10 +99,24 @@ export type CreateReservationGroupInput = z.infer<typeof CreateReservationGroupI
 
 export const UpdateReservationGroupInputSchema = CreateReservationGroupInputBaseSchema.omit({
   slots: true,
-  scheduleDayOfWeek: true,
-  scheduleStartMinute: true,
-  scheduleEndMinute: true,
-}).partial()
+})
+  .partial()
+  .superRefine((group, context) => {
+    const scheduleValues = [group.scheduleDayOfWeek, group.scheduleStartMinute, group.scheduleEndMinute]
+    const hasSchedule = scheduleValues.some((value) => value !== undefined)
+    if (!hasSchedule) return
+
+    if (scheduleValues.some((value) => value === undefined)) {
+      context.addIssue({ code: 'custom', path: ['scheduleDayOfWeek'], message: '요일과 시작·종료 시각을 모두 선택해 주세요' })
+      return
+    }
+    if (group.scheduleStartMinute! % SLOT_STEP_MINUTES !== 0 || group.scheduleEndMinute! % SLOT_STEP_MINUTES !== 0) {
+      context.addIssue({ code: 'custom', path: ['scheduleStartMinute'], message: `${SLOT_STEP_MINUTES}분 단위로 선택해 주세요` })
+    }
+    if (group.scheduleEndMinute! <= group.scheduleStartMinute!) {
+      context.addIssue({ code: 'custom', path: ['scheduleEndMinute'], message: '종료 시각은 시작 시각보다 이후여야 합니다' })
+    }
+  })
 
 export type UpdateReservationGroupInput = z.infer<typeof UpdateReservationGroupInputSchema>
 
