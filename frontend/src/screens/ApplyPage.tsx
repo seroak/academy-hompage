@@ -21,7 +21,7 @@ import {
 const emptyForm: CreateReservationInput = {
   childId: "",
   childName: "",
-  childAge: 4,
+  childAge: 5,
   parentName: "",
   parentEmail: "",
   parentPhone: "",
@@ -30,7 +30,7 @@ const emptyForm: CreateReservationInput = {
   requestedGroupId: undefined,
 };
 
-const CHILD_AGE_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
+const CHILD_AGE_OPTIONS = [5, 6, 7, 8, 9];
 
 function formForParent(parent: ParentProfile | null): CreateReservationInput {
   if (!parent) return emptyForm;
@@ -218,7 +218,7 @@ export default function ApplyPage({
                 >
                   {CHILD_AGE_OPTIONS.map((age) => (
                     <option key={age} value={age}>
-                      만 {age}세
+                      만 {age}세{age === 9 ? " 이상" : ""}
                     </option>
                   ))}
                 </select>
