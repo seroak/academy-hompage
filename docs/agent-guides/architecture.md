@@ -9,6 +9,7 @@
 - `DELETE`는 `@HttpCode(HttpStatus.NO_CONTENT)`로 204를 반환한다.
 - 담당 강좌가 남은 instructor 삭제는 FK 오류 대신 409 `ConflictException`을 반환한다.
 - 연관 데이터가 있는 엔티티 삭제 기능을 추가할 때는 각 연관 모델의 cascade/SetNull/제한 여부를 먼저 표로 정리하고, 여러 방식이 가능하면 옵션으로 제시해 사용자 확인을 받은 뒤 구현한다.
+- `@Body()`/`@Query()`는 항상 DTO 클래스로 타입을 지정한다 — `@Body() dto: { code: string }`처럼 인라인 객체 타입을 쓰면 전역 `ValidationPipe`(`whitelist`/`forbidNonWhitelisted`/`transform`)가 class-validator 메타데이터 없는 body를 전혀 검증하지 못한다. `social-auth.controller.ts`의 `exchange()`가 이 형태라 검증이 통째로 우회되고 있던 걸 발견해 전용 DTO(`ExchangeSessionDto`)로 교체한 사례가 있다.
 
 ## API 경계와 프론트 데이터
 
@@ -23,7 +24,8 @@
 - 공개 페이지 SEO는 App Router metadata와 서버 렌더링을 기준으로 관리한다. 브라우저 상태는 `use client` 컴포넌트로 분리한다.
 - 페이지 metadata 객체는 layout과 딥머지되지 않는다. `openGraph`는 `baseOpenGraph()`, canonical을 정의한 `alternates`는 `rssAlternate()`를 함께 스프레드해 공통 속성을 유지한다.
 - 백엔드 콘텐츠로 만드는 RSS 같은 피드 라우트는 빌드 시 빈 응답이 정적 산출물로 고정되지 않게 동적 생성하고 응답 캐시 헤더로 부하를 제어한다.
-- `AgentationDev.tsx`는 개발 환경에서만 루트 레이아웃에 렌더링한다.
+- `AgentationDev.tsx`는 개발 환경에서만 루트 레이아웃에 렌더링한다. 이 devtools는 다른 에이전트가 세션 도중 워킹 디렉토리 파일을 직접 수정할 수 있는 경로다 — 손대지 않은 파일(예: DTO, 폼 컴포넌트)에서 원인불명의 diff가 발견되면 자신의 실수로 단정하지 말고, 확인 전까지 커밋 대상에서 제외한 뒤 원인을 파악한다.
+- `## Page Feedback: /경로` 형식 메시지(Agentation 툴바가 자동 제출하는 주석)는 실시간 대화가 아니라 답장을 받을 수 없는 단발성 입력이다 — 지시가 모호해도 "확인이 필요해"로 멈추지 말고, "이렇게 해석해 진행합니다: [전제]"로 전제만 명시한 뒤 바로 처리한다.
 - RSC 클라이언트 매니페스트 500 에러가 나면 `outputFileTracingRoot`/`turbopack.root` 불일치부터 의심하되, 그걸 고쳐도 안 되면 파일명 자체(예: 다른 모듈과 충돌하는 `AdminLayout.tsx` 같은 이름)를 바꿔본다 — 근본 원인이 설정이 아니라 Next.js/webpack 특이 케이스였던 사례가 있었다.
 - props·store·query 값 변경을 이유로 같은 컴포넌트 state를 `useEffect`에서 보정하지 않는다. `key` 재마운트 또는 렌더 중 이전 값 비교를 사용한다.
 - `useEffect`는 네트워크 구독, DOM 조작, 타이머 같은 실제 사이드 이펙트에만 사용한다.
@@ -33,6 +35,7 @@
 - 긴 시간표의 터치는 드래그 캡처 대신 이동 임계값을 둔 탭 방식으로 분기한다. 반응형은 `useIsNarrow`를 재사용하고 마운트 후 전환을 E2E에서 기다린다.
 - 여러 화면(공개/관리자 등)이 공유하는 컴포넌트(`MonthCalendar` 등)를 수정하기 전에는 grep으로 전체 사용처를 찾고 각 사용처의 관련 E2E 테스트를 먼저 읽는다 — 겉보기엔 단순 표시 요소가 다른 화면에서는 의도된 기능(예: 관리자 드래그 편집)일 수 있다.
 - 신규 광고 랜딩페이지(`*LandingPage.tsx`)는 독자적인 색상 팔레트를 새로 만들지 않는다. 이미 확립된 사이트 톤(크림 배경, 웜다크 텍스트, 앰버 포인트)과 동일 타깃의 기존 페이지를 먼저 확인해 재사용한다.
+- 프로그램·브랜드 문구(예: "요리수 연산", "플레이팩토")를 바꿀 때는 grep으로 전체 참조를 먼저 확인한다 — 랜딩 페이지, `courses` 페이지, `seo-landing/data.ts`, 커리큘럼 데이터, `ComparisonTable`, `seo.ts`, E2E 스펙(`ad-landing.spec.ts`, `public-smoke.spec.ts` 등)까지 흩어져 있어 단순 이름 변경도 6개 이상 파일을 건드리게 된다. 프로그램 카드 이미지 alt 텍스트는 `${program.name} 수업 활동`으로 name에서 자동 생성되므로 name만 바꾸면 따라간다.
 
 ## 인증과 세션
 

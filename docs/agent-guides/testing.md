@@ -34,5 +34,6 @@ npx playwright test
 - 실제 보호자 세션이 필요하면 위조 쿠키 대신 가입·이메일 인증으로 발급된 서명 JWT를 Playwright context에 httpOnly 쿠키로 주입한다.
 - 예약 도메인 E2E 데이터는 `POST /reservations/walk-in`으로 `WAITING` 예약을 만들고, 그 ID를 `POST /reservation-groups`의 slot `reservationId`로 참조해 확정 그룹을 만든다.
 - 공유 개발 DB에 생성한 테스트 데이터는 식별자와 삭제 여부를 보고한다. 전용 임시 DB는 계획대로 폐기하고 사실만 보고한다.
+- 프로덕션에서 직접 테스트할 때도 `utm_content=qa-*` 같은 고정 접두사 없이 값을 넣지 않는다 — 실제로 접두사 없는 테스트 값(`test456`, `verification` 등)이 프로덕션 `Lead`/`MarketingEvent` 테이블에 쌓여 식별·일괄삭제가 어려웠던 사례가 있었다. 정리할 때는 SSH 키가 패스프레이즈로 잠겨 있어 직접 실행이 안 되므로, 사용자에게 `SELECT`로 대상 행 확인 → `DELETE` → `SELECT COUNT(*)`로 검증하는 순서의 SQL을 순서대로 안내한다.
 - `nest start --watch` 재기동 전 기존 프로세스를 정리하고 curl로 최신 라우트·응답이 실제 반영됐는지 확인한다.
 - 포트 3000·3001을 점유한 프로세스가 여러 개 겹쳐 있을 수 있다(예: 옛 PID와 실제 서비스 PID가 동시에 남아있는 경우). `lsof -i :포트`로 실제로 그 포트를 점유 중인 PID를 먼저 특정한 뒤에만 재시작·종료 대상으로 삼는다.
