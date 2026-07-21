@@ -51,10 +51,10 @@ export class CreateLeadDto {
   @MaxLength(30)
   privacyConsentVersion!: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(2048)
-  turnstileToken!: string;
+  turnstileToken?: string;
 
   @IsBoolean()
   analyticsConsent!: boolean;

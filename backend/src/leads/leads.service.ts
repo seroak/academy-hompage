@@ -6,6 +6,7 @@ import { isPrismaNotFoundError } from '../common/prisma-errors.js';
 import { CreateLeadDto } from './dto/create-lead.dto.js';
 import { QueryLeadSummaryDto, QueryLeadsDto } from './dto/query-leads.dto.js';
 import { UpdateLeadDto } from './dto/update-lead.dto.js';
+import { isInAppBrowserUserAgent } from './in-app-browser.util.js';
 import { LeadRateLimiter } from './lead-rate-limiter.service.js';
 import { TurnstileVerifier } from './turnstile-verifier.service.js';
 
@@ -34,14 +35,26 @@ export class LeadsService {
     private readonly config: ConfigService,
   ) {}
 
-  async submit(input: CreateLeadDto, ip: string): Promise<{ accepted: true }> {
+  async submit(
+    input: CreateLeadDto,
+    ip: string,
+    userAgent?: string,
+  ): Promise<{ accepted: true }> {
     if (!this.rateLimiter.consume(ip)) {
       this.logger.warn(`레이트리밋 초과로 리드 제출을 무시했습니다. ip=${ip}`);
       return { accepted: true };
     }
 
     try {
-      if (!(await this.verifier.verify(input.turnstileToken, ip))) {
+      const bypassTurnstile = isInAppBrowserUserAgent(userAgent);
+      if (bypassTurnstile) {
+        this.logger.log(
+          `인앱 브라우저 감지로 Turnstile 검증을 건너뛰었습니다. ip=${ip}`,
+        );
+      } else if (
+        !input.turnstileToken ||
+        !(await this.verifier.verify(input.turnstileToken, ip))
+      ) {
         this.logger.warn(`Turnstile 검증 실패로 리드 제출을 저장하지 않았습니다. ip=${ip}`);
         return { accepted: true };
       }

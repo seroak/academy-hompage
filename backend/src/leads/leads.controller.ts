@@ -28,6 +28,7 @@ export class LeadsController {
     return this.leadsService.submit(
       input,
       request.ip ?? request.socket.remoteAddress ?? 'unknown',
+      request.headers['user-agent'],
     );
   }
 

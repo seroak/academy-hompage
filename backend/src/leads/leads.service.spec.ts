@@ -159,6 +159,40 @@ describe('LeadsService', () => {
     warnSpy.mockRestore();
   });
 
+  it.each([
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Instagram 309.0.0.32.117',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 [FBAN/FBIOS;FBAV/470.0.0]',
+  ])(
+    '인앱 브라우저(%s)에서는 Turnstile 토큰이 없어도 검증을 건너뛰고 저장한다',
+    async (userAgent) => {
+      prisma.lead.findFirst.mockResolvedValue(null);
+      const inAppInput = { ...input, turnstileToken: undefined };
+
+      await expect(
+        service.submit(inAppInput, '203.0.113.10', userAgent),
+      ).resolves.toEqual({ accepted: true });
+
+      expect(verifier.verify).not.toHaveBeenCalled();
+      expect(prisma.lead.create).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('인앱 브라우저가 아니면 토큰 없는 제출은 여전히 저장하지 않는다', async () => {
+    const warnSpy = jest
+      .spyOn(Logger.prototype, 'warn')
+      .mockImplementation(() => undefined);
+    const noTokenInput = { ...input, turnstileToken: undefined };
+
+    await expect(
+      service.submit(noTokenInput, '203.0.113.10', 'Mozilla/5.0 (Macintosh) Chrome/150'),
+    ).resolves.toEqual({ accepted: true });
+
+    expect(verifier.verify).not.toHaveBeenCalled();
+    expect(prisma.lead.create).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/turnstile/i));
+    warnSpy.mockRestore();
+  });
+
   it('필터를 적용해 생성일 역순 페이지를 반환한다', async () => {
     let findManyArg:
       | {

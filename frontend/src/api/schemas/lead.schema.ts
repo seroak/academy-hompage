@@ -21,7 +21,7 @@ export const CreateLeadInputSchema = z.object({
   contactWindow: ContactWindowSchema,
   privacyConsent: z.literal(true),
   privacyConsentVersion: z.string(),
-  turnstileToken: z.string().min(1),
+  turnstileToken: z.string().optional(),
   utmSource: z.string().optional(),
   utmMedium: z.string().optional(),
   utmCampaign: z.string().optional(),

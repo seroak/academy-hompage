@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from 'react'
 import { createLead } from '../../api/leads.api'
 import { ContactWindowSchema, type ContactWindow } from '../../api/schemas/lead.schema'
 import { ApiError } from '../../lib/apiClient'
+import { isInAppBrowser } from '../../lib/browser/inAppBrowser'
 import { readAttribution } from '../../lib/marketing/attribution'
 import { sendTrackingEvent } from '../../lib/marketing/events'
 import TurnstileWidget from './TurnstileWidget'
@@ -53,7 +54,7 @@ export default function LeadConsultationForm() {
       event.currentTarget.reportValidity()
       return
     }
-    if (!turnstileToken) {
+    if (!turnstileToken && !isInAppBrowser()) {
       sendTrackingEvent('lead_submit_blocked')
       setError('자동 입력 방지 확인을 완료해 주세요.')
       return

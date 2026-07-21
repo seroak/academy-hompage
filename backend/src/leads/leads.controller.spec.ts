@@ -13,13 +13,20 @@ describe('LeadsController', () => {
   };
   const controller = new LeadsController(service as unknown as LeadsService);
 
-  it('공개 제출을 IP와 함께 서비스로 전달한다', async () => {
+  it('공개 제출을 IP·User-Agent와 함께 서비스로 전달한다', async () => {
     const dto = { guardianName: '김보호' };
     service.submit.mockResolvedValue({ accepted: true });
     await expect(
-      controller.submit(dto as never, { ip: '203.0.113.10' } as never),
+      controller.submit(dto as never, {
+        ip: '203.0.113.10',
+        headers: { 'user-agent': 'Mozilla/5.0 test-agent' },
+      } as never),
     ).resolves.toEqual({ accepted: true });
-    expect(service.submit).toHaveBeenCalledWith(dto, '203.0.113.10');
+    expect(service.submit).toHaveBeenCalledWith(
+      dto,
+      '203.0.113.10',
+      'Mozilla/5.0 test-agent',
+    );
   });
 
   it('리드 삭제를 서비스로 전달한다', async () => {
