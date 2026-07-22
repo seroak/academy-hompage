@@ -1,11 +1,12 @@
-'use client'
+"use client";
 
-import { ChevronDown } from 'lucide-react'
-import { ApiError } from '../../lib/apiClient'
-import type { useAdminLoginForm } from './useAdminLoginForm'
+import { useEffect, useRef } from "react";
+import { ChevronDown } from "lucide-react";
+import { ApiError } from "../../lib/apiClient";
+import type { useAdminLoginForm } from "./useAdminLoginForm";
 
 interface AdminLoginFormProps {
-  form: ReturnType<typeof useAdminLoginForm>
+  form: ReturnType<typeof useAdminLoginForm>;
 }
 
 export function AdminLoginForm({ form }: AdminLoginFormProps) {
@@ -19,7 +20,15 @@ export function AdminLoginForm({ form }: AdminLoginFormProps) {
     setPassword,
     toggleExpanded,
     handleSubmit,
-  } = form
+  } = form;
+
+  const usernameInputRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isExpanded && usernameInputRef.current) {
+      usernameInputRef.current.focus();
+    }
+  }, [isExpanded]);
 
   return (
     <>
@@ -30,11 +39,7 @@ export function AdminLoginForm({ form }: AdminLoginFormProps) {
         className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#ead7ad] bg-white px-5 text-sm font-black text-[#3f3a31] transition hover:border-[#ffd66b] hover:text-[#e86f00]"
       >
         관리자 아이디로 로그인
-        <ChevronDown
-          size={18}
-          strokeWidth={2.5}
-          className={`transition ${isExpanded ? 'rotate-180' : ''}`}
-        />
+        <ChevronDown size={18} strokeWidth={2.5} className={`transition ${isExpanded ? "rotate-180" : ""}`} />
       </button>
 
       {isExpanded && (
@@ -62,19 +67,20 @@ export function AdminLoginForm({ form }: AdminLoginFormProps) {
 
           {loginError && (
             <p className="rounded-2xl bg-[#fff0ed] px-4 py-3 text-sm font-bold text-[#d6452f]">
-              {loginError instanceof ApiError ? loginError.message : '로그인에 실패했습니다.'}
+              {loginError instanceof ApiError ? loginError.message : "로그인에 실패했습니다."}
             </p>
           )}
 
           <button
+            ref={usernameInputRef}
             type="submit"
             disabled={isLoggingIn}
             className="h-12 w-full rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418] shadow-[0_14px_28px_rgba(255,214,107,0.34)] transition hover:bg-[#ffcf4d] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isLoggingIn ? '로그인 중...' : '로그인'}
+            {isLoggingIn ? "로그인 중..." : "로그인"}
           </button>
         </form>
       )}
     </>
-  )
+  );
 }
