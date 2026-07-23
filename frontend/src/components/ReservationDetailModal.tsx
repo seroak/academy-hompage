@@ -137,7 +137,7 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving, dial
         open
         aria-modal="true"
         aria-labelledby="reservation-detail-title"
-        className="max-h-[calc(100vh-48px)] w-full max-w-[440px] overflow-y-auto rounded-[28px] border border-[#f2dfb9] bg-[#fff9ec] p-6 shadow-[0_24px_70px_rgba(48,33,10,0.24)] sm:p-8"
+        className="static max-h-[calc(100vh-48px)] w-full max-w-[440px] overflow-y-auto rounded-[28px] border border-[#f2dfb9] bg-[#fff9ec] p-6 shadow-[0_24px_70px_rgba(48,33,10,0.24)] sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -222,7 +222,7 @@ function ReservationDetailContent({ reservation, onClose, onSave, isSaving, dial
       open
       aria-modal="true"
       aria-label="예약 정보 수정"
-      className="max-h-[calc(100vh-48px)] w-full max-w-[820px] overflow-y-auto overflow-x-hidden rounded-[28px] border border-[#f2dfb9] bg-[#fff9ec] p-6 shadow-[0_24px_70px_rgba(48,33,10,0.24)] sm:p-8"
+      className="static max-h-[calc(100vh-48px)] w-full max-w-[820px] overflow-y-auto overflow-x-hidden rounded-[28px] border border-[#f2dfb9] bg-[#fff9ec] p-6 shadow-[0_24px_70px_rgba(48,33,10,0.24)] sm:p-8"
     >
       <form onSubmit={handleSubmit}>
       <div className="flex items-start justify-between gap-4">

@@ -22,7 +22,7 @@ export function AdminLoginForm({ form }: AdminLoginFormProps) {
     handleSubmit,
   } = form;
 
-  const usernameInputRef = useRef<HTMLButtonElement>(null);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isExpanded && usernameInputRef.current) {
@@ -47,6 +47,7 @@ export function AdminLoginForm({ form }: AdminLoginFormProps) {
           <label className="flex flex-col gap-2 text-sm font-bold text-[#3f3a31]">
             아이디
             <input
+              ref={usernameInputRef}
               type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
@@ -72,7 +73,6 @@ export function AdminLoginForm({ form }: AdminLoginFormProps) {
           )}
 
           <button
-            ref={usernameInputRef}
             type="submit"
             disabled={isLoggingIn}
             className="h-12 w-full rounded-full bg-[#ffd66b] text-sm font-black text-[#2b2418] shadow-[0_14px_28px_rgba(255,214,107,0.34)] transition hover:bg-[#ffcf4d] disabled:cursor-not-allowed disabled:opacity-60"

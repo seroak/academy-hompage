@@ -14,7 +14,7 @@ export function useReservationAdminState() {
   const { reservations, isLoading, error } = useReservationsQuery(
     ageFilter !== undefined ? { age: ageFilter } : {},
   )
-  const { groups } = useReservationGroupsQuery()
+  const { groups, isLoading: isGroupsLoading } = useReservationGroupsQuery()
   
   const reservationMutations = useReservationMutations()
   const groupMutations = useReservationGroupMutations()
@@ -61,6 +61,7 @@ export function useReservationAdminState() {
     error,
     reservations,
     groups,
+    isGroupsLoading,
     
     selectedSlots: gridSelection.selectedSlots,
     groupForm: groupForm.groupForm,

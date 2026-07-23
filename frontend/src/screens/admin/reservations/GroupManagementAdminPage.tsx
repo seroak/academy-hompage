@@ -32,6 +32,7 @@ export default function GroupManagementAdminPage() {
 
       <GroupManagementCard
         groups={admin.groups}
+        isLoading={admin.isGroupsLoading}
         fieldErrors={admin.blankGroupFieldErrors}
         submitError={admin.blankGroupSubmitError}
         isCreating={admin.isCreating}

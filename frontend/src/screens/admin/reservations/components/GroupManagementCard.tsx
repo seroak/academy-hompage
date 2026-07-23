@@ -5,6 +5,7 @@ import { fieldClass, labelClass, errorClass } from "../styles";
 
 type Props = {
   groups: ReservationGroup[];
+  isLoading?: boolean;
   fieldErrors: Record<string, string>;
   submitError: string | null;
   isCreating: boolean;
@@ -27,6 +28,7 @@ function parseOptionalNumber(value: string): number | undefined {
 
 export default function GroupManagementCard({
   groups,
+  isLoading,
   fieldErrors,
   submitError,
   isCreating,
@@ -176,7 +178,11 @@ export default function GroupManagementCard({
       <div className="flex flex-col gap-2">
         <p className="text-xs font-black text-[#6f6253]">전체 그룹 목록</p>
 
-        {groups.length === 0 ? (
+        {isLoading ? (
+          <p className="rounded-[20px] bg-[#fff9ec] px-4 py-3 text-sm font-black text-[#6f6253]">
+            그룹 목록을 불러오는 중입니다...
+          </p>
+        ) : groups.length === 0 ? (
           <p className="rounded-[20px] bg-[#fff9ec] px-4 py-3 text-sm font-black text-[#6f6253]">
             아직 만들어진 그룹이 없습니다.
           </p>
