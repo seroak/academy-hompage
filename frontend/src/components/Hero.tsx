@@ -27,7 +27,7 @@ export default function Hero() {
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link
-              href="/apply"
+              href="#consultation-form"
               className="inline-flex h-13 items-center justify-center rounded-full bg-brand-600 px-7 text-base font-bold text-white shadow-[0_16px_30px_rgba(255,138,31,0.28)] transition duration-200 hover:-translate-y-0.5 hover:bg-brand-700"
             >
               상담 신청하기

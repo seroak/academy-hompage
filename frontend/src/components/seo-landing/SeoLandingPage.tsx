@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Check } from 'lucide-react'
 import Layout from '../Layout'
+import ConsultationSection from '../lead/ConsultationSection'
 import type { SeoLandingContent } from './data'
 import { programMedia } from './data'
 
@@ -30,7 +31,7 @@ export default function SeoLandingPage({ content }: { content: SeoLandingContent
               <p className="mt-5 text-sm font-black text-[#8a5d22]">용인시 기흥구 흥덕 · 유아 및 초등 저학년</p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  href="/apply"
+                  href="#consultation-form"
                   className="inline-flex h-12 items-center justify-center rounded-full bg-[#29251e] px-6 text-sm font-black text-[#fffaf0] transition hover:-translate-y-0.5 hover:bg-[#c45c00]"
                 >
                   수업 상담 신청하기
@@ -147,11 +148,13 @@ export default function SeoLandingPage({ content }: { content: SeoLandingContent
             <Link href="/courses" className="inline-flex h-12 items-center justify-center rounded-full border border-[#d7c8ad] px-6 text-sm font-black text-[#4d4437] transition hover:bg-[#f7eddb]">
               전체 교육과정 보기
             </Link>
-            <Link href="/apply" className="inline-flex h-12 items-center justify-center rounded-full bg-[#29251e] px-6 text-sm font-black text-[#fffaf0] transition hover:-translate-y-0.5 hover:bg-[#c45c00]">
+            <Link href="#consultation-form" className="inline-flex h-12 items-center justify-center rounded-full bg-[#29251e] px-6 text-sm font-black text-[#fffaf0] transition hover:-translate-y-0.5 hover:bg-[#c45c00]">
               수업 상담 신청하기
             </Link>
           </div>
         </section>
+
+        <ConsultationSection />
       </main>
     </Layout>
   )

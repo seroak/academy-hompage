@@ -75,6 +75,13 @@ function ParentProfileMenu({
           >
             내 자녀
           </Link>
+          <Link
+            href="/apply"
+            onClick={() => setIsOpen(false)}
+            className="mt-2 flex w-full rounded-xl px-2 py-2 text-sm font-black text-[#3f3a31] transition hover:bg-[#fff4dc] hover:text-[#e86f00]"
+          >
+            수업 예약
+          </Link>
           <button
             type="button"
             onClick={() => {
@@ -137,7 +144,7 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
 
   function handleReservationClick() {
     setIsOpen(false)
-    router.push('/apply')
+    router.push('/#consultation-form')
   }
 
   function handleNavItemClick() {
@@ -311,6 +318,9 @@ export default function Header({ initialAuth }: { initialAuth: HeaderInitialAuth
                 </div>
                 <Link href="/children" onClick={() => setIsOpen(false)} className="mt-2 inline-flex h-10 items-center justify-center rounded-full border border-[#f2dfb9] bg-white px-4 text-sm font-black text-[#3f3a31]">
                   내 자녀
+                </Link>
+                <Link href="/apply" onClick={() => setIsOpen(false)} className="mt-2 inline-flex h-10 items-center justify-center rounded-full border border-[#f2dfb9] bg-white px-4 text-sm font-black text-[#3f3a31]">
+                  수업 예약
                 </Link>
                 </>
               ) : (

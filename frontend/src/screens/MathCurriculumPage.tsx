@@ -4,6 +4,7 @@ import GrowthTimeline from '../components/math-curriculum/GrowthTimeline'
 import MathHero from '../components/math-curriculum/MathHero'
 import ProgramCards from '../components/math-curriculum/ProgramCards'
 import RecommendationCta from '../components/math-curriculum/RecommendationCta'
+import ConsultationSection from '../components/lead/ConsultationSection'
 
 export default function MathCurriculumPage() {
   return (
@@ -14,6 +15,7 @@ export default function MathCurriculumPage() {
       <ClassTimeTable />
       <ProgramCards />
       <RecommendationCta />
+      <ConsultationSection />
     </div>
   )
 }

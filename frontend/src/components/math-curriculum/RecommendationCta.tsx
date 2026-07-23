@@ -63,7 +63,7 @@ export default function RecommendationCta() {
         </div>
         <div className="relative mt-5 lg:mt-0">
           <Link
-            href="/apply"
+            href="#consultation-form"
             className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#ff9f00] px-6 text-sm font-bold text-[#2c2518] shadow-[0_8px_16px_rgba(202,130,0,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f08e00]"
           >
             <CalendarCheck size={17} strokeWidth={2.6} />

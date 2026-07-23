@@ -21,7 +21,7 @@ export default function MathHero() {
             아이의 흥미를 발견하고, 스스로 생각하는 힘과 수학 자신감으로 이어갑니다.
           </p>
           <Link
-            href="/apply"
+            href="#consultation-form"
             className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[#ff8a1f] px-5 text-sm font-bold text-white shadow-[0_10px_20px_rgba(232,111,0,0.2)] transition hover:-translate-y-0.5 hover:bg-[#e86f00]"
           >
             교육과정 상담하기 <ArrowRight size={18} strokeWidth={2.7} />

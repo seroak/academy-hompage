@@ -28,7 +28,17 @@ test.describe('공개 페이지 스모크', () => {
       level: 1,
     })
     await expect(heading).not.toHaveAttribute('style')
-    await expect(page.getByRole('link', { name: '상담 신청하기' })).toHaveAttribute('href', '/apply')
+    await expect(page.getByRole('link', { name: '상담 신청하기' })).toHaveAttribute('href', '#consultation-form')
+  })
+
+  test('로그아웃 방문자가 홈 상담 CTA를 누르면 로그인 없이 상담 폼이 바로 보인다', async ({ page }) => {
+    const pages = new PublicPages(page)
+    await pages.gotoHome()
+
+    await page.getByRole('link', { name: '상담 신청하기' }).click()
+
+    await expect(page).not.toHaveURL(/login=1/)
+    await expect(page.getByLabel('보호자 이름')).toBeVisible()
   })
 
   test('홈의 상단 이미지는 우선 요청하고 모바일에서는 숨긴다', async ({ page }) => {
@@ -69,7 +79,7 @@ test.describe('공개 페이지 스모크', () => {
     await page.goto('/?login=1')
     await page.getByRole('button', { name: '회원가입' }).click()
 
-    const nameInput = page.getByLabel('이름')
+    const nameInput = page.getByRole('dialog', { name: '로그인' }).getByLabel('이름')
     await nameInput.click()
     await expect(nameInput).toBeFocused()
 
@@ -86,73 +96,6 @@ test.describe('공개 페이지 스모크', () => {
     })
 
     await expect(nameInput).toBeFocused()
-  })
-
-  test('홈에서 수업 신청 절차를 순서대로 안내한다', async ({ page }) => {
-    const pages = new PublicPages(page)
-    await pages.gotoHome()
-    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
-
-    await expect(page.getByRole('heading', { name: '수업 신청, 이렇게 진행돼요' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: '자녀 선택' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: '희망 시간 선택' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: '편성 결과 안내' })).toBeVisible()
-  })
-
-  test('홈의 수업 신청 버튼이 신청 페이지로 연결된다', async ({ page }) => {
-    const pages = new PublicPages(page)
-    await pages.gotoHome()
-    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
-
-    await expect(page.getByRole('link', { name: '수업 신청하기' })).toHaveAttribute('href', '/apply')
-  })
-
-  test('홈에서 신청 방법을 보여주는 세 개의 실시간 미리보기를 제공한다', async ({ page }) => {
-    const pages = new PublicPages(page)
-    await pages.gotoHome()
-    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
-
-    for (const step of ['child-select', 'time-select', 'application-complete']) {
-      const animation = page.getByTestId(`application-guide-animation-${step}`)
-      await expect(animation).toBeVisible()
-    }
-  })
-
-  test('동작 최소화 환경에서도 정적으로 안내를 보여준다', async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' })
-    const pages = new PublicPages(page)
-    await pages.gotoHome()
-    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
-
-    for (const step of ['child-select', 'time-select', 'application-complete']) {
-      const animation = page.getByTestId(`application-guide-animation-${step}`)
-      await expect(animation).toBeVisible()
-    }
-  })
-
-  test('모바일에서 수업 신청 절차와 신청 버튼을 읽을 수 있다', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 })
-    const pages = new PublicPages(page)
-    await pages.gotoHome()
-    await page.getByTestId('deferred-application-guide').scrollIntoViewIfNeeded()
-
-    const firstStep = page.getByRole('heading', { name: '자녀 선택' })
-    const secondStep = page.getByRole('heading', { name: '희망 시간 선택' })
-    const thirdStep = page.getByRole('heading', { name: '편성 결과 안내' })
-
-    await expect(firstStep).toBeVisible()
-    await expect(secondStep).toBeVisible()
-    await expect(thirdStep).toBeVisible()
-    await expect(page.getByRole('link', { name: '수업 신청하기' })).toBeVisible()
-
-    const [firstBox, secondBox, thirdBox] = await Promise.all([
-      firstStep.boundingBox(),
-      secondStep.boundingBox(),
-      thirdStep.boundingBox(),
-    ])
-
-    expect(firstBox!.y).toBeLessThan(secondBox!.y)
-    expect(secondBox!.y).toBeLessThan(thirdBox!.y)
   })
 
   test('교육과정 설명 페이지에 프로그램이 렌더된다', async ({ page }) => {
@@ -286,13 +229,13 @@ test.describe('공개 페이지 스모크', () => {
         'href',
         `http://localhost:3410${seoPage.path}`,
       )
-      await expect(page.getByRole('link', { name: '전체 교육과정 보기' })).toHaveAttribute(
+      await expect(page.getByRole('link', { name: '전체 교육과정 보기' }).first()).toHaveAttribute(
         'href',
         '/courses',
       )
-      await expect(page.getByRole('link', { name: '수업 상담 신청하기' })).toHaveAttribute(
+      await expect(page.getByRole('link', { name: '수업 상담 신청하기' }).first()).toHaveAttribute(
         'href',
-        '/apply',
+        '#consultation-form',
       )
 
       const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents()
