@@ -153,6 +153,55 @@ export class ReservationGroupsValidator {
     };
   }
 
+  /**
+   * 새로 지정하려는 요일·시각이 다른 그룹의 이미 확정된 시간(슬롯) 또는 빈 그룹의
+   * schedule 필드와 겹치는지 확인한다. 겹치면 그리드에서 두 그룹이 같은 칸을 두고
+   * 다투게 되어(anchor 셀 병합 필요) 관리자 경험이 혼란스러워지므로, 애초에 생성·수정
+   * 단계에서 차단한다.
+   */
+  validateScheduleOverlap(
+    day: string,
+    startMinute: number,
+    endMinute: number,
+    otherGroups: {
+      label: string;
+      scheduleDayOfWeek: string | null;
+      scheduleStartMinute: number | null;
+      scheduleEndMinute: number | null;
+      slots: { dayOfWeek: string; startMinute: number; endMinute: number }[];
+    }[],
+  ): void {
+    const overlapping = otherGroups.find((group) => {
+      const ranges =
+        group.slots.length > 0
+          ? group.slots
+          : group.scheduleDayOfWeek != null &&
+              group.scheduleStartMinute != null &&
+              group.scheduleEndMinute != null
+            ? [
+                {
+                  dayOfWeek: group.scheduleDayOfWeek,
+                  startMinute: group.scheduleStartMinute,
+                  endMinute: group.scheduleEndMinute,
+                },
+              ]
+            : [];
+
+      return ranges.some(
+        (range) =>
+          range.dayOfWeek === day &&
+          startMinute < range.endMinute &&
+          endMinute > range.startMinute,
+      );
+    });
+
+    if (overlapping) {
+      throw new ConflictException(
+        `이미 "${overlapping.label}" 반과 시간이 겹칩니다`,
+      );
+    }
+  }
+
   assertNoGaps(slots: GroupSlotDto[]): void {
     const byReservationDay = new Map<string, GroupSlotDto[]>();
     for (const slot of slots) {

@@ -39,6 +39,52 @@ describe('ReservationGroupLifecycleService', () => {
     });
   });
 
+  it('schedule이 지정된 그룹을 만들 때 다른 그룹의 시간과 겹치면 검증기가 예외를 던지면 그대로 전파한다', async () => {
+    const tx = {
+      reservation: { findMany: jest.fn().mockResolvedValue([]) },
+      reservationGroup: {
+        findMany: jest.fn().mockResolvedValue([
+          { label: '기존 반', scheduleDayOfWeek: null, scheduleStartMinute: null, scheduleEndMinute: null, slots: [{ dayOfWeek: 'TUE', startMinute: 1010, endMinute: 1060 }] },
+        ]),
+        create: jest.fn(),
+      },
+      reservationGroupSlot: { createManyAndReturn: jest.fn() },
+    };
+    const transaction = { run: jest.fn((operation) => operation(tx)) };
+    const validator = {
+      validateCapacity: jest.fn(),
+      resolveSchedule: jest.fn().mockReturnValue({ dayOfWeek: 'TUE', startMinute: 1050, endMinute: 1120 }),
+      validateScheduleOverlap: jest.fn(() => {
+        throw new Error('시간 겹침');
+      }),
+      assertNoGaps: jest.fn(),
+    };
+    const service = new ReservationGroupLifecycleService(
+      transaction as never,
+      { sendGroupConfirmed: jest.fn() } as never,
+      validator as never,
+    );
+
+    await expect(
+      service.create({
+        label: '빈 반',
+        capacity: 4,
+        slots: [],
+        scheduleDayOfWeek: 'TUE',
+        scheduleStartMinute: 1050,
+        scheduleEndMinute: 1120,
+      } as never),
+    ).rejects.toThrow('시간 겹침');
+
+    expect(validator.validateScheduleOverlap).toHaveBeenCalledWith(
+      'TUE',
+      1050,
+      1120,
+      [{ label: '기존 반', scheduleDayOfWeek: null, scheduleStartMinute: null, scheduleEndMinute: null, slots: [{ dayOfWeek: 'TUE', startMinute: 1010, endMinute: 1060 }] }],
+    );
+    expect(tx.reservationGroup.create).not.toHaveBeenCalled();
+  });
+
   it('그룹을 만들면 재조회한 신청 목록을 포함해 반환한다', async () => {
     const reservation = {
       id: 'r1',
@@ -130,6 +176,7 @@ describe('ReservationGroupLifecycleService', () => {
       reservationGroup: {
         findUnique: jest.fn().mockResolvedValue(existingGroup),
         update: jest.fn().mockResolvedValue(updatedGroup),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       reservation: {
         findMany: jest.fn().mockResolvedValue([member]),
@@ -142,6 +189,7 @@ describe('ReservationGroupLifecycleService', () => {
     const transaction = { run: jest.fn((operation) => operation(tx)) };
     const validator = {
       validateSlotsWithinPreferred: jest.fn(),
+      validateScheduleOverlap: jest.fn(),
     };
     const service = new ReservationGroupLifecycleService(
       transaction as never,
@@ -172,6 +220,48 @@ describe('ReservationGroupLifecycleService', () => {
     );
   });
 
+  it('그룹 스케줄을 변경할 때 다른 그룹과 겹치면 자기 자신은 제외하고 검증한다', async () => {
+    const existingGroup = {
+      id: 'g1',
+      scheduleDayOfWeek: 'MON',
+      scheduleStartMinute: 780,
+      scheduleEndMinute: 840,
+      slots: [],
+    };
+    const tx = {
+      reservationGroup: { findUnique: jest.fn().mockResolvedValue(existingGroup), findMany: jest.fn().mockResolvedValue([]) },
+      reservation: { findMany: jest.fn().mockResolvedValue([]) },
+      reservationGroupSlot: { deleteMany: jest.fn(), createManyAndReturn: jest.fn() },
+    };
+    const transaction = { run: jest.fn((operation) => operation(tx)) };
+    const validator = {
+      validateSlotsWithinPreferred: jest.fn(),
+      validateScheduleOverlap: jest.fn(() => {
+        throw new Error('시간 겹침');
+      }),
+    };
+    const service = new ReservationGroupLifecycleService(
+      transaction as never,
+      {} as never,
+      validator as never,
+    );
+
+    await expect(
+      service.update('g1', {
+        scheduleDayOfWeek: 'TUE',
+        scheduleStartMinute: 900,
+        scheduleEndMinute: 960,
+      } as never),
+    ).rejects.toThrow('시간 겹침');
+
+    expect(tx.reservationGroup.findMany).toHaveBeenCalledWith({
+      where: { id: { not: 'g1' }, status: { in: ['CONFIRMED', 'EMPTY'] } },
+      include: { slots: true },
+    });
+    expect(validator.validateScheduleOverlap).toHaveBeenCalledWith('TUE', 900, 960, []);
+    expect(tx.reservationGroupSlot.deleteMany).not.toHaveBeenCalled();
+  });
+
   it('새 스케줄이 멤버의 선호 시간 밖이면 그룹 스케줄 변경을 거부한다', async () => {
     const member = {
       id: 'r1',
@@ -186,7 +276,7 @@ describe('ReservationGroupLifecycleService', () => {
       slots: [],
     };
     const tx = {
-      reservationGroup: { findUnique: jest.fn().mockResolvedValue(existingGroup) },
+      reservationGroup: { findUnique: jest.fn().mockResolvedValue(existingGroup), findMany: jest.fn().mockResolvedValue([]) },
       reservation: { findMany: jest.fn().mockResolvedValue([member]) },
       reservationGroupSlot: {
         deleteMany: jest.fn(),
@@ -195,6 +285,7 @@ describe('ReservationGroupLifecycleService', () => {
     };
     const transaction = { run: jest.fn((operation) => operation(tx)) };
     const validator = {
+      validateScheduleOverlap: jest.fn(),
       validateSlotsWithinPreferred: jest.fn(() => {
         throw new Error('밖 범위');
       }),
@@ -227,6 +318,7 @@ describe('ReservationGroupLifecycleService', () => {
       reservationGroup: {
         findUnique: jest.fn().mockResolvedValue(existingGroup),
         update: jest.fn().mockResolvedValue(existingGroup),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       reservation: { findMany: jest.fn().mockResolvedValue([]) },
       reservationGroupSlot: {
@@ -238,7 +330,7 @@ describe('ReservationGroupLifecycleService', () => {
     const service = new ReservationGroupLifecycleService(
       transaction as never,
       {} as never,
-      { validateSlotsWithinPreferred: jest.fn() } as never,
+      { validateSlotsWithinPreferred: jest.fn(), validateScheduleOverlap: jest.fn() } as never,
     );
 
     await service.update('g1', {
@@ -284,6 +376,7 @@ describe('ReservationGroupLifecycleService', () => {
       reservationGroup: {
         findUnique: jest.fn().mockResolvedValue(existingGroup),
         update: jest.fn().mockResolvedValue(existingGroup),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       reservation: { findMany: jest.fn().mockResolvedValue([memberA, memberB]) },
       reservationGroupSlot: {
@@ -292,7 +385,7 @@ describe('ReservationGroupLifecycleService', () => {
       },
     };
     const transaction = { run: jest.fn((operation) => operation(tx)) };
-    const validator = { validateSlotsWithinPreferred: jest.fn() };
+    const validator = { validateSlotsWithinPreferred: jest.fn(), validateScheduleOverlap: jest.fn() };
     const service = new ReservationGroupLifecycleService(
       transaction as never,
       {} as never,
@@ -355,6 +448,7 @@ describe('ReservationGroupLifecycleService', () => {
       reservationGroup: {
         findUnique: jest.fn().mockResolvedValue(existingGroup),
         update: jest.fn().mockResolvedValue(existingGroup),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       reservation: { findMany: jest.fn().mockResolvedValue([]) },
       reservationGroupSlot: {
@@ -363,7 +457,7 @@ describe('ReservationGroupLifecycleService', () => {
       },
     };
     const transaction = { run: jest.fn((operation) => operation(tx)) };
-    const validator = { validateSlotsWithinPreferred: jest.fn() };
+    const validator = { validateSlotsWithinPreferred: jest.fn(), validateScheduleOverlap: jest.fn() };
     const service = new ReservationGroupLifecycleService(
       transaction as never,
       {} as never,

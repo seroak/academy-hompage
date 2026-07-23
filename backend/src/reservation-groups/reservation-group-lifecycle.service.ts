@@ -51,6 +51,17 @@ export class ReservationGroupLifecycleService {
       );
       const schedule = this.validator.resolveSchedule(dto);
       if (schedule) {
+        const otherGroups = await tx.reservationGroup.findMany({
+          where: { status: { in: ['CONFIRMED', 'EMPTY'] } },
+          include: { slots: true },
+        });
+        this.validator.validateScheduleOverlap(
+          schedule.dayOfWeek,
+          schedule.startMinute,
+          schedule.endMinute,
+          otherGroups,
+        );
+
         const slotsByReservation = new Map<string, GroupSlotDto[]>();
         dto.slots.forEach((slot) => {
           const slots = slotsByReservation.get(slot.reservationId) ?? [];
@@ -168,6 +179,16 @@ export class ReservationGroupLifecycleService {
             startMinute: dto.scheduleStartMinute!,
             endMinute: dto.scheduleEndMinute!,
           };
+          const otherGroups = await tx.reservationGroup.findMany({
+            where: { id: { not: id }, status: { in: ['CONFIRMED', 'EMPTY'] } },
+            include: { slots: true },
+          });
+          this.validator.validateScheduleOverlap(
+            newSchedule.dayOfWeek,
+            newSchedule.startMinute,
+            newSchedule.endMinute,
+            otherGroups,
+          );
           const members = await tx.reservation.findMany({
             where: { groupId: id, status: 'GROUPED' },
             include: { preferredSlots: true },
