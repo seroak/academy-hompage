@@ -1,14 +1,31 @@
 import { useState, type SubmitEvent } from 'react'
+import { ApiError } from '../../../../lib/apiClient'
 import {
   CreateReservationGroupInputSchema,
   CreateReservationGroupInput,
   ReservationGroup,
 } from '../../../../api/schemas/reservation-group.schema'
+import { DAY_OF_WEEK_LABELS, timeLabel } from '../../../../api/schemas/reservation.schema'
 import { DayOfWeek, ReservationGroupFormState, SelectedSlot } from '../types'
-import { findSlotGap, mergeContiguousSlots, singleScheduleBlock } from '../utils/reservationAdminUtils'
+import { findSlotGap, mergeContiguousSlots, singleScheduleBlock } from '../utils/slotMerging'
+import { groupSlotsDeduped } from '../utils/groupJoinability'
 
 const emptyGroupForm: ReservationGroupFormState = {
   label: '',
+}
+
+/** 같은 요일·겹치는 시간에 이미 다른 그룹(반)이 있는지 확인한다. */
+function hasScheduleOverlap(
+  groups: ReservationGroup[],
+  day: DayOfWeek,
+  startMinute: number,
+  endMinute: number,
+): boolean {
+  return groups.some((group) =>
+    groupSlotsDeduped(group).some(
+      (range) => range.dayOfWeek === day && startMinute < range.endMinute && endMinute > range.startMinute,
+    ),
+  )
 }
 
 export function useGroupForm(
@@ -16,7 +33,8 @@ export function useGroupForm(
   selectedAges: number[],
   selectedReservationCount: number,
   createGroup: (input: CreateReservationGroupInput) => Promise<ReservationGroup>,
-  onSuccess: () => void
+  onSuccess: () => void,
+  groups: ReservationGroup[] = [],
 ) {
   const [groupForm, setGroupForm] = useState<ReservationGroupFormState>(emptyGroupForm)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -77,6 +95,16 @@ export function useGroupForm(
     setFieldErrors({})
     setSubmitError(null)
 
+    const overlappingSlot = slots.find((slot) =>
+      hasScheduleOverlap(groups, slot.dayOfWeek, slot.startMinute, slot.endMinute),
+    )
+    if (overlappingSlot) {
+      window.alert(
+        `${DAY_OF_WEEK_LABELS[overlappingSlot.dayOfWeek]}요일 ${timeLabel(overlappingSlot.startMinute)}~${timeLabel(overlappingSlot.endMinute)}에는 이미 다른 반이 있습니다. 겹치지 않는 시간을 선택해 주세요.`,
+      )
+      return
+    }
+
     try {
       await createGroup(result.data)
       setGroupForm(emptyGroupForm)
@@ -107,11 +135,18 @@ export function useGroupForm(
     setBlankGroupFieldErrors({})
     setBlankGroupSubmitError(null)
 
+    if (hasScheduleOverlap(groups, input.scheduleDayOfWeek, input.scheduleStartMinute, input.scheduleEndMinute)) {
+      window.alert(
+        `${DAY_OF_WEEK_LABELS[input.scheduleDayOfWeek]}요일 ${timeLabel(input.scheduleStartMinute)}~${timeLabel(input.scheduleEndMinute)}에는 이미 다른 반이 있습니다. 겹치지 않는 시간을 선택해 주세요.`,
+      )
+      return false
+    }
+
     try {
       await createGroup(result.data)
       return true
-    } catch {
-      setBlankGroupSubmitError('그룹 생성에 실패했습니다.')
+    } catch (cause) {
+      setBlankGroupSubmitError(cause instanceof ApiError ? cause.message : '그룹 생성에 실패했습니다.')
       return false
     }
   }

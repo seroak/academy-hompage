@@ -34,7 +34,8 @@ export function useReservationAdminState() {
     gridSelection.selectedAges,
     gridSelection.selectedReservationCount,
     groupMutations.createGroup,
-    gridSelection.clearSelection
+    gridSelection.clearSelection,
+    groups,
   )
 
   const actions = useReservationAdminActions(

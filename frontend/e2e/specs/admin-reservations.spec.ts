@@ -64,7 +64,10 @@ test.describe('관리자 - 예약 관리', () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }
-        groups = [...groups, created]
+        // 실제 백엔드는 findAll을 createdAt desc로 정렬해 방금 만든 그룹이 배열 맨 앞에
+        // 온다(reservation-group-query.service.ts). 순서가 addActiveGroupsToCellMap의
+        // 앵커 병합 결과에 영향을 주므로 목 서버도 동일하게 앞에 붙인다.
+        groups = [created, ...groups]
         await fulfillJson(route, 201, created)
       },
     })
@@ -105,6 +108,33 @@ test.describe('관리자 - 예약 관리', () => {
     await expect(scheduledCell.getByTestId('empty-group-group-e2e-100')).toContainText('0/4')
   })
 
+  test('겹치는 시간에는 빈 수업을 만들 수 없다', async ({ page }) => {
+    const admin = new AdminReservationsPagePO(page)
+    await admin.navigateToGroups()
+
+    let createRequested = false
+    page.on('request', (request) => {
+      if (request.url().includes('/reservation-groups') && request.method() === 'POST') createRequested = true
+    })
+
+    await admin.blankGroupNameInput.fill('겹치는 빈 수업(차단)')
+    await admin.blankGroupCapacityInput.fill('4')
+    await admin.blankGroupDayInput.selectOption('TUE')
+    await admin.blankGroupStartTimeInput.selectOption('920')
+    await admin.blankGroupEndTimeInput.selectOption('930')
+
+    let dialogMessage = ''
+    page.on('dialog', async (dialog) => {
+      dialogMessage = dialog.message()
+      await dialog.accept()
+    })
+    await admin.createBlankGroupButton.click()
+    await expect.poll(() => dialogMessage).toContain('이미 다른 반이 있습니다')
+
+    await expect(admin.groupListItem('겹치는 빈 수업(차단)')).toHaveCount(0)
+    expect(createRequested).toBe(false)
+  })
+
   test('시간표에서 단일 시간블록으로 그룹을 확정하면 반의 고정 일정으로도 저장된다', async ({ page }) => {
     // 반이 나중에 학생 이동으로 비어도 그리드에서 사라지지 않으려면, 확정 시점에
     // scheduleDayOfWeek/StartMinute/EndMinute가 함께 저장돼야 한다(useGroupForm.ts).
@@ -126,6 +156,61 @@ test.describe('관리자 - 예약 관리', () => {
     expect(body.scheduleDayOfWeek).toBe('MON')
     expect(body.scheduleStartMinute).toBe(900)
     expect(body.scheduleEndMinute).toBe(960)
+  })
+
+  test('시간표에서 그룹을 확정할 때 이미 다른 반과 겹치면 확정을 막고 alert를 띄운다', async ({ page }) => {
+    // handleConfirmGroup에도 빈 수업 폼(handleCreateBlankGroup)과 동일한 hasScheduleOverlap
+    // 가드가 걸려 있는지 확인한다. 겹침 병합 로직을 없앤 뒤(useReservationTimetable.ts)로는
+    // 겹치는 확정을 막지 않으면 나중 그룹이 화면에서 조용히 사라지므로, 애초에 생성 자체를
+    // 차단하고 사용자에게 alert로 알려야 한다.
+    const overlappingReservation = {
+      id: 'reservation-overlap',
+      childName: '겹침학생',
+      childAge: 5,
+      parentName: '겹침학부모',
+      parentEmail: 'overlap.e2e@example.com',
+      parentPhone: null,
+      preferredSlots: [
+        { id: 'p-overlap-1', reservationId: 'reservation-overlap', dayOfWeek: 'TUE', startMinute: 900, endMinute: 910 },
+      ],
+      note: null,
+      status: 'WAITING',
+      groupId: null,
+      requestedGroupId: null,
+      createdAt: '2026-01-10T00:00:00.000Z',
+      updatedAt: '2026-01-10T00:00:00.000Z',
+    }
+    await page.route(apiPattern('/reservations(\\?.*)?$'), async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback()
+      await fulfillJson(route, 200, [overlappingReservation])
+    })
+
+    const admin = new AdminReservationsPagePO(page)
+    await admin.navigate()
+
+    // TUE-900은 기존 확정반(픽스처 group-1, TUE 900~960)의 앵커 셀이라, 겹침학생의 희망
+    // 시간(TUE 900~910)과 같은 칸에서 혼합(isMixed)으로 표시된다. 대기 토글을 펼친 뒤
+    // 학생 카드를 클릭해 슬롯을 선택한다.
+    const cell = page.getByTestId('timetable-cell-TUE-900')
+    await cell.getByRole('button', { name: /^대기 1명/ }).click()
+    await cell.locator('button').filter({ hasText: '겹침학생' }).click()
+
+    let createRequested = false
+    page.on('request', (request) => {
+      if (request.url().includes('/reservation-groups') && request.method() === 'POST') createRequested = true
+    })
+
+    let dialogMessage = ''
+    page.on('dialog', async (dialog) => {
+      dialogMessage = dialog.message()
+      await dialog.accept()
+    })
+
+    await page.getByLabel('그룹 이름', { exact: true }).fill('겹침 확정(차단)')
+    await page.getByRole('button', { name: '그룹 확정하기' }).click()
+    await expect.poll(() => dialogMessage).toContain('이미 다른 반이 있습니다')
+
+    expect(createRequested).toBe(false)
   })
 
   test('학생이 모두 빠져 빈 반이 된 그룹은 그리드에서 사라지지 않고, 삭제 버튼으로 지울 수 있다', async ({ page }) => {

@@ -2,71 +2,19 @@ import { useMemo, useCallback } from "react";
 import { Reservation } from "../../../../api/schemas/reservation.schema";
 import { ReservationGroup } from "../../../../api/schemas/reservation-group.schema";
 import { DayOfWeek } from "../types";
-import { ADMIN_ROW_MINUTES, isGroupJoinableForReservation } from "../utils/reservationAdminUtils";
+import { isGroupJoinableForReservation } from "../utils/groupJoinability";
+import { ADMIN_ROW_MINUTES } from "../utils/reservationAdminUtils";
+import {
+  CellData,
+  createEmptyCell,
+  getRowRange,
+  addUniqueReservation,
+  addUniqueGroup,
+  findRenderableCell,
+  placeInCellMap,
+} from "../utils/cellMap";
 
-export type CellData = {
-  waitingInCell: Reservation[];
-  groupedInCell: Reservation[];
-  emptyGroupsInCell: ReservationGroup[];
-  rowSpan: number;
-  skipRender: boolean;
-};
-
-function createEmptyCell(): CellData {
-  return {
-    waitingInCell: [],
-    groupedInCell: [],
-    emptyGroupsInCell: [],
-    rowSpan: 1,
-    skipRender: false,
-  };
-}
-
-function getCell(map: Map<string, CellData>, day: string, rowStart: number): CellData {
-  const key = `${day}-${rowStart}`;
-
-  if (!map.has(key)) {
-    map.set(key, createEmptyCell());
-  }
-
-  return map.get(key)!;
-}
-
-function getRowRange(startMinute: number, endMinute: number) {
-  const startRow = Math.floor(startMinute / ADMIN_ROW_MINUTES) * ADMIN_ROW_MINUTES;
-
-  const endRow = Math.ceil(endMinute / ADMIN_ROW_MINUTES) * ADMIN_ROW_MINUTES;
-
-  return {
-    startRow,
-    endRow,
-    span: (endRow - startRow) / ADMIN_ROW_MINUTES,
-  };
-}
-
-function addUniqueReservation(reservations: Reservation[], reservation: Reservation) {
-  if (!reservations.some((existing) => existing.id === reservation.id)) {
-    reservations.push(reservation);
-  }
-}
-
-function addUniqueGroup(groups: ReservationGroup[], group: ReservationGroup) {
-  if (!groups.some((existing) => existing.id === group.id)) {
-    groups.push(group);
-  }
-}
-
-function findRenderableCell(map: Map<string, CellData>, day: string, rowStart: number): CellData {
-  let targetRowStart = rowStart;
-  let targetCell = getCell(map, day, targetRowStart);
-
-  while (targetCell.skipRender && targetRowStart >= 0) {
-    targetRowStart -= ADMIN_ROW_MINUTES;
-    targetCell = getCell(map, day, targetRowStart);
-  }
-
-  return targetCell;
-}
+export type { CellData } from "../utils/cellMap";
 
 function addActiveGroupsToCellMap(map: Map<string, CellData>, groups: ReservationGroup[]) {
   for (const group of groups) {
@@ -75,28 +23,19 @@ function addActiveGroupsToCellMap(map: Map<string, CellData>, groups: Reservatio
     const groupReservations = group.reservations ?? [];
 
     for (const slot of group.slots) {
-      const { startRow, span } = getRowRange(slot.startMinute, slot.endMinute);
+      const { startRow, endRow, span } = getRowRange(slot.startMinute, slot.endMinute);
 
       if (span <= 0) continue;
 
-      const firstCell = getCell(map, slot.dayOfWeek, startRow);
-
-      firstCell.rowSpan = Math.max(firstCell.rowSpan, span);
-
-      if (groupReservations.length === 0) {
-        addUniqueGroup(firstCell.emptyGroupsInCell, group);
-      } else {
-        for (const reservation of groupReservations) {
-          addUniqueReservation(firstCell.groupedInCell, reservation);
+      placeInCellMap(map, slot.dayOfWeek, startRow, endRow, (cell) => {
+        if (groupReservations.length === 0) {
+          addUniqueGroup(cell.emptyGroupsInCell, group);
+        } else {
+          for (const reservation of groupReservations) {
+            addUniqueReservation(cell.groupedInCell, reservation);
+          }
         }
-      }
-
-      for (let i = 1; i < span; i++) {
-        const nextRowStart = startRow + i * ADMIN_ROW_MINUTES;
-        const nextCell = getCell(map, slot.dayOfWeek, nextRowStart);
-
-        nextCell.skipRender = true;
-      }
+      });
     }
 
     if (
@@ -106,17 +45,12 @@ function addActiveGroupsToCellMap(map: Map<string, CellData>, groups: Reservatio
       typeof group.scheduleStartMinute === "number" &&
       typeof group.scheduleEndMinute === "number"
     ) {
-      const { startRow, span } = getRowRange(group.scheduleStartMinute, group.scheduleEndMinute);
+      const { startRow, endRow, span } = getRowRange(group.scheduleStartMinute, group.scheduleEndMinute);
       if (span <= 0) continue;
 
-      const firstCell = getCell(map, group.scheduleDayOfWeek, startRow);
-      firstCell.rowSpan = Math.max(firstCell.rowSpan, span);
-      firstCell.emptyGroupsInCell.push(group);
-
-      for (let i = 1; i < span; i++) {
-        const nextRowStart = startRow + i * ADMIN_ROW_MINUTES;
-        getCell(map, group.scheduleDayOfWeek, nextRowStart).skipRender = true;
-      }
+      placeInCellMap(map, group.scheduleDayOfWeek, startRow, endRow, (cell) => {
+        addUniqueGroup(cell.emptyGroupsInCell, group);
+      });
     }
   }
 }

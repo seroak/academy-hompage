@@ -6,7 +6,7 @@ import {
   UpdateReservationGroupInput,
 } from "../../../../api/schemas/reservation-group.schema";
 import { DayOfWeek } from "../types";
-import { joinableSlotsForDay, joinableSlotsForAllDays, groupSlotsDeduped } from "../utils/reservationAdminUtils";
+import { joinableSlotsForDay, joinableSlotsForAllDays, groupSlotsDeduped } from "../utils/groupJoinability";
 import { ApiError } from "../../../../lib/apiClient";
 
 export function useReservationAdminActions(
