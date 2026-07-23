@@ -66,3 +66,5 @@
 - 그룹을 반환하는 모든 API는 `FULL_GROUP_INCLUDE`로 `slots`와 `reservations.preferredSlots`를 포함한다.
 - 마지막 멤버 제거 시 anchor slot은 삭제하지 않고 `reservationId: null`, 그룹 상태는 `EMPTY`로 유지한다. 프론트 낙관적 업데이트도 동일하게 재현한다.
 - 예약 생성·이동의 충돌 검사와 쓰기는 Prisma `Serializable` 트랜잭션에 묶고 `P2034`만 제한 횟수 재시도한다.
+- 스케줄이 지정된 그룹(`scheduleDayOfWeek`/`scheduleStartMinute`/`scheduleEndMinute`)은 `validateScheduledMemberSlots`가 모든 멤버 슬롯이 그 스케줄과 완전히 동일하도록 강제한다 — 그룹 스케줄을 바꾸면 부분 수정이 아니라 멤버 슬롯 전체를 재작성해야 하는 이유다.
+- `GroupDetailModal.tsx`처럼 "편집 모드 진입 시 버튼이 새로 나타나는" UI는 조건부 렌더링 대신 항상 렌더링해두고 비활성 상태에서만 `invisible`/`tabIndex={-1}`로 숨긴다 — DOM이 새로 추가되며 아래 섹션이 밀리는 레이아웃 시프트를 막는 패턴.

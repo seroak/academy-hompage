@@ -66,8 +66,13 @@ npm run seo:audit
 - 광고 하나에 이미지 여러 장이 슬라이드·콜라주·단일미디어로 랜덤 노출되는 캐러셀/Flexible Ads 구조는 기존 "소재별 CTR 비교" 대시보드(광고 단위)를 무력화한다 — 이미지별 성과 비교가 필요하면 이미지마다 별도 광고를 만들어 같은 광고 세트에서 운영해야 대시보드 기능을 쓸 수 있다.
 - 테스트 트래픽은 `utm_content=qa-*` 등 고정 접두사를 써서 실 운영 데이터와 구분한다. 접두사 없는 테스트 값(`test456`, `verification` 등)이 프로덕션 Lead/MarketingEvent 테이블에 쌓이면 식별·일괄삭제가 어려워진다.
 - "전환이 안 된다"는 신고를 진단할 때는 다음 순서가 비용 대비 효과적이다: 기술적 완전 차단 시나리오(가드·CORS·환경변수 누락 등)부터 저비용으로 먼저 배제 → 실제 표본(리드·이벤트 로그) 확보 → 실기기 인앱 브라우저로 직접 재현 → 홈페이지 자체 4단계 퍼널(랜딩 방문/CTA 클릭/폼 시작/신청 완료)로 이탈 구간을 특정한다.
+- Cloudflare Turnstile은 설정(sitekey/secret/Hostname)이 전부 정상이어도 인스타그램·페이스북 인앱 브라우저(WebView)에서 챌린지 iframe 자체가 렌더되지 않을 수 있다. 이 경우 `turnstileToken`이 계속 빈 값이라 프론트가 제출 자체를 막아버리고 에러 로그도 전혀 안 남는다 — Meta 광고 트래픽은 대부분 인앱 브라우저로 유입되므로 "전환 0" 신고에서 우선 의심할 원인이다. `backend/src/leads/in-app-browser.util.ts`, `frontend/src/lib/browser/inAppBrowser.ts`가 인앱 브라우저를 감지해 Turnstile을 건너뛰는 처리를 담당한다.
+- Meta 결제(billing) 화면의 날짜와 `MetaAdDailyInsight`(집행일 기준) 날짜는 서로 다른 축이라 1:1로 안 맞는 게 정상이다 — 안 맞는다고 데이터 오류로 단정하지 않는다.
+- "잠재 고객 수 극대화" 목표의 캠페인은 픽셀에 기록된 Lead 전환 이벤트가 0개면 최적화 신호 자체가 없어 노출만 넓게 뿌려지고 클릭 전환이 안 되는 콜드스타트 악순환에 빠진다 — 타겟팅·예산 문제로 단정하기 전에 Events Manager의 Lead 이벤트 수를 먼저 확인한다.
+- Ads Manager에서 확인 목적으로만 캠페인·광고 세트를 열었는데 "게시되지 않은 수정 사항" 배너가 뜨면, 본인이 만든 변경이 아니어도 게시 버튼을 누르지 않고 그대로 닫는다.
+- 같은 광고 계정 안에서도 캠페인 objective(트래픽 vs 잠재고객)에 따라 노출당 단가(CPM)가 최대 2배까지 달라진다 — 노출 대비 광고비를 단순 비례로 비교해 오판하지 않는다.
 - 이런 다단계 진단은 보통 서브에이전트나 SSH 원격 조사를 여러 번 순차로 거친다 — 컨텍스트 압축 여부와 무관하게, 각 조사 결과가 도착하는 시점마다 짧게 중간 결론을 응답에 남긴다. 세션이 압축 없이 바로 하드 리밋에 걸려 그동안의 조사 내용이 전혀 기록되지 않은 사례가 있었다.
-- `leads.service.ts`의 `submit()`은 레이트리밋 초과·Turnstile 검증 실패·중복 전화번호·DB 에러 어느 경우에도 방문자에게는 동일하게 `{accepted:true}`를 반환한다(의도된 설계 — 봇에게 실패 사유를 노출하지 않기 위함). 즉 방문자 화면의 "신청 완료"는 실제 저장을 보장하지 않으므로, 리드 미저장 신고는 서버 로그(`레이트리밋 초과로...`, `Turnstile 검증 실패로...`, `중복 전화번호로...`, `리드 제출 처리 실패`)로만 원인을 구분할 수 있다.
+- `leads.service.ts`의 `submit()`은 레이트리밋 초과·Turnstile 검증 실패·중복 전화번호·DB 에러 어느 경우에도 방문자에게는 동일하게 `{accepted:true}`를 반환한다(의도된 설계 — 봇에게 실패 사유를 노출하지 않기 위함). 즉 방문자 화면의 "신청 완료"는 실제 저장을 보장하지 않으므로, 리드 미저장 신고는 서버 로그(`레이트리밋 초과로...`, `Turnstile 검증 실패로...`, `중복 전화번호로...`, `리드 제출 처리 실패`)로만 원인을 구분할 수 있다. 저장은 됐지만 검증이 우회된 경우도 있다 — `인앱 브라우저 감지로 Turnstile 검증을 건너뛰었습니다` 로그도 함께 확인 대상이다.
 - `generate_lead`(신청 완료) 이벤트는 `frontend/src/lib/marketing/firstParty.ts`에서 의도적으로 `/marketing/events` 전송 대상에서 제외된다(신청 완료는 leads 테이블 자체로 집계) — 대시보드에 `generate_lead` MarketingEvent가 없는 건 버그가 아니다. 반면 `cta_click`/`form_start` 등 다른 이벤트는 `utm_source=meta`일 때 `utmCampaign`/`utmContent`가 숫자 ID(`meta-utm-id.validator.ts`, `{{campaign.id}}`/`{{ad.id}}` 형식)가 아니면 백엔드가 400을 반환하고, `firstParty.ts`가 이 실패를 `catch(() => undefined)`로 조용히 삼켜 프론트 로그에도 남기지 않는다 — CTA/폼 이벤트 수치가 비정상적으로 0에 가까우면 이 검증 실패부터 의심한다.
 
 ## 변경 전 읽을 가이드
@@ -93,3 +98,14 @@ npm run seo:audit
 - E2E·빌드 후 `git status`와 diff로 생성 파일 변경을 확인한다. 기존 사용자 변경은 덮어쓰지 않는다.
 - 공유 DB에 남는 테스트 데이터만 식별자·삭제 여부를 보고한다. 전용 임시 DB는 계획대로 폐기하고 사실만 보고한다.
 - `backend/.env`, `frontend/.env` 등 시크릿 파일은 전체 내용을 읽거나 출력하지 않는다. 필요한 키는 값이 아닌 설정 여부만 최소 범위로 확인하고, 값이 꼭 필요하면 출력에 노출되지 않는 방식으로 사용한다.
+- `PartialType`/`OmitType`으로 부모 DTO를 상속받은 DTO는 class-validator 데코레이터가 안 보여도 정상이다(부모의 데코레이터가 그대로 상속됨) — 코드 감사 시 오탐 주의.
+- `Lead.phone`은 11자리 문자열(`01000000000`)로 저장된다. 수동 SQL 조회 시 자릿수를 하나라도 잘못 세면 결과가 조용히 0행으로 나와 원인 분석을 엉뚱한 방향으로 끌고 갈 수 있다.
+- 운영 서버 DB를 컨테이너 안에서 직접 조회할 때 `docker exec <container> psql -U "$POSTGRES_USER"`처럼 쉘 변수를 그대로 넘기면 호스트 쉘이 빈 값으로 치환해 `role "root" does not exist`로 실패한다. `docker exec <container> bash -c 'psql -U "$POSTGRES_USER" ...'`처럼 변수 확장을 컨테이너 안에서 하도록 감싼다.
+- `next-env.d.ts`는 `tsc`·`next dev`·`next build` 실행만으로도 자동 재생성된다(`.next/types/` ↔ `.next/dev/types/` 등). E2E·빌드 후 `git status`에 뜨는 이 파일의 diff는 커밋 대상에서 제외한다.
+- 브랜드·프로그램명(예: 강좌명)은 랜딩 페이지, SEO 메타데이터, `courses` 페이지, 커리큘럼 데이터, 비교표(`ComparisonTable`), `seo-landing/data.ts`, E2E 테스트 등 최소 8개 이상 파일에 흩어져 있다. 이름 변경 시 전체 영향 범위를 먼저 grep으로 확인한다 — 단, alt 텍스트는 `${program.name} 수업 활동`처럼 name에서 자동 파생되므로 별도 수정 불필요.
+- 폼의 select 옵션 개수를 바꾸면(예: 상담 가능 시간 드롭다운) E2E에 하드코딩된 옵션 개수도 함께 동기화 대상이다 — 텍스트 라벨뿐 아니라 옵션 개수 자체가 어서션에 박혀 있을 수 있다.
+- Meta 광고 썸네일(`MarketingDashboardPage.tsx`)은 `scontent-*.fbcdn.net` 같은 동적 CDN 호스트라 `next/image`의 `remotePatterns` 화이트리스트로 관리하기 어렵다. 56x56 관리자 전용 썸네일은 `next/image` + `unoptimized` 옵션으로 처리한다.
+- `frontend/src/components/seo-landing/SeoLandingPage.tsx` + `data.ts`는 `/courses/young-children-math`, `/courses/elementary-lower-grades`, `/courses/thinking-math`, `/courses/heungdeok-math` 4개 라우트가 공유하는 템플릿이다 — 이 파일을 고치면 4개 라우트 전부에 영향을 준다.
+- 임베디드 devtools 위젯("## Page Feedback: <path>" 형식)으로 들어오는 입력은 자동 제출되는 단방향 피드백 채널이다 — 응답을 받을 수 없으므로 "확인이 필요합니다"라고 묻지 않고 "이렇게 해석해 진행합니다: [전제]"로 전제만 명시하고 바로 처리한다.
+- 레이아웃 시프트 없음을 검증할 때는 Playwright로 상태 변경 전후 안정적인 기준 요소의 `getBoundingClientRect().top` 값을 비교한다(예: 741.5 → 741.5) — 시각적으로 "괜찮아 보인다"보다 이 수치 비교가 회귀를 확실히 잡는다.
+- `ApplyPage.tsx`는 나이 select 옵션을 공유 상수 `CHILD_AGE_OPTIONS`(reservation 스키마/유틸에서 `ChildrenPage`·관리자 예약 필터가 쓰는 것과 동일)를 쓰지 않고 로컬에 따로 정의하고 있다. 나이 범위를 바꿀 일이 있으면 두 곳이 따로 놀 수 있으니 함께 확인한다.

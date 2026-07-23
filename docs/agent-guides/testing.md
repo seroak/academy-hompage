@@ -23,6 +23,7 @@ npx playwright test
 - E2E는 3410·4310 포트를 쓰며 실제 백엔드·일반 dev 서버와 분리된다.
 - 공개 SSR fetch는 `e2e/mock-server/server.ts`가 응답한다. 클라이언트 요청은 각 spec의 `page.route()`로 제어한다.
 - `page.route()`는 `e2e/helpers/intercept.ts`의 `apiPattern()`으로 API origin까지 앵커링한다.
+- mock 서버가 새로 생성한 데이터를 배열에 추가하는 순서는 실제 백엔드의 정렬 기준(예: `createdAt desc`)과 일치시킨다 — 순서가 반대면 순서 의존적인 렌더링 버그(예: 겹침 셀 병합)가 실제로는 존재하는데도 mock에서만 재현되지 않아 테스트가 통과해버릴 수 있다.
 - `NEXT_E2E=1`은 `.next-e2e`를 사용한다. fetch 캐시는 webServer 시작 전 지운다.
 - 인증은 `auth.setup.ts`의 관리자·보호자 storageState를 사용한다.
 - 네이티브 dialog는 클릭 전에 `page.once('dialog', ...)`를 등록한다.
@@ -34,6 +35,6 @@ npx playwright test
 - 실제 보호자 세션이 필요하면 위조 쿠키 대신 가입·이메일 인증으로 발급된 서명 JWT를 Playwright context에 httpOnly 쿠키로 주입한다.
 - 예약 도메인 E2E 데이터는 `POST /reservations/walk-in`으로 `WAITING` 예약을 만들고, 그 ID를 `POST /reservation-groups`의 slot `reservationId`로 참조해 확정 그룹을 만든다.
 - 공유 개발 DB에 생성한 테스트 데이터는 식별자와 삭제 여부를 보고한다. 전용 임시 DB는 계획대로 폐기하고 사실만 보고한다.
-- 프로덕션에서 직접 테스트할 때도 `utm_content=qa-*` 같은 고정 접두사 없이 값을 넣지 않는다 — 실제로 접두사 없는 테스트 값(`test456`, `verification` 등)이 프로덕션 `Lead`/`MarketingEvent` 테이블에 쌓여 식별·일괄삭제가 어려웠던 사례가 있었다. 정리할 때는 SSH 키가 패스프레이즈로 잠겨 있어 직접 실행이 안 되므로, 사용자에게 `SELECT`로 대상 행 확인 → `DELETE` → `SELECT COUNT(*)`로 검증하는 순서의 SQL을 순서대로 안내한다.
+- 프로덕션에서 직접 테스트할 때도 `utm_content=qa-*` 같은 고정 접두사 없이 값을 넣지 않는다 — 실제로 접두사 없는 테스트 값(`test456`, `verification` 등)이 프로덕션 `Lead`/`MarketingEvent` 테이블에 쌓여 식별·일괄삭제가 어려웠던 사례가 있었다. 정리할 때는 SSH 키가 ssh-agent에 로드돼 있지 않으면 직접 실행이 안 되므로(`ssh-add -l`로 먼저 확인), 로드돼 있지 않다면 사용자에게 `SELECT`로 대상 행 확인 → `DELETE` → `SELECT COUNT(*)`로 검증하는 순서의 SQL을 순서대로 안내한다.
 - `nest start --watch` 재기동 전 기존 프로세스를 정리하고 curl로 최신 라우트·응답이 실제 반영됐는지 확인한다.
 - 포트 3000·3001을 점유한 프로세스가 여러 개 겹쳐 있을 수 있다(예: 옛 PID와 실제 서비스 PID가 동시에 남아있는 경우). `lsof -i :포트`로 실제로 그 포트를 점유 중인 PID를 먼저 특정한 뒤에만 재시작·종료 대상으로 삼는다.

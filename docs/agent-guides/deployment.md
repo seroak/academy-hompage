@@ -35,7 +35,7 @@
 - Instagram 전용 노출 위치를 설정해도 Meta가 광고 신원 자산으로 Facebook 페이지 연결을 요구할 수 있다. 페이지 없이 진행 가능하다고 가정하지 말고, 현재 광고 신원 단계의 요구사항을 확인한다.
 - 홈페이지 연결 광고의 URL 매개변수는 `utm_campaign={{campaign.id}}`, `utm_content={{ad.id}}`로 설정해야 Meta Insights와 리드가 자동 연결된다. 배포 후 `/admin/marketing`의 수동 동기화로 광고 관리자 수치와 일치하는지 확인한다.
 - 배포용 SSH 키는 전용 패스프레이즈 없는 키를 사용하고 시크릿으로 등록한다.
-- 프로덕션 서버 로그인용 SSH 키(`~/.ssh/oci_academy`)는 패스프레이즈가 걸려 있어 Claude Code의 Bash 도구(TTY 없음)로는 직접 접속할 수 없다 — 진단·조치 명령을 사용자에게 제공하고 결과를 받아 진단하는 방식으로 진행한다.
+- 프로덕션 서버 로그인용 SSH 키(`~/.ssh/oci_academy`)는 패스프레이즈가 걸려 있다. macOS ssh-agent(`SSH_AUTH_SOCK`)에 키가 이미 로드돼 있으면 Claude Code의 Bash 도구로도 즉시 접속 가능하니 매번 `ssh-add -l`로 먼저 확인한다 — 로드돼 있지 않을 때만 진단·조치 명령을 사용자에게 제공하고 결과를 받아 진단하는 방식으로 진행한다.
 - 운영 DB(Lead/MarketingEvent 등)에 쌓인 테스트 데이터를 정리해야 하면: 사용자가 터미널에서 SSH·`psql`을 수동 실행 → `SELECT`로 대상 행을 먼저 확인 → 확인된 조건으로만 `DELETE` 문을 제공 → 실행 후 `SELECT COUNT(*)`로 삭제 결과를 검증하는 순서를 따른다. Claude가 직접 실행할 수 없으므로 각 단계의 SQL과 결과 확인 방법을 명확히 안내한다.
 - 백엔드 프로덕션 컨테이너에는 `curl`이 설치돼 있지 않다 — `docker exec`로 컨테이너 내부에서 HTTP 요청을 확인해야 하면 `node -e "fetch('...').then(r=>r.text()).then(console.log)"` 형태를 사용한다.
 - SSH로 사용자에게 멀티라인 진단 명령을 전달할 때 중첩 따옴표(`node -e "... /^[\"']/ ..."` 등)를 쓰면 사용자 쉘이 `>` 연속 입력 프롬프트에 걸려 멈출 수 있다 — 가능하면 한 줄 명령으로 만들거나 `\x27`/`\x22` 이스케이프, `JSON.stringify(...)` 출력으로 단순화한다.
@@ -49,6 +49,7 @@
 - `docker-compose.override.yml`(IP 직접 테스트용, `backend`에 host 포트 3000 매핑)은 도메인·Caddy HTTPS 확인 후 제거 대상이었고, blue/green 전환에서 `backend` 서비스 자체가 없어져 남아 있으면 컴포즈 병합이 깨진다. 배포 스크립트는 더 이상 `-f docker-compose.override.yml`을 참조하지 않아 병합 자체는 더 이상 문제가 안 되지만, 서버에 파일이 남아 있다면 정리 대상이다.
 - 현재 실행 중인 컨테이너명(blue/green 중 어느 쪽인지)을 추측해서 안내하지 않는다 — 안내 전 서버에서 `docker ps`로 실제 실행 중인 컨테이너를 확인한다.
 - **최초 1회 수동 전환**: blue/green 도입 전에는 컨테이너명이 `academy-backend-prod`(서비스명 `backend`) 하나였다. 자동 배포 워크플로는 `academy-backend-blue`/`-green`만 감지하므로 구 컨테이너를 정리하지 않으면 orphan으로 남는다 — 첫 전환 직후 `docker stop academy-backend-prod && docker rm academy-backend-prod`로 수동 정리한다.
+- blue/green 롤링 배포로 비활성 슬롯 컨테이너가 정리되면 그 컨테이너의 `docker logs`는 다시 볼 수 없다 — 배포 직전에 발생한 버그를 사후에 그 슬롯 로그로 원인 규명하려면 다음 롤링 전에 로그를 먼저 확보해야 한다.
 - **Caddyfile은 단일 파일이 아니라 `caddy/` 디렉터리째로 바인드 마운트한다**(`./caddy:/etc/caddy`). Docker가 파일 하나만 바인드 마운트하면 컨테이너는 마운트 시점의 inode를 계속 참조하는데, git은 pull/checkout 시 파일을 새 inode로 교체(rename)한다 — 그 결과 호스트에서 `cat`하면 새 내용이 보여도 컨테이너 안에서는(`caddy adapt`/`caddy reload`) 여전히 옛 내용을 읽어 `caddy reload`가 "config is unchanged"로 조용히 아무 것도 안 바꾸는 사고가 났다(2026-07-12). 디렉터리 마운트는 내부 rename을 정상 추적해 이 문제를 없앤다.
 - `caddy` 서비스 자체의 정의(볼륨, 이미지, ports)가 바뀌면 배포 스크립트가 자동으로 반영하지 않는다 — 스크립트는 `backend_blue`/`backend_green`과 `caddy reload`(설정 내용 반영)만 다루므로, `docker-compose.prod.yml`의 caddy 서비스 정의를 바꿨다면 서버에서 `docker compose -f docker-compose.prod.yml --env-file .env.production up -d caddy`를 한 번 수동 실행해 컨테이너를 재생성해야 한다(이 순간만 짧게 끊긴다).
 - `caddy`는 `depends_on: backend_blue`를 갖고 있어서, `up -d caddy`(또는 caddy만 대상으로 한 어떤 compose 명령이든)를 실행하면 그 시점에 `backend_blue`가 꺼져 있어도 compose가 의존성 충족을 위해 **자동으로 다시 기동시킨다**. 이미 `backend_green`이 active인 상태에서 caddy를 재생성하면 blue가 되살아나 blue/green이 동시에 뜬 채로 남을 수 있다(2026-07-12 실제 발생) — caddy를 단독으로 조작한 뒤에는 `docker ps`로 blue/green이 둘 다 떠 있지 않은지 확인하고, 남아 있으면 비활성 컬러를 수동으로 정지·삭제한다.
