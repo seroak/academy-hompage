@@ -32,6 +32,8 @@ export const SITE_KEYWORDS = [
   '요리수 연산',
   '씨투엠',
   'C2M',
+  '흥덕 플레이팩토',
+  '용인 플레이팩토 학원',
 ]
 
 export function siteUrl(path = '/'): string {

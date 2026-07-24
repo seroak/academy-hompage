@@ -15,7 +15,7 @@ export interface SeoLandingContent {
 }
 
 export const programMedia: Record<string, { src: string; alt: string }> = {
-  플레이팩토: { src: '/images/math/playfacto-activity.png', alt: '교구와 게임으로 수학 활동을 하는 아이들' },
+  플레이팩토: { src: '/images/math/playfacto-activity.png', alt: '플레이팩토 교구와 게임으로 수학 활동을 하는 아이들' },
   '요리수 연산': { src: '/images/math/yorisu-activity.png', alt: '놀이와 이야기로 수학을 배우는 아이들' },
   '씨투엠(C2M)': { src: '/images/math/c2m-activity.png', alt: '사고력 문제를 함께 해결하는 아이들' },
 }
@@ -24,11 +24,19 @@ export const seoLandingPages: SeoLandingContent[] = [
   {
     slug: 'young-children-math',
     title: '흥덕 유아 수학, 놀이에서 시작하는 첫 수학',
-    metaTitle: '흥덕 유아 수학 | 놀이·교구로 시작하는 첫 수학',
+    metaTitle: '흥덕 유아 수학 · 플레이팩토 | 놀이·교구로 시작하는 첫 수학',
     description:
       '용인 흥덕 유아 수학 수업. 플레이팩토와 요리수 연산의 놀이·교구 활동으로 수와 도형을 즐겁게 만나고 생각을 말하는 힘을 키웁니다.',
     ogImage: '/images/og/young-children-math.webp',
-    keywords: ['흥덕 유아 수학', '용인 유아 수학', '유치부 수학학원', '플레이팩토', '요리수 연산'],
+    keywords: [
+      '흥덕 유아 수학',
+      '용인 유아 수학',
+      '유치부 수학학원',
+      '플레이팩토',
+      '요리수 연산',
+      '흥덕 플레이팩토',
+      '용인 플레이팩토 학원',
+    ],
     eyebrow: '유아의 첫 수학 경험',
     intro:
       '처음 만나는 수학은 정답을 빨리 찾는 시간보다 직접 만지고, 비교하고, 자기 말로 설명하는 경험이어야 합니다. 아이가 부담 없이 몰입하도록 놀이에서 개념으로 이어지는 흐름을 설계합니다.',
@@ -49,15 +57,23 @@ export const seoLandingPages: SeoLandingContent[] = [
   {
     slug: 'thinking-math',
     title: '흥덕 사고력 수학, 생각하는 힘을 기르는 수업',
-    metaTitle: '흥덕 사고력 수학 | 관찰·비교·설명 중심 수업',
+    metaTitle: '흥덕 사고력 수학 · 플레이팩토 | 관찰·비교·설명 중심 수업',
     description:
       '용인 흥덕 사고력 수학 수업. 플레이팩토, 요리수 연산, 씨투엠으로 관찰하고 비교하며 여러 해결 방법을 설명하는 힘을 기릅니다.',
     ogImage: '/images/og/thinking-math.webp',
-    keywords: ['흥덕 사고력 수학', '용인 사고력 수학', '기흥 사고력 수학', '플레이팩토', '씨투엠'],
+    keywords: [
+      '흥덕 사고력 수학',
+      '용인 사고력 수학',
+      '기흥 사고력 수학',
+      '플레이팩토',
+      '씨투엠',
+      '흥덕 플레이팩토',
+      '용인 플레이팩토 학원',
+    ],
     eyebrow: '답보다 과정을 보는 수학',
     intro:
       '사고력은 어려운 문제를 많이 푸는 것만으로 자라지 않습니다. 조건을 살피고, 서로 다른 방법을 비교하고, 선택한 이유를 설명하는 수업 속에서 문제를 끝까지 해결하는 힘을 키웁니다.',
-    heroImage: { src: '/images/math/playfacto-activity.png', alt: '교구 블록으로 사고력 활동을 하는 아이들' },
+    heroImage: { src: '/images/math/playfacto-activity.png', alt: '플레이팩토 교구 블록으로 사고력 활동을 하는 아이들' },
     features: [
       { title: '조건을 관찰하기', description: '문제에 주어진 정보와 관계를 차분히 찾는 습관을 만듭니다.' },
       { title: '방법을 비교하기', description: '한 가지 풀이에 머물지 않고 여러 해결 전략의 차이를 살펴봅니다.' },
@@ -99,11 +115,20 @@ export const seoLandingPages: SeoLandingContent[] = [
   {
     slug: 'heungdeok-math',
     title: '흥덕 수학학원, 유치부부터 초등 저학년까지',
-    metaTitle: '흥덕 수학학원 | 용인 흥덕 유치부·초등 저학년 사고력 수학',
+    metaTitle: '흥덕 플레이팩토 수학학원 | 용인 흥덕 유치부·초등 저학년 수학',
     description:
       '경기도 용인시 기흥구 흥덕동 수학학원. 플레이팩토, 요리수 연산, 씨투엠(C2M) 세 과정으로 유치부부터 초등 저학년까지 아이 발달 단계에 맞춰 수업합니다.',
     ogImage: '/images/og/home.webp',
-    keywords: ['흥덕 수학학원', '용인 흥덕 수학학원', '기흥 수학학원', '흥덕 유치부 수학학원', '흥덕 저학년 수학학원'],
+    keywords: [
+      '흥덕 수학학원',
+      '용인 흥덕 수학학원',
+      '기흥 수학학원',
+      '흥덕 유치부 수학학원',
+      '흥덕 저학년 수학학원',
+      '흥덕 플레이팩토',
+      '기흥 플레이팩토',
+      '용인 플레이팩토 학원',
+    ],
     eyebrow: '용인시 기흥구 흥덕동 수학학원',
     intro:
       '흥덕2로에 위치한 동네 수학학원입니다. 유아부터 초등 저학년까지, 아이의 현재 발달 단계에 맞는 프로그램을 골라 놀이에서 개념 이해, 사고력, 교과 학습까지 단계적으로 이어갑니다.',
