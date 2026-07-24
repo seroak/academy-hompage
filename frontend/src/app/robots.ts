@@ -9,6 +9,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: ['/admin', '/admin/', '/auth/social/callback', '/children'],
       },
+      {
+        userAgent: 'Yeti',
+        allow: '/',
+        disallow: ['/admin', '/admin/', '/auth/social/callback', '/children'],
+      },
     ],
     sitemap: siteUrl('/sitemap.xml'),
   }
